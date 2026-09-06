@@ -17,20 +17,38 @@ export const COMFORT_LINE_H = 8;
 /** The writing rule after the marker strip must be at least this wide. */
 export const MIN_WRITE_W = 100;
 
-export const HEADER_H = 14;
-export const HEADER_GAP = 3;
-export const DAY_PAD_TOP = 1;
-export const DAY_PAD_BOTTOM = 1;
+export const HEADER_H = 15;
+export const HEADER_GAP = 4;
+/** Space above the weekday name, inside the day block. */
+export const DAY_PAD_TOP = 1.8;
+/** Space below the last writing line, above the separator. */
+export const DAY_PAD_BOTTOM = 1.4;
+/** Height of the weekday name band as a fraction of the day height. */
+export const HEAD_RATIO = 0.26;
+/** Floor and ceiling for the weekday name band. */
+export const HEAD_MIN = 6;
+export const HEAD_MAX = 9.5;
+/** Left inset of the marker strip inside the content box. */
+export const STRIP_INSET = 1;
+/** Gutter between the end of the marker strip and the start of the writing rule. */
+export const STRIP_GAP = 4.5;
+/** Height of a mark as a fraction of the line height, before clamping. */
+export const MARK_RATIO = 0.55;
 export const MARK_GAP = 1.6;
 export const MARK_MIN = 3.5;
-export const MARK_MAX = 5.5;
+export const MARK_MAX = 4.6;
+/** Gap between the writing rule and the bottom of its line band, for descenders. */
+export const RULE_LIFT = 1.2;
 export const DATE_FIELD_W = 14;
+/** Gap kept between the weekday name and the right-aligned date column. */
+export const NAME_DATE_GUTTER = 4;
 export const NAME_FONT_MAX = 8;
 export const NAME_FONT_MIN = 4.5;
-export const LEGEND_SYMBOL = 5;
+/** Ceiling for the legend symbol; it otherwise matches the strip mark size. */
+export const LEGEND_SYMBOL_MAX = MARK_MAX;
 export const LEGEND_FONT = 3.4;
 export const LEGEND_FONT_MIN = 2.8;
-export const LEGEND_ITEM_GAP = 5;
+export const LEGEND_ITEM_GAP = 4.6;
 export const LEGEND_ROW_H = 6.5;
 export const LEGEND_MAX_ROWS = 3;
 export const WEEK_LABEL_FONT = 7;
@@ -204,20 +222,23 @@ export function layoutResolved(sheet: ResolvedSheet): Layout {
   };
   const issues: LayoutIssue[] = [];
 
-  const header = sheet.hasHeader ? layoutHeader(sheet, content, issues) : undefined;
-  const headerTotal = header ? HEADER_H + HEADER_GAP : 0;
+  const headerTotal = sheet.hasHeader ? HEADER_H + HEADER_GAP : 0;
   const daysTop = content.y + headerTotal;
   const topRule: Rule = { x1: content.x, x2: content.x + content.w, y: daysTop };
 
   const dayHeight = (content.h - headerTotal) / 7;
-  const headHeight = clamp(dayHeight * 0.22, 6, 9);
+  const headHeight = headBandHeight(dayHeight, config.linesPerDay);
   const linesArea = dayHeight - headHeight - DAY_PAD_TOP - DAY_PAD_BOTTOM;
   const lineHeight = linesArea / config.linesPerDay;
-  const markSize = clamp(lineHeight * 0.62, MARK_MIN, MARK_MAX);
+  const markSize = clamp(lineHeight * MARK_RATIO, MARK_MIN, MARK_MAX);
   const markCount = sheet.marks.length;
   const stripWidth = markCount * markSize + Math.max(0, markCount - 1) * MARK_GAP;
-  const ruleStart = content.x + 1 + stripWidth + 2.5;
+  const ruleStart = content.x + STRIP_INSET + stripWidth + STRIP_GAP;
   const writeWidth = content.x + content.w - ruleStart;
+
+  // The legend shares the mark size with the strips, so the header needs the
+  // metrics; the metrics only need to know whether a header exists.
+  const header = sheet.hasHeader ? layoutHeader(sheet, content, markSize, issues) : undefined;
 
   const remedies = lineRemedies(sheet);
   if (lineHeight < MIN_LINE_H) {
@@ -250,9 +271,10 @@ export function layoutResolved(sheet: ResolvedSheet): Layout {
     const rect: Rect = { x: content.x, y: top, w: content.w, h: dayHeight };
     const text = sheet.dayNames[position] ?? '';
 
-    // Weekday name: shrink until it fits beside the date field.
+    // Weekday name: shrink until it fits beside the date column, which is
+    // right-aligned at the content edge and therefore at the same x every day.
     const nameX = content.x + 0.5;
-    const reserved = config.showDayDates ? DATE_FIELD_W + 4 + 2 : 2;
+    const reserved = config.showDayDates ? DATE_FIELD_W + NAME_DATE_GUTTER : 2;
     const maxNameWidth = content.w - 0.5 - reserved;
     const letterSpacing = 0.04;
     let fontSize = Math.min(NAME_FONT_MAX, headHeight * 0.92);
@@ -266,7 +288,8 @@ export function layoutResolved(sheet: ResolvedSheet): Layout {
 
     const dateField: DayLayout['dateField'] = config.showDayDates
       ? {
-          x: nameX + width + 4,
+          // Right-aligned at the content edge: one date column for all seven days.
+          x: content.x + content.w - DATE_FIELD_W,
           y: baseline + 0.6,
           w: DATE_FIELD_W,
           text: sheet.dates?.days[position] === undefined ? undefined : sheet.dates.days[position],
@@ -278,11 +301,13 @@ export function layoutResolved(sheet: ResolvedSheet): Layout {
     const lines: LineLayout[] = [];
     for (let i = 0; i < config.linesPerDay; i++) {
       const lineTop = linesTop + i * lineHeight;
-      const ruleY = lineTop + lineHeight - 0.6;
+      const ruleY = lineTop + lineHeight - RULE_LIFT;
+      // Marks sit centred in the line band, so every line has the same rhythm.
+      const markY = lineTop + (lineHeight - markSize) / 2;
       const marks: MarkSlot[] = sheet.marks.map((mark, j) => ({
         mark,
-        x: content.x + 1 + j * (markSize + MARK_GAP),
-        y: ruleY - 0.7 - markSize,
+        x: content.x + STRIP_INSET + j * (markSize + MARK_GAP),
+        y: markY,
         size: markSize,
       }));
       lines.push({
@@ -329,6 +354,22 @@ export function layoutResolved(sheet: ResolvedSheet): Layout {
   });
 }
 
+/**
+ * Height of the weekday name band. It takes its share of the day, but the
+ * writing lines have priority: rather than push them below the comfort height
+ * the band gives up its own, and rather than push them below the floor it gives
+ * up more, down to `HEAD_MIN`. Rounded down to 3 decimals so that rounding can
+ * never steal a hundredth of a millimetre from a line sitting on a threshold.
+ */
+function headBandHeight(dayHeight: number, linesPerDay: number): number {
+  const ideal = clamp(dayHeight * HEAD_RATIO, HEAD_MIN, HEAD_MAX);
+  const forLines = dayHeight - DAY_PAD_TOP - DAY_PAD_BOTTOM;
+  const comfort = forLines - linesPerDay * COMFORT_LINE_H;
+  const floor = forLines - linesPerDay * MIN_LINE_H;
+  const cap = comfort >= HEAD_MIN ? comfort : floor;
+  return Math.floor(Math.max(HEAD_MIN, Math.min(ideal, cap)) * 1000) / 1000;
+}
+
 function lineRemedies(sheet: ResolvedSheet): string[] {
   const { config } = sheet;
   const remedies: string[] = [];
@@ -340,7 +381,12 @@ function lineRemedies(sheet: ResolvedSheet): string[] {
   return remedies;
 }
 
-function layoutHeader(sheet: ResolvedSheet, content: Rect, issues: LayoutIssue[]): HeaderLayout {
+function layoutHeader(
+  sheet: ResolvedSheet,
+  content: Rect,
+  markSize: number,
+  issues: LayoutIssue[],
+): HeaderLayout {
   const { config } = sheet;
   const rect: Rect = { x: content.x, y: content.y, w: content.w, h: HEADER_H };
   let cursor = content.x;
@@ -382,7 +428,7 @@ function layoutHeader(sheet: ResolvedSheet, content: Rect, issues: LayoutIssue[]
   let legend: HeaderLayout['legend'];
   if (config.showLegend) {
     const maxWidth = content.x + content.w - cursor;
-    legend = layoutLegend(sheet, content, maxWidth, issues);
+    legend = layoutLegend(sheet, content, maxWidth, markSize, issues);
   }
 
   return { rect, weekLabel, weekBox, dateRange, legend };
@@ -392,13 +438,16 @@ function layoutLegend(
   sheet: ResolvedSheet,
   content: Rect,
   maxWidth: number,
+  markSize: number,
   issues: LayoutIssue[],
 ): NonNullable<HeaderLayout['legend']> {
   const right = content.x + content.w;
   const marks = sheet.marks;
+  // One icon size per sheet: the legend symbol is the strip mark.
+  const symbolSize = Math.min(markSize, LEGEND_SYMBOL_MAX);
 
   const measure = (fontSize: number) =>
-    marks.map((mark) => LEGEND_SYMBOL + 1.5 + estimateTextWidth(mark.label, fontSize, 'mixed'));
+    marks.map((mark) => symbolSize + 1.5 + estimateTextWidth(mark.label, fontSize, 'mixed'));
 
   // Try the normal size in one or two rows, then a smaller size, then a
   // third, shorter row. Only after that is it an overflow.
@@ -426,7 +475,6 @@ function layoutLegend(
   const rowCount = rows.length;
   const rowHeight =
     rowCount === 1 ? LEGEND_ROW_H : Math.min(LEGEND_ROW_H, (HEADER_H - 1) / rowCount);
-  const symbolSize = Math.min(LEGEND_SYMBOL, rowHeight - 1.2);
   const firstBaseline = rowCount === 1 ? content.y + 9.5 : content.y + rowHeight - 0.8;
   const items: LegendItem[] = [];
   rows.forEach((row, rowIndex) => {
@@ -441,7 +489,7 @@ function layoutLegend(
       items.push({
         mark,
         symbol: { x, y: baseline - symbolSize + fontSize * 0.15, w: symbolSize, h: symbolSize },
-        text: { x: x + LEGEND_SYMBOL + 1.5, baseline, fontSize, text: mark.label },
+        text: { x: x + symbolSize + 1.5, baseline, fontSize, text: mark.label },
         width,
       });
       x += width + LEGEND_ITEM_GAP;

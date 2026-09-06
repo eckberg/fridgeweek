@@ -1,0 +1,56 @@
+---
+import GithubMark from './GithubMark.astro';
+---
+
+<footer class="site-footer">
+  <p class="note">
+    Free and open source. Nothing you type here leaves your browser
+    &mdash; <a href="/about#privacy">read the privacy note</a>.
+  </p>
+  <nav aria-label="Secondary">
+    <a href="/about">About, terms and privacy</a>
+    <a href="/about#what">What is Fridgeweek?</a>
+    <a href="https://github.com/eckberg/fridgeweek" rel="noopener" class="source">
+      <GithubMark size={16} /> Source
+    </a>
+  </nav>
+</footer>
+
+<style>
+  .site-footer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    border-top: 1px solid var(--border);
+    background: var(--paper);
+  }
+
+  .note {
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-5);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  nav a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  nav a:hover {
+    color: var(--accent);
+  }
+
+  .source {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+</style>

@@ -8,6 +8,7 @@ import {
   type Layout,
   MIN_LINE_H,
   PAPER,
+  RULE_LIFT,
 } from '../src/layout.js';
 
 function layoutOf(input: SheetConfigInput = {}): Layout {
@@ -38,7 +39,7 @@ describe('computeLayout: geometry', () => {
     const last = l.days[6];
     expect(last).toBeDefined();
     if (last) expect(last.rect.y + last.rect.h).toBeCloseTo(287, 2);
-    expect(l.metrics.dayHeight).toBeCloseTo((277 - 17) / 7, 2);
+    expect(l.metrics.dayHeight).toBeCloseTo((277 - (HEADER_H + HEADER_GAP)) / 7, 2);
   });
 
   it('drops the header when nothing needs it', () => {
@@ -123,6 +124,85 @@ describe('computeLayout: geometry', () => {
         if (day.dateField) {
           expect(day.dateField.x + day.dateField.w).toBeLessThanOrEqual(l.content.x + l.content.w);
         }
+      }
+    }
+  });
+});
+
+describe('computeLayout: sheet v2 geometry', () => {
+  it('puts the day date in one column at the right edge on every day', () => {
+    const l = layoutOf({ locale: 'fi-FI', weekStarting: '2026-09-07' });
+    const xs = new Set(l.days.map((d) => d.dateField?.x));
+    expect(xs.size).toBe(1);
+    const x = l.days[0]?.dateField;
+    expect(x).toBeDefined();
+    if (x) expect(x.x + x.w).toBeCloseTo(l.content.x + l.content.w, 3);
+  });
+
+  it('keeps the widest weekday name clear of the date column', () => {
+    for (const locale of ['fi-FI', 'de-DE', 'pt-PT', 'sv-SE']) {
+      const l = layoutOf({ locale });
+      for (const day of l.days) {
+        const dateLeft = day.dateField?.x ?? l.content.x + l.content.w;
+        expect(
+          day.name.x + day.name.estimatedWidth,
+          `${locale} ${day.name.text}`,
+        ).toBeLessThanOrEqual(dateLeft);
+      }
+    }
+  });
+
+  it('centres the marks in their line band', () => {
+    const l = layoutOf({ people: peopleOf(4), linesPerDay: 3 });
+    for (const day of l.days) {
+      for (const line of day.lines) {
+        for (const slot of line.marks) {
+          const above = slot.y - line.top;
+          const below = line.top + line.height - (slot.y + slot.size);
+          expect(above).toBeCloseTo(below, 2);
+        }
+      }
+    }
+  });
+
+  it('leaves a gutter of at least 4.5 mm between the strip and the writing rule', () => {
+    for (let n = 1; n <= 6; n++) {
+      const l = layoutOf({ people: peopleOf(n) });
+      const line = l.days[0]?.lines[0];
+      const lastMark = line?.marks.at(-1);
+      expect(line).toBeDefined();
+      if (line && lastMark) {
+        // Every value is rounded to 3 decimals on its own, so a derived
+        // difference can land a thousandth either side of the constant.
+        expect(line.rule.x1 - (lastMark.x + lastMark.size)).toBeGreaterThan(4.49);
+      }
+    }
+  });
+
+  it('lifts the writing rule so descenders have room', () => {
+    const l = layoutOf({ linesPerDay: 2 });
+    for (const line of l.days[0]?.lines ?? []) {
+      expect(line.top + line.height - line.rule.y).toBeCloseTo(RULE_LIFT, 2);
+    }
+  });
+
+  it('draws the legend symbol at the same size as a strip mark', () => {
+    for (const linesPerDay of [1, 2, 3, 4] as const) {
+      const l = layoutOf({ locale: 'sv-SE', linesPerDay, people: peopleOf(3) });
+      for (const item of l.header?.legend?.items ?? []) {
+        expect(item.symbol.w).toBeCloseTo(l.metrics.markSize, 2);
+        expect(item.text.x).toBeCloseTo(item.symbol.x + item.symbol.w + 1.5, 2);
+      }
+    }
+  });
+
+  it('gives the weekday name a band that never starves the writing lines', () => {
+    for (const paper of ['A4', 'Letter'] as const) {
+      for (const linesPerDay of [1, 2, 3, 4] as const) {
+        const l = layoutOf({ paper, linesPerDay });
+        expect(l.metrics.headHeight).toBeGreaterThanOrEqual(6);
+        expect(l.metrics.headHeight).toBeLessThanOrEqual(9.5);
+        expect(l.metrics.lineHeight, `${paper} ${linesPerDay}`).toBeGreaterThanOrEqual(MIN_LINE_H);
       }
     }
   });
