@@ -95,13 +95,22 @@
   border-radius: var(--radius-sm);
 }
 
+/*
+ * The override has to beat every component's own transition, including scoped
+ * styles with higher specificity, so !important is the only thing that works
+ * here. This is the standard reduced-motion reset.
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: a motion reset must beat scoped styles */
     animation-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: a motion reset must beat scoped styles */
     animation-iteration-count: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: a motion reset must beat scoped styles */
     transition-duration: 0.01ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: a motion reset must beat scoped styles */
     scroll-behavior: auto !important;
   }
 }
