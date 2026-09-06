@@ -60,3 +60,32 @@ axe accessibility checks on every page, a full code review pass, and documentati
   the reverse.
 - Anything that cannot be decided without the maintainer gets a placeholder, a `TODO(karl)`
   comment and an entry in the open questions list at the end.
+
+---
+
+## What was built
+
+Every phase above landed. The whole project runs on a laptop with no account,
+key or hosting platform.
+
+| Phase | Outcome |
+|---|---|
+| 1. Sheet refinement | Applied. Marks centred and smaller, a 4.5 mm gutter before the writing rule, day dates right-aligned into one column, more air under the weekday name, one icon size per sheet. Metrics match the design's proposed numbers (line 8.05 mm, mark 4.43 mm). |
+| 2. Web shell | Astro site, static except one route, with design tokens from the brand system, self-hosted fonts and no third-party requests. |
+| 3. The builder | A Vue island: language, people with a searchable symbol picker, family mark, mark style, lines per day, weekend style, week starting, four header toggles, paper, margin and copies, with a live preview and the engine's own fit report. |
+| 4. Content pages | A landing page that renders two real sheets at build time, and one prose page covering about, privacy, terms and licences. |
+| 5. PDF | `POST /api/pdf` behind a renderer interface. A local Chromium implementation needs nothing external; a deployment without one answers 501 and the interface says to print instead. |
+| 6. Quality | 319 unit tests, 19 browser tests, 6 sheet screenshots, axe on all three pages, and a code review whose findings were fixed. |
+
+Beyond the plan: the interface, the symbol names and the sheet's own words are
+translated into fifteen languages.
+
+## Deliberately not done
+
+- **Locale routes for the static pages.** The builder is fully translated at
+  runtime, but the landing and about pages are English. Translating them means
+  fifteen route trees, which is a decision about the shape of the site rather
+  than a missing piece of work.
+- **A hosted PDF renderer.** Sketched in `apps/web/src/lib/pdf/cloudflare.ts`
+  and deliberately not built; see the open questions.
+- **Analytics.** None, and the privacy page says so.
