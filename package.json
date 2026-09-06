@@ -15,7 +15,8 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "typecheck": "pnpm -r typecheck",
-    "sample": "pnpm --filter @fridgeweek/core sample"
+    "sample": "pnpm --filter @fridgeweek/core sample",
+    "test:e2e": "pnpm -r test:e2e"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.12",

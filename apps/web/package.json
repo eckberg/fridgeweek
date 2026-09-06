@@ -12,6 +12,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@astrojs/node": "^11.1.5",
     "@astrojs/vue": "^7.0.2",
     "@fridgeweek/core": "workspace:*",
     "astro": "^7.3.1",
@@ -23,6 +24,7 @@
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/test-utils": "^2.5.0",
     "happy-dom": "^20.14.0",
+    "playwright-core": "1.56.0",
     "typescript": "^7.0.2",
     "vitest": "^5.0.0"
   }
