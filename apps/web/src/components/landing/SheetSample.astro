@@ -1,0 +1,53 @@
+---
+import { renderSvg, resolveConfig, type SheetConfigInput } from '@fridgeweek/core';
+
+/**
+ * A real sheet, rendered at build time by the same function the printer uses.
+ * Nothing here is a mock-up: what the page shows is what comes out of the tray.
+ */
+interface Props {
+  config: SheetConfigInput;
+  caption: string;
+  /** Rendered smaller and without a shadow when used as a thumbnail. */
+  compact?: boolean;
+}
+
+const { config, caption, compact = false } = Astro.props;
+const svg = renderSvg(resolveConfig(config), { idPrefix: `s${caption.length}` });
+---
+
+<figure class:list={['sample', { compact }]}>
+  <div class="paper" set:html={svg} />
+  <figcaption class="mono">{caption}</figcaption>
+</figure>
+
+<style>
+  .sample {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .paper {
+    background: var(--white);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sheet);
+  }
+
+  .compact .paper {
+    box-shadow: none;
+  }
+
+  .paper :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  figcaption {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+</style>

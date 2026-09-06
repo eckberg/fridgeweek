@@ -1,0 +1,50 @@
+/*
+ * Long-form text. Used by the About page and anywhere else a paragraph needs
+ * to be read rather than scanned.
+ */
+
+.prose {
+  max-width: var(--measure);
+}
+
+.prose > * + * {
+  margin-top: var(--space-4);
+}
+
+.prose h2 {
+  margin-top: var(--space-8);
+  font-size: clamp(22px, 2.6vw, 30px);
+  scroll-margin-top: calc(var(--header-height) + var(--space-4));
+}
+
+.prose h3 {
+  margin-top: var(--space-6);
+  font-size: 18px;
+}
+
+.prose p,
+.prose li {
+  font-size: 17px;
+  color: var(--ink-soft);
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.3em;
+}
+
+.prose li + li {
+  margin-top: var(--space-2);
+}
+
+.prose strong {
+  color: var(--ink);
+}
+
+.prose code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--paper-sunk);
+  font: 400 0.92em var(--font-mono);
+  color: var(--ink);
+}
