@@ -1,0 +1,54 @@
+---
+import SheetBuilder from '../components/builder/SheetBuilder.vue';
+import { t } from '../i18n/index.js';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title={t('en', 'meta.builderTitle')}
+  description={t('en', 'meta.builderDescription')}
+  current="builder"
+  fullHeight
+>
+  <SheetBuilder client:only="vue">
+    <div slot="fallback" class="loading">
+      <p>Loading the sheet builder…</p>
+    </div>
+  </SheetBuilder>
+</BaseLayout>
+
+<style is:global>
+  /*
+   * Astro wraps a hydrated component in <astro-island>, an inline element by
+   * default. That breaks the chain of definite heights the builder needs to
+   * size its preview to the pane, so the wrapper is made transparent to layout.
+   */
+  astro-island {
+    display: contents;
+  }
+
+  /* The builder owns the viewport below the header. */
+  body.full-height main {
+    height: calc(100vh - var(--header-height));
+    overflow: hidden;
+  }
+
+  @media (max-width: 900px) {
+    body.full-height {
+      height: auto;
+      overflow: auto;
+    }
+
+    body.full-height main {
+      height: auto;
+      overflow: visible;
+    }
+  }
+
+  .loading {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    color: var(--ink-faint);
+  }
+</style>
