@@ -1,78 +1,71 @@
 import type { SymbolId } from './index.js';
-
-export interface SymbolLabel {
-  en: string;
-  sv: string;
-}
+import da from './labels/da.json';
+import de from './labels/de.json';
+import en from './labels/en.json';
+import es from './labels/es.json';
+import fi from './labels/fi.json';
+import fo from './labels/fo.json';
+import fr from './labels/fr.json';
+import is from './labels/is.json';
+import it from './labels/it.json';
+import nb from './labels/nb.json';
+import nl from './labels/nl.json';
+import nn from './labels/nn.json';
+import pl from './labels/pl.json';
+import pt from './labels/pt.json';
+import sv from './labels/sv.json';
 
 /**
- * Human labels for the legend and the symbol picker. `Record<SymbolId, ...>`
- * on purpose: adding a symbol without a label is a compile error.
+ * Human names for the symbols, used by the legend, the picker and by screen
+ * readers. They are never printed on the sheet itself: the sheet shows the
+ * drawing, because that is the point of it.
+ *
+ * English is complete by construction, and every other language falls back to
+ * it key by key, so a translation that misses a symbol is still worth shipping.
+ * Adding a language is one JSON file plus one line below.
  */
-export const SYMBOL_LABELS: Record<SymbolId, SymbolLabel> = {
-  anchor: { en: 'Anchor', sv: 'Ankare' },
-  apple: { en: 'Apple', sv: 'Äpple' },
-  bike: { en: 'Bicycle', sv: 'Cykel' },
-  bird: { en: 'Bird', sv: 'Fågel' },
-  book: { en: 'Book', sv: 'Bok' },
-  bot: { en: 'Robot', sv: 'Robot' },
-  bus: { en: 'Bus', sv: 'Buss' },
-  candy: { en: 'Candy', sv: 'Godis' },
-  car: { en: 'Car', sv: 'Bil' },
-  cat: { en: 'Cat', sv: 'Katt' },
-  cherry: { en: 'Cherries', sv: 'Körsbär' },
-  cloud: { en: 'Cloud', sv: 'Moln' },
-  crown: { en: 'Crown', sv: 'Krona' },
-  'dice-5': { en: 'Dice', sv: 'Tärning' },
-  dinosaur: { en: 'Dinosaur', sv: 'Dinosaurie' },
-  dog: { en: 'Dog', sv: 'Hund' },
-  drum: { en: 'Drum', sv: 'Trumma' },
-  'firefighter-helmet': { en: 'Fire helmet', sv: 'Brandhjälm' },
-  fish: { en: 'Fish', sv: 'Fisk' },
-  flame: { en: 'Flame', sv: 'Låga' },
-  flower: { en: 'Flower', sv: 'Blomma' },
-  footprints: { en: 'Footprints', sv: 'Fotspår' },
-  'gamepad-2': { en: 'Game controller', sv: 'Spelkontroll' },
-  ghost: { en: 'Ghost', sv: 'Spöke' },
-  gift: { en: 'Present', sv: 'Present' },
-  glasses: { en: 'Glasses', sv: 'Glasögon' },
-  guitar: { en: 'Guitar', sv: 'Gitarr' },
-  hammer: { en: 'Hammer', sv: 'Hammare' },
-  heart: { en: 'Heart', sv: 'Hjärta' },
-  house: { en: 'House', sv: 'Hus' },
-  'ice-cream-cone': { en: 'Ice cream', sv: 'Glass' },
-  leaf: { en: 'Leaf', sv: 'Löv' },
-  lollipop: { en: 'Lollipop', sv: 'Klubba' },
-  medal: { en: 'Medal', sv: 'Medalj' },
-  moon: { en: 'Moon', sv: 'Måne' },
-  'mountain-snow': { en: 'Mountain', sv: 'Berg' },
-  music: { en: 'Music', sv: 'Musik' },
-  pizza: { en: 'Pizza', sv: 'Pizza' },
-  plane: { en: 'Aeroplane', sv: 'Flygplan' },
-  puzzle: { en: 'Puzzle piece', sv: 'Pusselbit' },
-  rabbit: { en: 'Rabbit', sv: 'Kanin' },
-  rainbow: { en: 'Rainbow', sv: 'Regnbåge' },
-  rocket: { en: 'Rocket', sv: 'Raket' },
-  sailboat: { en: 'Sailing boat', sv: 'Segelbåt' },
-  shell: { en: 'Shell', sv: 'Snäcka' },
-  shield: { en: 'Shield', sv: 'Sköld' },
-  ship: { en: 'Ship', sv: 'Skepp' },
-  smile: { en: 'Smiley', sv: 'Smiley' },
-  snail: { en: 'Snail', sv: 'Snigel' },
-  squirrel: { en: 'Squirrel', sv: 'Ekorre' },
-  star: { en: 'Star', sv: 'Stjärna' },
-  sun: { en: 'Sun', sv: 'Sol' },
-  sword: { en: 'Sword', sv: 'Svärd' },
-  tiara: { en: 'Tiara', sv: 'Tiara' },
-  tractor: { en: 'Tractor', sv: 'Traktor' },
-  'train-front': { en: 'Train', sv: 'Tåg' },
-  'tree-pine': { en: 'Pine tree', sv: 'Gran' },
-  trophy: { en: 'Trophy', sv: 'Pokal' },
-  turtle: { en: 'Turtle', sv: 'Sköldpadda' },
-  umbrella: { en: 'Umbrella', sv: 'Paraply' },
-  unicorn: { en: 'Unicorn', sv: 'Enhörning' },
-  users: { en: 'Group', sv: 'Grupp' },
-  'wand-sparkles': { en: 'Magic wand', sv: 'Trollstav' },
-  wrench: { en: 'Spanner', sv: 'Skiftnyckel' },
-  zap: { en: 'Lightning', sv: 'Blixt' },
+
+/** English is the contract: a symbol without an English label is a type error. */
+export type SymbolLabels = Record<SymbolId, string>;
+
+const ENGLISH: SymbolLabels = en;
+
+const TRANSLATIONS: Record<string, Partial<SymbolLabels>> = {
+  en: ENGLISH,
+  sv,
+  da,
+  nb,
+  nn,
+  fi,
+  is,
+  fo,
+  de,
+  es,
+  fr,
+  it,
+  nl,
+  pl,
+  pt,
 };
+
+export const LABEL_LANGUAGES: readonly string[] = Object.keys(TRANSLATIONS);
+
+/**
+ * The label for a symbol in the closest language available.
+ *
+ * `locale` may be any BCP 47 tag; only the language subtag is used, since a
+ * cat is a cat in every region.
+ */
+export function symbolLabel(id: SymbolId, locale = 'en'): string {
+  const language = locale.toLowerCase().split(/[-_]/)[0] ?? 'en';
+  return TRANSLATIONS[language]?.[id] ?? ENGLISH[id];
+}
+
+/** Every language's label for one symbol, for callers that switch locale often. */
+export function symbolLabels(id: SymbolId): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [language, table] of Object.entries(TRANSLATIONS)) {
+    out[language] = table[id] ?? ENGLISH[id];
+  }
+  return out;
+}
