@@ -6,8 +6,8 @@ import {
   renderSvg,
   type SheetConfig,
 } from '@fridgeweek/core';
-import { computed, ref, shallowRef, watch } from 'vue';
-import { applyChange, loadConfig, saveConfig, shareUrl } from '../../lib/sheetState.js';
+import { computed, ref, watch } from 'vue';
+import { applyChange, loadConfig, readHash, saveConfig, shareUrl } from '../../lib/sheetState.js';
 
 /**
  * The builder's single source of truth. One configuration object, validated on
@@ -24,8 +24,8 @@ export function useSheet() {
 
   const config = ref<SheetConfig>(initial.config);
   const linkWasBroken = ref(initial.issues !== undefined);
-  /** Set while the hash is being written, so the hashchange listener can ignore it. */
-  const writingHash = shallowRef(false);
+  /** The encoding last written to the address bar, so an echo can be recognised. */
+  let writtenHash = '';
 
   const layout = computed(() => computeLayout(config.value));
   const previewSvg = computed(() => renderSvg(config.value, { idPrefix: 'preview' }));
@@ -84,19 +84,28 @@ export function useSheet() {
     (next) => {
       const encoded = saveConfig(next, typeof localStorage === 'undefined' ? null : localStorage);
       if (typeof history !== 'undefined' && typeof location !== 'undefined') {
-        writingHash.value = true;
+        writtenHash = encoded;
         history.replaceState(null, '', `${location.pathname}#${encoded}`);
-        writingHash.value = false;
       }
     },
     { deep: true },
   );
 
-  /** Someone pasted a different sheet into the address bar, or used the back button. */
+  /**
+   * Someone pasted a different sheet into the address bar, or used the back
+   * button. A hash this component wrote itself is ignored, so adopting it
+   * cannot loop back into the watcher that wrote it.
+   */
   function adoptHash(): void {
-    if (writingHash.value || typeof location === 'undefined') return;
+    if (typeof location === 'undefined') return;
+    const encoded = readHash(location.hash);
+    if (encoded === null || encoded === writtenHash) return;
+
     const result = loadConfig(location.hash, null);
-    if (result.source === 'url') config.value = result.config;
+    if (result.source === 'url') {
+      writtenHash = encoded;
+      config.value = result.config;
+    }
   }
 
   return {

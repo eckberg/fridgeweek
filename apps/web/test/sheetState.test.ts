@@ -132,7 +132,9 @@ describe('cloneDefaults', () => {
     const b = cloneDefaults();
     expect(a).toEqual(b);
     expect(a.people).not.toBe(b.people);
-    a.people[0]!.name = 'Changed';
+    const first = a.people[0];
+    expect(first).toBeDefined();
+    if (first) first.name = 'Changed';
     expect(b.people[0]?.name).not.toBe('Changed');
     expect(DEFAULT_CONFIG.people[0]?.name).not.toBe('Changed');
   });
