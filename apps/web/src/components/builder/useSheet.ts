@@ -1,4 +1,5 @@
 import {
+  type ConfigIssue,
   computeLayout,
   type LayoutIssue,
   type Person,
@@ -24,6 +25,13 @@ export function useSheet() {
 
   const config = ref<SheetConfig>(initial.config);
   const linkWasBroken = ref(initial.issues !== undefined);
+  /**
+   * Why the last change was refused. A control can put the configuration into a
+   * state the engine rejects (two people sharing an initial, say), and the
+   * person needs to be told rather than left looking at a field whose value
+   * never took effect.
+   */
+  const rejected = ref<ConfigIssue[]>([]);
   /** The encoding last written to the address bar, so an echo can be recognised. */
   let writtenHash = '';
 
@@ -42,6 +50,7 @@ export function useSheet() {
 
   function update(change: Partial<SheetConfig>): void {
     const result = applyChange(config.value, change);
+    rejected.value = result.issues;
     config.value = result.config;
   }
 
@@ -64,6 +73,7 @@ export function useSheet() {
   function clearWeekStarting(): void {
     const { weekStarting: _drop, ...rest } = config.value;
     const result = applyChange(rest as SheetConfig, {});
+    rejected.value = result.issues;
     config.value = result.config;
   }
 
@@ -117,6 +127,7 @@ export function useSheet() {
     warnings,
     fit,
     linkWasBroken,
+    rejected,
     update,
     updatePerson,
     addPerson,

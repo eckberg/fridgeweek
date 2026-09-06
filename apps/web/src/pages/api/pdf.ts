@@ -24,14 +24,21 @@ export const POST: APIRoute = async ({ request }) => {
     return problem(415, 'Send application/json.');
   }
 
-  const declaredLength = Number(request.headers.get('content-length') ?? '0');
-  if (declaredLength > MAX_BODY_BYTES) {
-    return problem(413, 'That configuration is too large to be a sheet.');
+  // `content-length` is a claim, and a chunked request does not make one at
+  // all, so the body is read with the cap applied as it arrives.
+  let text: string;
+  try {
+    text = await readCapped(request, MAX_BODY_BYTES);
+  } catch (error) {
+    if (error instanceof BodyTooLargeError) {
+      return problem(413, 'That configuration is too large to be a sheet.');
+    }
+    return problem(400, 'The request body could not be read.');
   }
 
   let body: unknown;
   try {
-    body = await request.json();
+    body = JSON.parse(text);
   } catch {
     return problem(400, 'The request body was not valid JSON.');
   }
@@ -95,6 +102,37 @@ export const ALL: APIRoute = () =>
   problem(405, 'Send a POST with a sheet configuration as JSON.', undefined, {
     allow: 'POST',
   });
+
+class BodyTooLargeError extends Error {}
+
+/** Reads the body, refusing as soon as it goes past the cap. */
+async function readCapped(request: Request, limit: number): Promise<string> {
+  const reader = request.body?.getReader();
+  if (!reader) return '';
+
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > limit) throw new BodyTooLargeError();
+      chunks.push(value);
+    }
+  } finally {
+    // Releasing the lock lets the connection be torn down promptly on refusal.
+    reader.releaseLock();
+  }
+
+  const joined = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    joined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(joined);
+}
 
 function filename(weekStarting: string | undefined): string {
   return weekStarting ? `fridgeweek-${weekStarting}.pdf` : 'fridgeweek.pdf';

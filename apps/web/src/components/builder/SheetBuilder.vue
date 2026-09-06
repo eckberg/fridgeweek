@@ -1,12 +1,6 @@
 <script setup lang="ts">
-import {
-  LIMITS,
-  type MarkStyle,
-  type PaperSize,
-  SYMBOL_IDS,
-  type WeekendStyle,
-} from '@fridgeweek/core';
-import { computed, onMounted, onUnmounted, ref, useId } from 'vue';
+import { LIMITS, type SheetConfig, SYMBOL_IDS } from '@fridgeweek/core';
+import { computed, onMounted, onUnmounted, ref, useId, watchEffect } from 'vue';
 import '../../i18n/catalogues.js';
 import { localeMeta, type MessageKey, translator, UI_LOCALES } from '../../i18n/index.js';
 import { downloadHtml, downloadPdf, printDocument, sheetFilename } from '../../lib/output.js';
@@ -22,7 +16,7 @@ import ToggleSwitch from './ToggleSwitch.vue';
 import { useSheet } from './useSheet.js';
 
 const sheet = useSheet();
-const { config, layout, previewSvg, fit } = sheet;
+const { config, layout, previewSvg, fit, rejected, linkWasBroken } = sheet;
 
 const t = computed(() => translator(config.value.locale));
 const tr = (key: MessageKey, params?: Record<string, string | number>) => t.value(key, params);
@@ -89,6 +83,10 @@ const canAddPerson = computed(() => config.value.people.length < LIMITS.people.m
 const canRemovePerson = computed(() => config.value.people.length > LIMITS.people.min);
 
 const NEW_PERSON_NAMES = ['Robin', 'Mika', 'Noa', 'Alex', 'Sam', 'Kim'];
+
+function dismissLinkWarning(): void {
+  linkWasBroken.value = false;
+}
 
 function addPerson(): void {
   const used = new Set(takenSymbols.value);
@@ -163,6 +161,28 @@ async function onCopyLink(): Promise<void> {
 onMounted(() => window.addEventListener('hashchange', sheet.adoptHash));
 onUnmounted(() => window.removeEventListener('hashchange', sheet.adoptHash));
 
+/**
+ * The page is served as English but the interface follows the sheet's
+ * language, so the document has to say which language it is actually in or a
+ * screen reader reads it with the wrong voice.
+ */
+watchEffect(() => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.lang = localeMeta(config.value.locale).code;
+  }
+});
+
+/**
+ * One line of feedback, most urgent first: a change the engine refused, then a
+ * link that could not be read, then whatever an action last reported.
+ */
+const message = computed(() => {
+  const refusal = rejected.value[0];
+  if (refusal) return refusal.message;
+  if (linkWasBroken.value) return tr('error.invalidLink');
+  return notice.value;
+});
+
 const languageSummary = computed(() => {
   const meta = localeMeta(config.value.locale);
   const first = layout.value.days[0]?.name.text ?? '';
@@ -172,7 +192,12 @@ const languageSummary = computed(() => {
 
 <template>
   <div class="builder">
-    <form class="panel" :aria-label="tr('builder.settingsLabel')" @submit.prevent>
+    <form
+      class="panel"
+      :aria-label="tr('builder.settingsLabel')"
+      @submit.prevent
+      @input="dismissLinkWarning"
+    >
       <div class="actions">
         <button type="button" class="primary" :disabled="busy" @click="onPdf">
           {{ tr('action.downloadPdf') }}
@@ -182,8 +207,9 @@ const languageSummary = computed(() => {
         </button>
       </div>
 
-      <p v-if="notice" class="notice" role="status">{{ notice }}</p>
-      <p v-else class="visually-hidden" role="status" />
+      <!-- One live region that always exists: swapping the element out would
+           insert the text with its container and typically go unannounced. -->
+      <p class="notice" role="status" :class="{ 'visually-hidden': !message }">{{ message }}</p>
 
       <ControlGroup
         :title="tr('language.group')"

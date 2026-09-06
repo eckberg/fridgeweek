@@ -18,13 +18,14 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node scripts/check-dist.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:visual": "playwright test -c test/visual/playwright.config.ts",
     "generate": "tsx scripts/build-icons.ts && tsx scripts/build-fonts.ts",
-    "sample": "tsx scripts/sample.ts"
+    "sample": "tsx scripts/sample.ts",
+    "check:dist": "node scripts/check-dist.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.56.0",

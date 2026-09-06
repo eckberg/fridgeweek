@@ -7,7 +7,7 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "typecheck": "astro check --minimum-severity error",
+    "typecheck": "astro check --minimum-severity error && vue-tsc --noEmit -p tsconfig.vue.json",
     "test": "vitest run",
     "test:e2e": "playwright test"
   },
@@ -20,12 +20,16 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "1.56.0",
+    "@types/node": "^26.4.1",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/test-utils": "^2.5.0",
+    "axe-core": "^4.13.0",
     "happy-dom": "^20.14.0",
     "playwright-core": "1.56.0",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.0",
+    "vue-tsc": "3.1.4"
   }
 }

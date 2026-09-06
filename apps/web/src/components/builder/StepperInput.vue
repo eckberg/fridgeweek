@@ -19,10 +19,20 @@ function nudge(delta: number): void {
   model.value = Math.min(props.max, Math.max(props.min, model.value + delta));
 }
 
+/**
+ * Writing a clamped value back is not enough on its own: if it equals the
+ * value already held, nothing re-renders and the field keeps showing what was
+ * typed. The element is corrected directly as well.
+ */
 function commit(event: Event): void {
-  const raw = Number((event.target as HTMLInputElement).value);
-  if (!Number.isFinite(raw)) return;
-  model.value = Math.min(props.max, Math.max(props.min, Math.round(raw)));
+  const input = event.target as HTMLInputElement;
+  const raw = Number(input.value);
+  const next = Number.isFinite(raw)
+    ? Math.min(props.max, Math.max(props.min, Math.round(raw)))
+    : model.value;
+
+  model.value = next;
+  input.value = String(next);
 }
 </script>
 

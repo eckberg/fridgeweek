@@ -20,8 +20,11 @@ the layout maths and the module contracts. Keep it in sync with the code.
 ## Gotchas
 - `apps/web` pins TypeScript 6 because `astro check` does not yet support the 7.x compiler API.
   Do not raise it until Astro's language server does.
-- Biome does not parse Vue or Astro templates, so unused-symbol rules are off for those files;
-  `astro check` covers them instead.
+- Biome does not parse Vue or Astro templates, so unused-symbol rules are off for those files.
+  Type checking needs both tools: `astro check` covers `.astro`, `vue-tsc` covers `.vue`.
+  Neither covers the other, and `pnpm typecheck` runs both.
+- `packages/core` imports its label JSON with `with { type: 'json' }`. Without the attribute the
+  published `dist` cannot be loaded by plain Node; `pnpm build` runs `check:dist` to prove it can.
 - `playwright-core` must stay external to the SSR bundle, or the PDF route cannot be built
   without it.
 

@@ -112,3 +112,26 @@ test('the picker filters by search and closes on Escape', async ({ page }) => {
   await page.keyboard.press('Escape');
   await expect(picker).toBeHidden();
 });
+
+test('the document language follows the sheet language', async ({ page }) => {
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await page.getByLabel('Language').selectOption('fi');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'fi');
+});
+
+test('a change the engine refuses is explained rather than silently dropped', async ({ page }) => {
+  await page.getByRole('radio', { name: 'Initial', exact: true }).click();
+  await page.getByRole('button', { name: 'Add a person' }).click();
+
+  // Two people whose names start with the same letter cannot both be told
+  // apart by an initial, so the engine refuses the second one.
+  await page.getByLabel('Name of person 3').fill('Alfred');
+  await expect(page.getByRole('status').filter({ hasText: 'same initial' })).toBeVisible();
+});
+
+test('the copies field snaps a silly number back into range', async ({ page }) => {
+  const copies = page.getByLabel('Copies', { exact: true });
+  await copies.fill('500');
+  await copies.blur();
+  await expect(copies).toHaveValue('20');
+});
