@@ -130,12 +130,12 @@ describe('computeLayout: geometry', () => {
 
 describe('computeLayout: height budget', () => {
   it.each([
-    ['A4', 1, true],
-    ['A4', 2, true],
-    ['A4', 3, true],
-    ['Letter', 1, true],
-    ['Letter', 2, true],
-    ['Letter', 3, true],
+    ['A4', 1],
+    ['A4', 2],
+    ['A4', 3],
+    ['Letter', 1],
+    ['Letter', 2],
+    ['Letter', 3],
   ] as const)('%s with %i lines is comfortable', (paper, linesPerDay) => {
     const l = layoutOf({ paper, linesPerDay });
     expect(errors(l)).toEqual([]);
@@ -202,13 +202,26 @@ describe('computeLayout: header', () => {
     expect(legend.rows).toBe(1);
     expect(legend.items).toHaveLength(3);
     const last = legend.items[2];
-    if (last) expect(last.text.x + last.width).toBeLessThanOrEqual(l.content.x + l.content.w + 6);
+    if (last)
+      expect(last.symbol.x + last.width).toBeLessThanOrEqual(l.content.x + l.content.w + 0.01);
     for (const item of legend.items) {
       expect(item.symbol.x).toBeGreaterThan(l.header?.dateRange?.x ?? 0);
     }
   });
 
-  it('wraps the legend into two rows for a big family with long names', () => {
+  it('wraps the legend into two rows for a mid-size family', () => {
+    const people = [
+      { name: 'Alexandra', symbol: 'cat' },
+      { name: 'Maximilian', symbol: 'dog' },
+      { name: 'Frederik', symbol: 'rocket' },
+      { name: 'Josephine', symbol: 'star' },
+    ];
+    const l = layoutOf({ locale: 'sv-SE', people });
+    expect(l.header?.legend?.rows).toBe(2);
+    expect(warnings(l)).not.toContain('LEGEND_OVERFLOW');
+  });
+
+  it('fits a big family with long names without overflow', () => {
     const people = [
       { name: 'Alexandra', symbol: 'cat' },
       { name: 'Maximilian', symbol: 'dog' },
@@ -218,8 +231,14 @@ describe('computeLayout: header', () => {
       { name: 'Charlotte', symbol: 'dinosaur' },
     ];
     const l = layoutOf({ locale: 'sv-SE', people });
-    expect(l.header?.legend?.rows).toBe(2);
+    expect(l.header?.legend?.rows).toBeGreaterThanOrEqual(2);
+    expect(l.header?.legend?.rows).toBeLessThanOrEqual(3);
     expect(warnings(l)).not.toContain('LEGEND_OVERFLOW');
+    const items = l.header?.legend?.items ?? [];
+    for (const item of items) {
+      expect(item.symbol.y).toBeGreaterThanOrEqual(l.content.y);
+      expect(item.text.baseline).toBeLessThanOrEqual(l.content.y + 14);
+    }
   });
 
   it('gives the legend the whole width when the week fields are hidden', () => {

@@ -228,10 +228,40 @@ export function validateConfig(input: unknown): ValidationResult {
       const person = validatePerson(raw, `people[${i}]`, issues);
       if (person) out.people.push(person);
     });
+    checkDuplicates(out, issues);
   }
 
   if (issues.length > 0) return { ok: false, issues };
   return { ok: true, config: out };
+}
+
+/** Two people with the same mark cannot be told apart on paper. */
+function checkDuplicates(config: SheetConfig, issues: ConfigIssue[]): void {
+  const seenSymbols = new Map<string, number>();
+  const seenInitials = new Map<string, number>();
+  config.people.forEach((person, i) => {
+    const symbolOwner = seenSymbols.get(person.symbol);
+    if (symbolOwner !== undefined) {
+      issues.push({
+        path: `people[${i}].symbol`,
+        message: `same symbol as people[${symbolOwner}]`,
+      });
+    } else {
+      seenSymbols.set(person.symbol, i);
+    }
+    if (config.markStyle === 'initial') {
+      const initial = personInitial(person).toLocaleUpperCase(config.locale);
+      const initialOwner = seenInitials.get(initial);
+      if (initialOwner !== undefined) {
+        issues.push({
+          path: `people[${i}].initial`,
+          message: `same initial as people[${initialOwner}]; set a distinct initial`,
+        });
+      } else {
+        seenInitials.set(initial, i);
+      }
+    }
+  });
 }
 
 function validatePerson(raw: unknown, path: string, issues: ConfigIssue[]): Person | undefined {

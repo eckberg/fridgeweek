@@ -87,6 +87,8 @@ Rules:
 
 - `resolveConfig(input)` applies defaults and validates. It never guesses: an invalid
   value is an error with a path and a message, not a silent fallback.
+- Two people cannot share a symbol. In `initial` mode two people cannot share an initial
+  either; set an explicit `initial` to disambiguate.
 - `weekStarting` that is not on the locale's first weekday is snapped back to the previous
   first weekday. The UI should show the snapped date.
 - Config is carried in the URL hash as a versioned, base64url-encoded JSON diff against
@@ -115,12 +117,17 @@ stripW         marks * markSize + (marks - 1) * gap
 
 Thresholds:
 
-- `MIN_LINE_H = 6.5` mm: below this a line is unwritable with a normal pen. Error.
+- `MIN_LINE_H = 6` mm: below this a line is unwritable with a normal pen (narrow-ruled paper
+  is 6.35 mm). Error.
 - `COMFORT_LINE_H = 8` mm: below this the engine emits a warning ("tight").
 - `MIN_WRITE_W = 100` mm: the writing rule after the strip must be at least this wide.
 
 Consequences: on A4 with a 10 mm margin, three lines are comfortable, four are tight, five
-never fit (hence the cap at four). Letter is 17.6 mm shorter, about 2.5 mm per day.
+never fit (hence the cap at four). Letter is 17.6 mm shorter, about 2.5 mm per day, so four
+lines on Letter sit right at the floor.
+
+The legend in the header wraps into up to three rows (the third one shorter) before the
+engine reports an overflow.
 
 Remedies are listed in order in the issue: fewer lines per day, smaller margin, hide the
 legend (removes the header when nothing else needs it).

@@ -4,7 +4,7 @@ Fridgeweek itself is MIT licensed. It bundles the assets below, which keep their
 
 | Component | Copyright | License | Source | How it is used |
 |---|---|---|---|---|
-| Atkinson Hyperlegible Next | Braille Institute of America | SIL Open Font License 1.1 | https://github.com/googlefonts/atkinson-hyperlegible-next | The WOFF2 files are embedded as `data:` URIs in generated HTML, so a sheet renders and prints identically everywhere. The full license text ships in `packages/core/assets/fonts/OFL.txt`. |
+| Atkinson Hyperlegible Next | The Atkinson Hyperlegible Next Project Authors | SIL Open Font License 1.1 | https://github.com/googlefonts/atkinson-hyperlegible-next | The WOFF2 files are embedded as `data:` URIs in generated HTML, so a sheet renders and prints identically everywhere. The full license text ships in `packages/core/assets/fonts/OFL.txt`. |
 | Lucide | Lucide Contributors | ISC | https://lucide.dev | A curated subset of icons is copied into `packages/core/src/symbols/lucide.generated.ts` at build time. Some Lucide icons derive from Feather (MIT, Copyright (c) 2013-2023 Cole Bemis). |
 
 ## Printed sheets

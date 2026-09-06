@@ -32,7 +32,7 @@ const samples: Record<string, SheetConfigInput> = {
   'a4-de-four-lines': { locale: 'de-DE', people: family.slice(0, 3), linesPerDay: 4 },
   'a4-fi-six-people': {
     locale: 'fi-FI',
-    people: [...family, { name: 'Mummo', symbol: 'flower' }, { name: 'Vaari', symbol: 'tractor' }],
+    people: [...family, { name: 'Mummo', symbol: 'cat' }, { name: 'Vaari', symbol: 'tractor' }],
   },
   'a4-sv-minimal': {
     locale: 'sv-SE',

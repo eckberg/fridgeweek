@@ -11,7 +11,7 @@ export const PAPER: Record<PaperSize, { width: number; height: number; css: stri
 };
 
 /** Below this a line cannot be written on with a normal pen. Error. */
-export const MIN_LINE_H = 6.5;
+export const MIN_LINE_H = 6;
 /** Below this the sheet is usable but cramped. Warning. */
 export const COMFORT_LINE_H = 8;
 /** The writing rule after the marker strip must be at least this wide. */
@@ -32,6 +32,7 @@ export const LEGEND_FONT = 3.4;
 export const LEGEND_FONT_MIN = 2.8;
 export const LEGEND_ITEM_GAP = 5;
 export const LEGEND_ROW_H = 6.5;
+export const LEGEND_MAX_ROWS = 3;
 export const WEEK_LABEL_FONT = 7;
 export const WEEK_BOX = { w: 18, h: 11 };
 export const DATE_RANGE_W = 44;
@@ -41,7 +42,7 @@ export const DATE_FONT = 3.6;
  * Average advance width per character as a fraction of font size, used to
  * estimate text widths without font metrics. Tuned for Atkinson Hyperlegible Next.
  */
-export const GLYPH_W = { upperBold: 0.72, mixed: 0.56, digits: 0.6 } as const;
+export const GLYPH_W = { upperBold: 0.72, mixed: 0.5, digits: 0.6 } as const;
 /** Cap height as a fraction of font size. */
 export const CAP_H = 0.7;
 
@@ -399,14 +400,15 @@ function layoutLegend(
   const measure = (fontSize: number) =>
     marks.map((mark) => LEGEND_SYMBOL + 1.5 + estimateTextWidth(mark.label, fontSize, 'mixed'));
 
-  // Try the normal size in one or two rows, then a smaller size.
+  // Try the normal size in one or two rows, then a smaller size, then a
+  // third, shorter row. Only after that is it an overflow.
   let fontSize = LEGEND_FONT;
   let rows = packRows(measure(fontSize), maxWidth);
   if (rows.length > 2) {
     fontSize = LEGEND_FONT_MIN;
     rows = packRows(measure(fontSize), maxWidth);
   }
-  if (rows.length > 2) {
+  if (rows.length > LEGEND_MAX_ROWS) {
     issues.push({
       severity: 'warning',
       code: 'LEGEND_OVERFLOW',
@@ -422,10 +424,13 @@ function layoutLegend(
 
   const widths = measure(fontSize);
   const rowCount = rows.length;
-  const firstBaseline = rowCount === 1 ? content.y + 9.5 : content.y + 5.5;
+  const rowHeight =
+    rowCount === 1 ? LEGEND_ROW_H : Math.min(LEGEND_ROW_H, (HEADER_H - 1) / rowCount);
+  const symbolSize = Math.min(LEGEND_SYMBOL, rowHeight - 1.2);
+  const firstBaseline = rowCount === 1 ? content.y + 9.5 : content.y + rowHeight - 0.8;
   const items: LegendItem[] = [];
   rows.forEach((row, rowIndex) => {
-    const baseline = firstBaseline + rowIndex * LEGEND_ROW_H;
+    const baseline = firstBaseline + rowIndex * rowHeight;
     const total =
       row.reduce((sum, i) => sum + (widths[i] ?? 0), 0) + (row.length - 1) * LEGEND_ITEM_GAP;
     let x = right - total;
@@ -435,12 +440,7 @@ function layoutLegend(
       if (!mark) continue;
       items.push({
         mark,
-        symbol: {
-          x,
-          y: baseline - LEGEND_SYMBOL + fontSize * 0.15,
-          w: LEGEND_SYMBOL,
-          h: LEGEND_SYMBOL,
-        },
+        symbol: { x, y: baseline - symbolSize + fontSize * 0.15, w: symbolSize, h: symbolSize },
         text: { x: x + LEGEND_SYMBOL + 1.5, baseline, fontSize, text: mark.label },
         width,
       });

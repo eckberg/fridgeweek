@@ -94,7 +94,9 @@ function renderSvgResolved(sheet: ResolvedSheet, layout: Layout, options: Render
   const { paper } = layout;
 
   const symbolIds = new Set<SymbolId>();
-  for (const mark of sheet.marks) symbolIds.add(mark.symbol);
+  for (const mark of sheet.marks) {
+    if (sheet.config.markStyle === 'symbol' || mark.kind === 'family') symbolIds.add(mark.symbol);
+  }
   const defs = Array.from(symbolIds)
     .sort()
     .map((id) => symbolToSvgSymbol(id, `${prefix}-s-${id}`))

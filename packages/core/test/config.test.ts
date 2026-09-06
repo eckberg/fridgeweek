@@ -84,6 +84,25 @@ describe('resolveConfig', () => {
     [{ people: [{ name: 'Ava', symbol: 'cat', initial: 'AVA' }] }, 'people[0].initial'],
     [{ people: [{ name: 'Ava', symbol: 'cat', initial: '' }] }, 'people[0].initial'],
     [{ people: [{ name: 'Ava', symbol: 'cat', colour: 'red' }] }, 'people[0].colour'],
+    [
+      {
+        people: [
+          { name: 'Ava', symbol: 'cat' },
+          { name: 'Bo', symbol: 'cat' },
+        ],
+      },
+      'people[1].symbol',
+    ],
+    [
+      {
+        markStyle: 'initial',
+        people: [
+          { name: 'Sara', symbol: 'cat' },
+          { name: 'Sam', symbol: 'dog' },
+        ],
+      },
+      'people[1].initial',
+    ],
     [{ version: 2 }, 'version'],
     [{ bogus: true }, 'bogus'],
   ])('rejects %j at %s', (input, path) => {
@@ -92,6 +111,22 @@ describe('resolveConfig', () => {
     if (!result.ok) {
       expect(result.issues.map((i) => i.path)).toContain(path);
     }
+  });
+
+  it('allows the same first letter when a distinct initial is given, and in symbol mode', () => {
+    const people = [
+      { name: 'Sara', symbol: 'cat' },
+      { name: 'Sam', symbol: 'dog', initial: 'Sm' },
+    ];
+    expect(validateConfig({ markStyle: 'initial', people }).ok).toBe(true);
+    expect(
+      validateConfig({
+        people: [
+          { name: 'Sara', symbol: 'cat' },
+          { name: 'Sam', symbol: 'dog' },
+        ],
+      }).ok,
+    ).toBe(true);
   });
 
   it('reports every issue at once', () => {

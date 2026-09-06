@@ -46,7 +46,7 @@ describe('renderSvg', () => {
     expect(outline).toMatch(/<text [^>]*fill="none" stroke="#111111"[^>]*>SATURDAY</);
     expect(outline).not.toMatch(/<text [^>]*fill="none"[^>]*>MONDAY</);
     const plain = renderSvg(resolveConfig({ locale: 'en-GB', weekendStyle: 'plain' }));
-    expect(plain).not.toContain('fill="none" stroke="#111111"');
+    expect(plain).not.toMatch(/<text [^>]*fill="none"/);
   });
 
   it('prints dates when a week is chosen', () => {

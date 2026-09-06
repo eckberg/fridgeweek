@@ -1,3 +1,4 @@
+/// <reference lib="dom" />
 import { expect, test } from '@playwright/test';
 import { renderSheet, resolveConfig, type SheetConfigInput } from '../../src/index.js';
 
