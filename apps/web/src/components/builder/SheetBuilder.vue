@@ -355,6 +355,9 @@ const languageSummary = computed(() => {
 }
 
 .panel {
+  /* A grid item defaults to its content's minimum width, which a stepper or a
+     segmented control can push past a narrow viewport. */
+  min-width: 0;
   overflow-y: auto;
   border-right: 1px solid var(--border);
   background: var(--paper);

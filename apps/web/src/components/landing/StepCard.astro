@@ -1,0 +1,68 @@
+---
+interface Props {
+  number: string;
+  title: string;
+  /** Short monospaced facts listed under the body, e.g. paper sizes. */
+  tags?: string[];
+}
+
+const { number, title, tags = [] } = Astro.props;
+---
+
+<article class="step">
+  <p class="mono number">{number}</p>
+  <h3>{title}</h3>
+  <p class="body"><slot /></p>
+  {
+    tags.length > 0 && (
+      <ul class="tags">
+        {tags.map((tag) => (
+          <li class="mono">{tag}</li>
+        ))}
+      </ul>
+    )
+  }
+</article>
+
+<style>
+  .step {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-5);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--white);
+  }
+
+  .number {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  h3 {
+    font-size: 19px;
+  }
+
+  .body {
+    color: var(--ink-soft);
+    font-size: 15px;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+    list-style: none;
+  }
+
+  .tags li {
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-pill);
+    background: var(--paper-tint);
+    color: var(--accent);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+</style>
