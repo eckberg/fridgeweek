@@ -12,17 +12,29 @@ import { createLocalRenderer } from '../src/lib/pdf/local.js';
  * is absent rather than failing a contributor's first test run.
  */
 
-const hasChromium = await canLaunch();
-
-async function canLaunch(): Promise<boolean> {
+/**
+ * `createLocalRenderer` only imports Playwright; it does not start a browser,
+ * so it succeeds on a machine that has never run `playwright install`. The
+ * check has to actually render something.
+ */
+async function canRender(): Promise<boolean> {
   try {
     const renderer = await createLocalRenderer();
-    await renderer.dispose?.();
-    return true;
+    try {
+      await renderer.render('<!doctype html><title>probe</title><p>probe', {
+        widthMm: 210,
+        heightMm: 297,
+      });
+      return true;
+    } finally {
+      await renderer.dispose?.();
+    }
   } catch {
     return false;
   }
 }
+
+const hasChromium = await canRender();
 
 function embeddedFontNames(pdf: Uint8Array): string[] {
   const text = Buffer.from(pdf).toString('latin1');

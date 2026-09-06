@@ -1,19 +1,19 @@
 import type { SymbolId } from './index.js';
-import da from './labels/da.json';
-import de from './labels/de.json';
-import en from './labels/en.json';
-import es from './labels/es.json';
-import fi from './labels/fi.json';
-import fo from './labels/fo.json';
-import fr from './labels/fr.json';
-import is from './labels/is.json';
-import it from './labels/it.json';
-import nb from './labels/nb.json';
-import nl from './labels/nl.json';
-import nn from './labels/nn.json';
-import pl from './labels/pl.json';
-import pt from './labels/pt.json';
-import sv from './labels/sv.json';
+import da from './labels/da.json' with { type: 'json' };
+import de from './labels/de.json' with { type: 'json' };
+import en from './labels/en.json' with { type: 'json' };
+import es from './labels/es.json' with { type: 'json' };
+import fi from './labels/fi.json' with { type: 'json' };
+import fo from './labels/fo.json' with { type: 'json' };
+import fr from './labels/fr.json' with { type: 'json' };
+import is from './labels/is.json' with { type: 'json' };
+import it from './labels/it.json' with { type: 'json' };
+import nb from './labels/nb.json' with { type: 'json' };
+import nl from './labels/nl.json' with { type: 'json' };
+import nn from './labels/nn.json' with { type: 'json' };
+import pl from './labels/pl.json' with { type: 'json' };
+import pt from './labels/pt.json' with { type: 'json' };
+import sv from './labels/sv.json' with { type: 'json' };
 
 /**
  * Human names for the symbols, used by the legend, the picker and by screen
