@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest a change to the sheet or the generator.
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What does not work today? Describe the situation, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: The proposed change
+      description: What should Fridgeweek do instead?
+    validations:
+      required: true
+  - type: checkboxes
+    id: non-goals
+    attributes:
+      label: Scope
+      options:
+        - label: I have read the non-goals in DESIGN.md and this is not one of them.
+          required: true

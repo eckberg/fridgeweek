@@ -1,0 +1,36 @@
+{
+  "name": "@fridgeweek/core",
+  "version": "0.1.0",
+  "description": "Layout solver and SVG/HTML renderer for Fridgeweek sheets. Zero runtime dependencies.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:visual": "playwright test -c test/visual/playwright.config.ts",
+    "generate": "tsx scripts/build-icons.ts && tsx scripts/build-fonts.ts",
+    "sample": "tsx scripts/sample.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.0",
+    "@types/node": "^26.4.1",
+    "lucide-static": "1.41.0",
+    "tsx": "^4.23.13",
+    "vitest": "^5.0.0"
+  }
+}

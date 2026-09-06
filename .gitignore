@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+examples/out/
+test-results/
+playwright-report/
+*.log
+.DS_Store
+.env
+.env.*
+.wrangler/
+.astro/

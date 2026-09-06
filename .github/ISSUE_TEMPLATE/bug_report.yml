@@ -1,0 +1,51 @@
+name: Bug report
+description: Something in the sheet or the generator is wrong.
+labels:
+  - bug
+body:
+  - type: textarea
+    id: config
+    attributes:
+      label: What you configured
+      description: Paste the share URL, or the config object if you are using the core package.
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: paper
+    attributes:
+      label: Paper size
+      options:
+        - A4
+        - Letter
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and OS
+      description: For example "Firefox 141 on Ubuntu 24.04" or "Safari 18 on macOS 15".
+      placeholder: Browser, version, operating system
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshot or printed result
+      description: >-
+        A screenshot of the preview, or a photo of the printed sheet if the problem only
+        shows up on paper. Drag the file into this field.
+    validations:
+      required: false

@@ -1,0 +1,32 @@
+name: Translation
+description: Offer or request a new UI language.
+labels:
+  - translation
+body:
+  - type: input
+    id: language
+    attributes:
+      label: Language and BCP 47 tag
+      description: For example "Finnish (fi)" or "Portuguese, Brazil (pt-BR)".
+    validations:
+      required: true
+  - type: dropdown
+    id: contribute
+    attributes:
+      label: Can you contribute the translation yourself?
+      description: The recipe is in CONTRIBUTING.md. It is one JSON file plus a list of symbol labels.
+      options:
+        - "Yes, I will open a pull request"
+        - "Yes, but I would like help with the setup"
+        - "No, I am requesting the language"
+    validations:
+      required: true
+  - type: textarea
+    id: quirks
+    attributes:
+      label: Week-start or week-number quirks
+      description: >-
+        Does your region start the week on a day other than Monday? Are week numbers used,
+        and do they follow ISO 8601? Write "none that I know of" if nothing stands out.
+    validations:
+      required: false
