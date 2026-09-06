@@ -8,7 +8,7 @@
  */
 import { LUCIDE_IDS } from './curated.js';
 import { CUSTOM_IDS, CUSTOM_SYMBOLS } from './custom.js';
-import { SYMBOL_LABELS, type SymbolLabel } from './labels.js';
+import { LABEL_LANGUAGES, symbolLabel, symbolLabels } from './labels.js';
 import { LUCIDE_SYMBOLS, LUCIDE_VERSION } from './lucide.generated.js';
 
 export type SymbolSource = 'lucide' | 'fridgeweek';
@@ -18,7 +18,8 @@ export interface SymbolDef {
   /** Inner SVG markup on a 24x24 grid: no `<svg>` wrapper, no fill/stroke attributes. */
   body: string;
   source: SymbolSource;
-  labels: SymbolLabel;
+  /** The symbol's name in every language that has one, keyed by language subtag. */
+  labels: Record<string, string>;
 }
 
 const ALL_IDS = [...LUCIDE_IDS, ...CUSTOM_IDS] as const;
@@ -58,7 +59,7 @@ export function getSymbol(id: SymbolId): SymbolDef {
     id,
     body: bodyOf(id),
     source: isCustomId(id) ? 'fridgeweek' : 'lucide',
-    labels: SYMBOL_LABELS[id],
+    labels: symbolLabels(id),
   };
 }
 
@@ -95,5 +96,5 @@ export const SYMBOL_LICENSES: readonly SymbolLicense[] = [
   },
 ];
 
-export type { SymbolLabel };
-export { LUCIDE_VERSION, SYMBOL_LABELS };
+export type { SymbolLabels } from './labels.js';
+export { LABEL_LANGUAGES, LUCIDE_VERSION, symbolLabel, symbolLabels };

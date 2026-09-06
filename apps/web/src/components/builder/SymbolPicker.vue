@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getSymbol, SYMBOL_IDS, type SymbolId } from '@fridgeweek/core';
+import { SYMBOL_IDS, type SymbolId, symbolLabel } from '@fridgeweek/core';
 import { computed, nextTick, ref, useId, watch } from 'vue';
 import type { MessageKey } from '../../i18n/index.js';
 import SymbolMark from './SymbolMark.vue';
@@ -20,11 +20,8 @@ const searchInput = ref<HTMLInputElement | null>(null);
 const dialog = ref<HTMLElement | null>(null);
 const panelId = useId();
 
-/** Symbol labels are only translated into a few languages so far; English is the fallback. */
 function labelFor(id: SymbolId): string {
-  const labels = getSymbol(id).labels as Record<string, string | undefined>;
-  const language = props.locale.split('-')[0] ?? 'en';
-  return labels[language] ?? labels.en ?? id;
+  return symbolLabel(id, props.locale);
 }
 
 const matches = computed(() => {
