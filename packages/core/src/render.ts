@@ -200,7 +200,15 @@ function renderDay(sheet: ResolvedSheet, day: DayLayout, prefix: string): string
     const f = day.dateField;
     if (f.text !== undefined) {
       const label = formatDayDate(config.locale, parseIsoDate(f.text));
-      out.push(text(label, f.x, f.y - 0.9, { fontSize: f.fontSize, weight: 400, fill: '#444444' }));
+      // The field is right-aligned at the content edge, so the text is too.
+      out.push(
+        text(label, f.x + f.w, f.y - 0.9, {
+          fontSize: f.fontSize,
+          weight: 400,
+          anchor: 'end',
+          fill: '#444444',
+        }),
+      );
     } else {
       out.push(rule({ x1: f.x, x2: f.x + f.w, y: f.y }, RULE, 0.3));
     }

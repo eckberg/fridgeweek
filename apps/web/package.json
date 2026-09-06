@@ -1,0 +1,29 @@
+{
+  "name": "@fridgeweek/web",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "typecheck": "astro check --minimum-severity error",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@astrojs/vue": "^7.0.2",
+    "@fridgeweek/core": "workspace:*",
+    "astro": "^7.3.1",
+    "vue": "^3.5.42"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@playwright/test": "1.56.0",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vue/test-utils": "^2.5.0",
+    "happy-dom": "^20.14.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
+  }
+}

@@ -106,14 +106,24 @@ All numbers are millimetres. Constants live in `packages/core/src/layout.ts`.
 ```
 paper          A4 210 x 297, Letter 215.9 x 279.4
 usable         paper - 2 * margin
-header         14 tall + 3 gap, present if weekNumber || dateRange || legend
-dayH           (usableH - header) / 7                      (A4, m=10: 37.1)
-headH          clamp(dayH * 0.22, 6, 9)                   (weekday name row)
-linesArea      dayH - headH - 2 (padding)
-lineH          linesArea / linesPerDay                    (A4, 3 lines: ~8.4)
-markSize       clamp(lineH * 0.62, 3.5, 5.5)
-stripW         marks * markSize + (marks - 1) * gap
+header         HEADER_H 15 + HEADER_GAP 4, present if weekNumber || dateRange || legend
+dayH           (usableH - header) / 7                     (A4, m=10: 36.86)
+headH          clamp(dayH * HEAD_RATIO .26, 6, 9.5),      capped so the lines keep
+               their comfort height before the band keeps its own
+lineH          (dayH - headH - padTop 1.8 - padBottom 1.4) / linesPerDay   (A4, 3: 8.05)
+markSize       clamp(lineH * MARK_RATIO .55, 3.5, 4.6)                     (A4, 3: 4.43)
+stripW         marks * markSize + (marks - 1) * MARK_GAP 1.6
+ruleStart      content.x + STRIP_INSET 1 + stripW + STRIP_GAP 4.5
+ruleY          bottom of the line band - RULE_LIFT 1.2
 ```
+
+Placement rules that are not just numbers:
+
+- Marks are **centred** in their line band, so every line has the same rhythm.
+- The day date is **right-aligned at the content edge**, forming one column down
+  the sheet rather than following each weekday name's width. The name shrinks to fit
+  what is left.
+- The legend symbol is **the same size as a strip mark**, so a sheet has one icon size.
 
 Thresholds:
 
@@ -122,9 +132,9 @@ Thresholds:
 - `COMFORT_LINE_H = 8` mm: below this the engine emits a warning ("tight").
 - `MIN_WRITE_W = 100` mm: the writing rule after the strip must be at least this wide.
 
-Consequences: on A4 with a 10 mm margin, three lines are comfortable, four are tight, five
-never fit (hence the cap at four). Letter is 17.6 mm shorter, about 2.5 mm per day, so four
-lines on Letter sit right at the floor.
+Consequences: on A4 with a 10 mm margin, three lines are comfortable at 8.05 mm, four are
+tight at about 6 mm, five never fit (hence the cap at four). Letter is 17.6 mm shorter, about
+2.5 mm per day, so four lines on Letter sit right at the floor.
 
 The legend in the header wraps into up to three rows (the third one shorter) before the
 engine reports an overflow.

@@ -1,0 +1,82 @@
+---
+import SiteFooter from '../components/SiteFooter.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import '../styles/base.css';
+
+interface Props {
+  title: string;
+  description: string;
+  current?: 'builder' | 'about' | null;
+  /** The builder fills the viewport and manages its own scrolling. */
+  fullHeight?: boolean;
+}
+
+const { title, description, current = null, fullHeight = false } = Astro.props;
+const fullTitle = title === 'Fridgeweek' ? title : `${title} · Fridgeweek`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content="light" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="/fonts/atkinson-hyperlegible-next-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+  </head>
+  <body class:list={{ 'full-height': fullHeight }}>
+    <a href="#main" class="skip-link">Skip to content</a>
+    <SiteHeader current={current} />
+    <main id="main">
+      <slot />
+    </main>
+    {!fullHeight && <SiteFooter />}
+  </body>
+</html>
+
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  body.full-height {
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  main {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: var(--space-4);
+    top: -100px;
+    z-index: 10;
+    padding: var(--space-2) var(--space-4);
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: top var(--transition);
+  }
+
+  .skip-link:focus {
+    top: var(--space-4);
+    color: var(--paper);
+  }
+</style>

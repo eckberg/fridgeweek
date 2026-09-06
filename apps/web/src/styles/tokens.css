@@ -1,0 +1,107 @@
+/*
+ * Design tokens for the Fridgeweek site, taken from the brand system.
+ *
+ * The palette is paper and ink: warm off-whites for surfaces, a single burnt
+ * orange for anything interactive, and the exact greys the sheet renderer uses
+ * so the preview and its surroundings belong to the same document.
+ */
+
+:root {
+  /* Surfaces, lightest to darkest */
+  --paper: #fcfaf6;
+  --paper-sunk: #f4efe9;
+  --paper-tint: #feeadd;
+  --desk: #e9e7e2;
+  --white: #ffffff;
+
+  /* Ink. --ink, --rule, --ghost and --separator mirror packages/core/src/render.ts */
+  --ink: #111111;
+  --ink-soft: #444444;
+  --ink-faint: #6b6b6b;
+  --rule: #c8c8c8;
+  --ghost: #8f8f8f;
+  --separator: #d4d4d4;
+  --border: #dcd6cf;
+
+  /* Accent: folded paper, from the origami mark */
+  --accent: #a8471b;
+  --accent-mid: #ce6234;
+  --accent-soft: #e08256;
+  --accent-pale: #f5c5ab;
+
+  /* Type */
+  --font-sans: "Atkinson Hyperlegible Next", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Radii and elevation */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+  --shadow-control: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-sheet: 0 2px 14px rgba(0, 0, 0, 0.18);
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  /* Layout */
+  --measure: 78ch;
+  --page-max: 1200px;
+  --panel-width: 380px;
+  --header-height: 60px;
+
+  --focus-ring: 2px solid var(--accent);
+  --focus-offset: 2px;
+  --transition: 120ms ease;
+}
+
+/* The eyebrow label used above every section heading and control group. */
+.eyebrow {
+  font: 500 12px / 1 var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Small monospaced facts: measurements, counts, codes. */
+.mono {
+  font: 400 12px / 1 var(--font-mono);
+  color: var(--ink-faint);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
