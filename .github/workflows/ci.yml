@@ -32,7 +32,7 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
-  visual:
+  browser:
     needs: check
     runs-on: ubuntu-latest
     steps:
@@ -50,12 +50,18 @@ jobs:
       - name: Install Chromium
         run: pnpm --filter @fridgeweek/core exec playwright install --with-deps chromium
 
-      - run: pnpm test:visual
+      - name: Sheet snapshots
+        run: pnpm test:visual
+
+      - name: Browser tests for the builder
+        run: pnpm test:e2e
 
       - name: Upload failure artifacts
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: visual-test-results
-          path: packages/core/test-results
+          name: browser-test-results
+          path: |
+            packages/core/test-results
+            apps/web/test-results
           if-no-files-found: ignore
