@@ -45,10 +45,11 @@ function announce(message: string): void {
 
 // --- Controls bound straight to the configuration -------------------------
 
-function field<K extends keyof typeof config.value>(key: K) {
-  return computed({
+/** Two-way binding for one configuration field, validated on the way in. */
+function field<K extends keyof SheetConfig>(key: K) {
+  return computed<SheetConfig[K]>({
     get: () => config.value[key],
-    set: (value) => sheet.update({ [key]: value } as never),
+    set: (value) => sheet.update({ [key]: value } as Pick<SheetConfig, K>),
   });
 }
 
@@ -101,19 +102,21 @@ function addPerson(): void {
 // --- Dates ----------------------------------------------------------------
 
 /**
- * The engine snaps a chosen date back to the first weekday of the locale. Say
- * so, rather than silently moving what someone typed.
+ * The engine snaps a chosen date back to the first weekday of the locale, so
+ * that a sheet always starts where that language starts its week. Say so,
+ * rather than silently moving what someone typed.
  */
 const snapNotice = computed(() => {
   const chosen = config.value.weekStarting;
-  const start = layout.value ? sheet.config.value.weekStarting : undefined;
-  if (!chosen || !start) return null;
-  const days = sheet.layout.value.days;
-  const first = days[0]?.dateField?.text;
-  if (!first || first === chosen) return null;
-  const weekday = days[0]?.name.text ?? '';
+  if (!chosen) return null;
+
+  const firstDay = layout.value.days[0];
+  const printed = firstDay?.dateField?.text;
+  if (!printed || printed === chosen) return null;
+
+  const weekday = firstDay?.name.text ?? '';
   return tr('header.snapped', {
-    weekday: weekday.charAt(0) + weekday.slice(1).toLowerCase(),
+    weekday: weekday.charAt(0) + weekday.slice(1).toLocaleLowerCase(config.value.locale),
     language: localeMeta(config.value.locale).endonym,
   });
 });
@@ -225,7 +228,7 @@ const languageSummary = computed(() => {
 
         <FieldRow :label="tr('people.markStyle')" stacked>
           <SegmentedControl
-            v-model="markStyle as MarkStyle"
+            v-model="markStyle"
             :label="tr('people.markStyle')"
             :options="[
               { value: 'symbol', label: tr('people.markStyle.symbol') },
@@ -255,7 +258,7 @@ const languageSummary = computed(() => {
 
         <FieldRow :label="tr('days.weekendNames')" stacked>
           <SegmentedControl
-            v-model="weekendStyle as WeekendStyle"
+            v-model="weekendStyle"
             :label="tr('days.weekendNames')"
             :options="[
               { value: 'outline', label: tr('days.weekend.outline') },
@@ -292,7 +295,7 @@ const languageSummary = computed(() => {
       <ControlGroup :title="tr('paper.group')">
         <FieldRow :label="tr('paper.size')" stacked>
           <SegmentedControl
-            v-model="paper as PaperSize"
+            v-model="paper"
             :label="tr('paper.size')"
             :options="[
               { value: 'A4', label: tr('paper.a4') },

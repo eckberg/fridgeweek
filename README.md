@@ -29,12 +29,18 @@ Output is mono only. Colour is decoration, not information, so a cheap laser pri
 
 ## Status
 
-Early development. v0.1 is the `@fridgeweek/core` package: config, layout, renderer, symbols, fonts, dates and i18n. There is no web UI yet. See [DESIGN.md section 9](DESIGN.md#9-milestones) for the milestones.
+Early development, and everything runs locally with no account, key or hosting platform.
+
+- `@fridgeweek/core` is complete: config, layout solver, renderer, symbols, embedded fonts, dates and i18n.
+- The website has a landing page, an about page and the sheet builder with a live preview, in 15 languages.
+- `POST /api/pdf` renders a PDF with a local Chromium. Deployments without a renderer answer 501 and the interface tells people to print instead, which every browser can save as a PDF.
+
+See [DESIGN.md section 9](DESIGN.md#9-milestones) for the milestones and [PLAN.md](PLAN.md) for what this phase set out to build.
 
 ## Repository layout
 
 - `packages/core`: the `@fridgeweek/core` package. Config validation and encoding, the layout solver, the SVG and HTML renderers, symbols, embedded fonts, date and week-number helpers, and UI strings. Strict TypeScript, no runtime dependencies, no DOM access.
-- `apps/web`: planned. An Astro site with a Vue island for the config panel, live preview, and a PDF endpoint on Cloudflare Workers.
+- `apps/web`: the website. An Astro site, static except for the PDF route, with one Vue island for the builder. Self-hosted fonts, no third-party requests, no analytics, no cookies.
 
 ## Development
 
@@ -49,17 +55,27 @@ Then:
 ```sh
 pnpm install       # install workspace dependencies
 pnpm test          # unit and snapshot tests
-pnpm typecheck     # TypeScript, no emit
+pnpm typecheck     # TypeScript and Astro diagnostics
 pnpm lint          # Biome
 pnpm sample        # writes example HTML files to examples/out/
 ```
 
-The visual tests use Playwright. Install the browser once, then run them:
+To run the website:
+
+```sh
+pnpm --filter @fridgeweek/web dev      # http://localhost:4321
+pnpm --filter @fridgeweek/web build    # then `preview` to serve the built site
+```
+
+The browser tests use Playwright. Install the browser once, then run them:
 
 ```sh
 pnpm exec playwright install chromium
-pnpm test:visual
+pnpm test:visual   # sheet screenshots, from packages/core
+pnpm test:e2e      # drives the built website
 ```
+
+The same browser is what renders PDFs locally, so installing it also turns on the PDF button.
 
 ## Contributing
 
