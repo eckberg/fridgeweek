@@ -75,7 +75,7 @@ key or hosting platform.
 | 3. The builder | A Vue island: language, people with a searchable symbol picker, family mark, mark style, lines per day, weekend style, week starting, four header toggles, paper, margin and copies, with a live preview and the engine's own fit report. |
 | 4. Content pages | A landing page that renders two real sheets at build time, and one prose page covering about, privacy, terms and licences. |
 | 5. PDF | `POST /api/pdf` behind a renderer interface. A local Chromium implementation needs nothing external; a deployment without one answers 501 and the interface says to print instead. |
-| 6. Quality | 319 unit tests, 19 browser tests, 6 sheet screenshots, axe on all three pages, and a code review whose findings were fixed. |
+| 6. Quality | 273 unit tests, 21 browser tests, 6 sheet screenshots, axe on all three pages, and a code review whose findings were fixed. |
 
 Beyond the plan: the interface, the symbol names and the sheet's own words are
 translated into fifteen languages.
