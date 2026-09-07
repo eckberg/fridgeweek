@@ -19,15 +19,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # One step for the whole toolchain: pnpm comes from `packageManager`,
-      # Node from `devEngines.runtime`, and `require-lockfile` makes the
-      # install it runs a frozen one. It replaces `pnpm/action-setup` and
-      # `actions/setup-node` together, and caches the store itself.
+      # pnpm comes from `packageManager` and Node from `devEngines.runtime`,
+      # so this replaces `pnpm/action-setup` and `actions/setup-node` together
+      # and caches the store itself. `install: false` because the action's own
+      # install is not a frozen one, and a stale lockfile must fail here.
       - uses: pnpm/setup@v2
         with:
           cache: true
-          require-lockfile: true
+          install: false
 
+      - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
@@ -42,7 +43,9 @@ jobs:
       - uses: pnpm/setup@v2
         with:
           cache: true
-          require-lockfile: true
+          install: false
+
+      - run: pnpm install --frozen-lockfile
 
       - name: Install Chromium
         run: pnpm --filter @fridgeweek/core exec playwright install --with-deps chromium
