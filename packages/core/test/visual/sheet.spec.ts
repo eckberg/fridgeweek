@@ -2,11 +2,12 @@
 import { expect, test } from '@playwright/test';
 import { renderSheet, resolveConfig, type SheetConfigInput } from '../../src/index.js';
 
+// Invented people. Examples in this repository never use real names.
 const family = [
-  { name: 'Ava', symbol: 'unicorn' },
-  { name: 'Harry', symbol: 'dinosaur' },
-  { name: 'Sara', symbol: 'flower' },
-  { name: 'Karl', symbol: 'rocket' },
+  { name: 'Iris', symbol: 'unicorn' },
+  { name: 'Otto', symbol: 'dinosaur' },
+  { name: 'Vera', symbol: 'flower' },
+  { name: 'Milo', symbol: 'rocket' },
 ];
 
 /**
@@ -21,7 +22,7 @@ const cases: Record<string, SheetConfigInput> = {
   'a4-fi-six-people-four-lines': {
     locale: 'fi-FI',
     linesPerDay: 4,
-    people: [...family, { name: 'Mummo', symbol: 'cat' }, { name: 'Vaari', symbol: 'tractor' }],
+    people: [...family, { name: 'Aino', symbol: 'cat' }, { name: 'Eero', symbol: 'tractor' }],
   },
   'letter-en-us': { locale: 'en-US', paper: 'Letter', people: family.slice(0, 2) },
   'a4-pt-no-header': {

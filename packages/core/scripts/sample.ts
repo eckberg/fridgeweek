@@ -17,11 +17,12 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const outDir = join(root, 'examples', 'out');
 mkdirSync(outDir, { recursive: true });
 
+// Invented people. Examples in this repository never use real names.
 const family = [
-  { name: 'Ava', symbol: 'unicorn' },
-  { name: 'Harry', symbol: 'dinosaur' },
-  { name: 'Sara', symbol: 'flower' },
-  { name: 'Karl', symbol: 'rocket' },
+  { name: 'Iris', symbol: 'unicorn' },
+  { name: 'Otto', symbol: 'dinosaur' },
+  { name: 'Vera', symbol: 'flower' },
+  { name: 'Milo', symbol: 'rocket' },
 ];
 
 const samples: Record<string, SheetConfigInput> = {
@@ -32,7 +33,7 @@ const samples: Record<string, SheetConfigInput> = {
   'a4-de-four-lines': { locale: 'de-DE', people: family.slice(0, 3), linesPerDay: 4 },
   'a4-fi-six-people': {
     locale: 'fi-FI',
-    people: [...family, { name: 'Mummo', symbol: 'cat' }, { name: 'Vaari', symbol: 'tractor' }],
+    people: [...family, { name: 'Aino', symbol: 'cat' }, { name: 'Eero', symbol: 'tractor' }],
   },
   'a4-sv-minimal': {
     locale: 'sv-SE',

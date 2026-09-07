@@ -10,10 +10,10 @@ import {
 } from '../src/config.js';
 
 const people = [
-  { name: 'Ava', symbol: 'unicorn' },
-  { name: 'Harry', symbol: 'dinosaur' },
-  { name: 'Sara', symbol: 'flower' },
-  { name: 'Karl', symbol: 'rocket', initial: 'K' },
+  { name: 'Iris', symbol: 'unicorn' },
+  { name: 'Otto', symbol: 'dinosaur' },
+  { name: 'Vera', symbol: 'flower' },
+  { name: 'Milo', symbol: 'rocket', initial: 'M' },
 ];
 
 describe('resolveConfig', () => {
@@ -43,7 +43,7 @@ describe('resolveConfig', () => {
     });
     expect(config.locale).toBe('sv-SE');
     expect(config.people).toHaveLength(4);
-    expect(config.people[3]?.initial).toBe('K');
+    expect(config.people[3]?.initial).toBe('M');
     expect(config.weekStarting).toBe('2026-09-07');
   });
 
@@ -76,18 +76,18 @@ describe('resolveConfig', () => {
     [{ locale: 'not a locale' }, 'locale'],
     [{ locale: '' }, 'locale'],
     [{ people: [] }, 'people'],
-    [{ people: 'Ava' }, 'people'],
+    [{ people: 'Iris' }, 'people'],
     [{ people: Array(7).fill({ name: 'X', symbol: 'cat' }) }, 'people'],
     [{ people: [{ name: '', symbol: 'cat' }] }, 'people[0].name'],
     [{ people: [{ name: 'A'.repeat(25), symbol: 'cat' }] }, 'people[0].name'],
-    [{ people: [{ name: 'Ava', symbol: 'dragon' }] }, 'people[0].symbol'],
-    [{ people: [{ name: 'Ava', symbol: 'cat', initial: 'AVA' }] }, 'people[0].initial'],
-    [{ people: [{ name: 'Ava', symbol: 'cat', initial: '' }] }, 'people[0].initial'],
-    [{ people: [{ name: 'Ava', symbol: 'cat', colour: 'red' }] }, 'people[0].colour'],
+    [{ people: [{ name: 'Iris', symbol: 'dragon' }] }, 'people[0].symbol'],
+    [{ people: [{ name: 'Iris', symbol: 'cat', initial: 'IRIS' }] }, 'people[0].initial'],
+    [{ people: [{ name: 'Iris', symbol: 'cat', initial: '' }] }, 'people[0].initial'],
+    [{ people: [{ name: 'Iris', symbol: 'cat', colour: 'red' }] }, 'people[0].colour'],
     [
       {
         people: [
-          { name: 'Ava', symbol: 'cat' },
+          { name: 'Iris', symbol: 'cat' },
           { name: 'Bo', symbol: 'cat' },
         ],
       },
@@ -97,8 +97,8 @@ describe('resolveConfig', () => {
       {
         markStyle: 'initial',
         people: [
-          { name: 'Sara', symbol: 'cat' },
-          { name: 'Sam', symbol: 'dog' },
+          { name: 'Vera', symbol: 'cat' },
+          { name: 'Viktor', symbol: 'dog' },
         ],
       },
       'people[1].initial',
@@ -115,15 +115,15 @@ describe('resolveConfig', () => {
 
   it('allows the same first letter when a distinct initial is given, and in symbol mode', () => {
     const people = [
-      { name: 'Sara', symbol: 'cat' },
-      { name: 'Sam', symbol: 'dog', initial: 'Sm' },
+      { name: 'Vera', symbol: 'cat' },
+      { name: 'Viktor', symbol: 'dog', initial: 'Vk' },
     ];
     expect(validateConfig({ markStyle: 'initial', people }).ok).toBe(true);
     expect(
       validateConfig({
         people: [
-          { name: 'Sara', symbol: 'cat' },
-          { name: 'Sam', symbol: 'dog' },
+          { name: 'Vera', symbol: 'cat' },
+          { name: 'Viktor', symbol: 'dog' },
         ],
       }).ok,
     ).toBe(true);
@@ -153,9 +153,9 @@ describe('resolveConfig', () => {
 
 describe('personInitial', () => {
   it('uses the explicit initial, else the first character', () => {
-    expect(personInitial({ name: 'Karl', symbol: 'cat', initial: 'KE' })).toBe('KE');
+    expect(personInitial({ name: 'Milo', symbol: 'cat', initial: 'ML' })).toBe('ML');
     expect(personInitial({ name: 'Åsa', symbol: 'cat' })).toBe('Å');
-    expect(personInitial({ name: '👧 Ava', symbol: 'cat' })).toBe('👧');
+    expect(personInitial({ name: '👧 Iris', symbol: 'cat' })).toBe('👧');
   });
 });
 
@@ -187,7 +187,7 @@ describe('encodeConfig / decodeConfig', () => {
     const config = resolveConfig({ people, linesPerDay: 2 });
     const json = JSON.parse(Buffer.from(encodeConfig(config), 'base64url').toString('utf8'));
     expect(Object.keys(json).sort()).toEqual(['linesPerDay', 'p', 'v']);
-    expect(json.p[3]).toEqual(['Karl', 'rocket', 'K']);
+    expect(json.p[3]).toEqual(['Milo', 'rocket', 'M']);
   });
 
   it('rejects garbage, wrong versions and invalid payloads', () => {
