@@ -91,8 +91,37 @@ Rules:
   either; set an explicit `initial` to disambiguate.
 - `weekStarting` that is not on the locale's first weekday is snapped back to the previous
   first weekday. The UI should show the snapped date.
-- Config is carried in the URL hash as a versioned, base64url-encoded JSON diff against
-  the defaults, plus in `localStorage` for convenience. There is no other persistence.
+- Config is carried in the URL hash, plus in `localStorage` for convenience. There is no
+  other persistence. The encoding is described below.
+
+### The link
+
+The link is the sheet, so its length is a product decision and not an implementation
+detail: it is pasted into messages, and a mail client decides on its own whether to wrap
+it. The hash is packed rather than pretty.
+
+**Format 2, what is written.** Bytes, base64url. Everything with two states is a bit,
+`showWeekNumber` and `weekStart` are two bits each, `linesPerDay`, `copies` and the number
+of people are small integers sharing bytes, a margin is tenths of a millimetre, a date is
+a day offset from 2000-01-01 in two bytes, and a symbol is one byte: its number in
+`SYMBOL_CODES`. Only names are text, because only names are unpredictable. The defaults
+come to 20 characters and a two-person sheet with a date and a language to about 30, down
+from about 240.
+
+`SYMBOL_CODES` in `packages/core/src/symbols/codes.ts` is therefore append-only.
+`SYMBOL_IDS` stays sorted for the picker; renumbering it would change what every link
+already sent means. A test fails on a symbol missing from the table.
+
+**Format 1, still read.** The original encoding: base64url JSON holding the fields that
+differ from the defaults. Links already shared and configurations already in
+`localStorage` are in it, so `decodeConfig` accepts both formats; the first byte tells
+them apart, because JSON starts with `{`. It is also still written for the one
+configuration format 2 cannot hold, a margin that is not a whole tenth of a millimetre.
+Rounding it would be the silent guess this project does not make.
+
+Not a URL shortener: that is a server storing sheets, which is the thing this project does
+not have, and it would put a household's names in somebody's database. The hash never
+leaves the browser. Shorter had to come out of the encoding.
 
 ## 4. Layout engine
 
@@ -263,8 +292,10 @@ These are the exported surfaces other modules build against.
 resolveConfig(input: unknown): SheetConfig            // throws ConfigError
 validateConfig(input: unknown): ValidationResult
 DEFAULT_CONFIG: SheetConfig
-encodeConfig(config: SheetConfig): string             // base64url, versioned
-decodeConfig(encoded: string): SheetConfig            // throws ConfigError
+
+// src/encoding.ts
+encodeConfig(config: SheetConfig): string             // base64url, packed
+decodeConfig(encoded: string): SheetConfig            // reads both formats, throws ConfigError
 
 // src/layout.ts
 computeLayout(config: SheetConfig): Layout            // mm, with issues[]

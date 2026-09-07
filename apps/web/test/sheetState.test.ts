@@ -57,6 +57,16 @@ describe('loadConfig', () => {
     expect(result.config).toEqual(DEFAULT_CONFIG);
   });
 
+  it('opens a link that was made before the encoding changed', () => {
+    // A format 1 hash, kept verbatim: links live in message threads.
+    const old =
+      '#eyJ2IjoxLCJwIjpbWyJJcmlzIiwidW5pY29ybiJdLFsiTWlsbyIsInJvY2tldCJdXSwibG9jYWxlIjoic3YtU0' +
+      'UiLCJsaW5lc1BlckRheSI6Mn0';
+    const result = loadConfig(old, memoryStorage());
+    expect(result.source).toBe('url');
+    expect(result.config).toEqual(family);
+  });
+
   it('reports a broken link rather than throwing', () => {
     const result = loadConfig('#not-a-real-config', memoryStorage());
     expect(result.source).toBe('defaults');

@@ -114,7 +114,8 @@ export class ConfigError extends Error {
 
 const KNOWN_KEYS = new Set<string>(Object.keys(DEFAULT_CONFIG).concat('weekStarting'));
 
-function isRecord(x: unknown): x is Record<string, unknown> {
+/** Exported for the decoder in `encoding.ts`, which validates the same shapes. */
+export function isRecord(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null && !Array.isArray(x);
 }
 
@@ -365,98 +366,4 @@ export function personInitial(person: Person): string {
   if (person.initial !== undefined) return person.initial;
   const first = Array.from(person.name.trim())[0];
   return first ?? '?';
-}
-
-// ---------------------------------------------------------------------------
-// URL encoding
-//
-// The config travels in the URL hash as a base64url-encoded JSON object holding
-// only the fields that differ from the defaults, plus the people list in a
-// compact tuple form. `v` is the format version.
-// ---------------------------------------------------------------------------
-
-type PersonTuple = [name: string, symbol: string] | [name: string, symbol: string, initial: string];
-
-interface EncodedConfig {
-  v: 1;
-  p: PersonTuple[];
-  [key: string]: unknown;
-}
-
-const DIFF_KEYS = [
-  'locale',
-  'paper',
-  'marginMm',
-  'weekStart',
-  'showWeekNumber',
-  'showDateRange',
-  'showDayDates',
-  'showLegend',
-  'weekStarting',
-  'markStyle',
-  'familyMark',
-  'linesPerDay',
-  'weekendStyle',
-  'copies',
-] as const;
-
-export function encodeConfig(config: SheetConfig): string {
-  const payload: EncodedConfig = {
-    v: 1,
-    p: config.people.map((person) =>
-      person.initial === undefined
-        ? [person.name, person.symbol]
-        : [person.name, person.symbol, person.initial],
-    ),
-  };
-  for (const key of DIFF_KEYS) {
-    const value = config[key];
-    if (value !== undefined && value !== DEFAULT_CONFIG[key]) {
-      payload[key] = value;
-    }
-  }
-  return base64UrlEncode(JSON.stringify(payload));
-}
-
-export function decodeConfig(encoded: string): SheetConfig {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(base64UrlDecode(encoded));
-  } catch {
-    throw new ConfigError([{ path: '', message: 'not a valid encoded config' }]);
-  }
-  if (!isRecord(parsed) || parsed.v !== 1) {
-    throw new ConfigError([{ path: 'v', message: 'unsupported encoded config version' }]);
-  }
-  const { v: _v, p, ...rest } = parsed;
-  const input: Record<string, unknown> = { ...rest };
-  if (p !== undefined) {
-    if (!Array.isArray(p)) {
-      throw new ConfigError([{ path: 'p', message: 'people must be an array' }]);
-    }
-    input.people = p.map((tuple: unknown) => {
-      if (!Array.isArray(tuple)) return tuple;
-      const person: PersonInput = { name: tuple[0], symbol: tuple[1] };
-      if (tuple[2] !== undefined) person.initial = tuple[2];
-      return person;
-    });
-  }
-  return resolveConfig(input);
-}
-
-function base64UrlEncode(text: string): string {
-  const bytes = new TextEncoder().encode(text);
-  let binary = '';
-  for (const b of bytes) binary += String.fromCharCode(b);
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-function base64UrlDecode(encoded: string): string {
-  const padded = encoded
-    .replace(/-/g, '+')
-    .replace(/_/g, '/')
-    .padEnd(Math.ceil(encoded.length / 4) * 4, '=');
-  const binary = atob(padded);
-  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
 }

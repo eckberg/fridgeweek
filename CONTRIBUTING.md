@@ -65,6 +65,7 @@ Lucide icons are preferred, because they are already consistent with the rest of
 1. Add the icon id to `LUCIDE_IDS` in `packages/core/src/symbols/curated.ts`.
 2. Run `pnpm generate` to copy the icon into the generated module.
 3. Add a name for it to `packages/core/src/symbols/labels/en.json`. A symbol without a name is a compile error. These names appear in the picker and to screen readers, never on the printed sheet, so they are English only.
+4. Append the id to the **end** of `SYMBOL_CODES` in `packages/core/src/symbols/codes.ts`. That list is how a symbol is written into a link, so its order is fixed forever: inserting an id alphabetically would change what every link already shared means. A test tells you when you have forgotten this step.
 
 If the icon you need does not exist in Lucide, draw it and put it in `packages/core/src/symbols/custom.ts`. Follow the Lucide conventions so it sits beside the others:
 

@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   ConfigError,
   DEFAULT_CONFIG,
-  decodeConfig,
-  encodeConfig,
   personInitial,
   resolveConfig,
   validateConfig,
@@ -156,48 +154,5 @@ describe('personInitial', () => {
     expect(personInitial({ name: 'Milo', symbol: 'cat', initial: 'ML' })).toBe('ML');
     expect(personInitial({ name: 'Åsa', symbol: 'cat' })).toBe('Å');
     expect(personInitial({ name: '👧 Iris', symbol: 'cat' })).toBe('👧');
-  });
-});
-
-describe('encodeConfig / decodeConfig', () => {
-  it('round-trips the defaults compactly', () => {
-    const encoded = encodeConfig(DEFAULT_CONFIG);
-    expect(encoded).toMatch(/^[A-Za-z0-9_-]+$/);
-    expect(decodeConfig(encoded)).toEqual(DEFAULT_CONFIG);
-    expect(encoded.length).toBeLessThan(80);
-  });
-
-  it('round-trips a full config including unicode names', () => {
-    const config = resolveConfig({
-      locale: 'sv-SE',
-      paper: 'Letter',
-      weekStarting: '2026-09-07',
-      people: [
-        { name: 'Åsa Öberg', symbol: 'unicorn' },
-        { name: '李小龙', symbol: 'dinosaur', initial: '李' },
-      ],
-      markStyle: 'initial',
-      linesPerDay: 2,
-      copies: 3,
-    });
-    expect(decodeConfig(encodeConfig(config))).toEqual(config);
-  });
-
-  it('only encodes fields that differ from the defaults', () => {
-    const config = resolveConfig({ people, linesPerDay: 2 });
-    const json = JSON.parse(Buffer.from(encodeConfig(config), 'base64url').toString('utf8'));
-    expect(Object.keys(json).sort()).toEqual(['linesPerDay', 'p', 'v']);
-    expect(json.p[3]).toEqual(['Milo', 'rocket', 'M']);
-  });
-
-  it('rejects garbage, wrong versions and invalid payloads', () => {
-    expect(() => decodeConfig('not base64!')).toThrow(ConfigError);
-    expect(() => decodeConfig(Buffer.from('{"v":2}').toString('base64url'))).toThrow(ConfigError);
-    expect(() => decodeConfig(Buffer.from('{"v":1,"paper":"A5"}').toString('base64url'))).toThrow(
-      ConfigError,
-    );
-    expect(() => decodeConfig(Buffer.from('{"v":1,"p":"x"}').toString('base64url'))).toThrow(
-      ConfigError,
-    );
   });
 });
