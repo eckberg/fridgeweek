@@ -21,11 +21,25 @@ test('renders a sheet with the default household', async ({ page }) => {
   expect(text).toContain('Alex');
 });
 
-test('changing the language changes the weekday names and the interface', async ({ page }) => {
+test('changing the language translates the sheet but not the interface', async ({ page }) => {
   await page.getByLabel('Language').selectOption('sv');
-  await expect(page.locator('.paper svg')).toContainText('MÅNDAG');
-  await expect(page.getByRole('button', { name: 'Skriv ut' })).toBeVisible();
-  expect(await sheetText(page)).toContain('VECKA');
+
+  const text = await sheetText(page);
+  expect(text).toContain('MÅNDAG');
+  expect(text).toContain('VECKA');
+  expect(text).toContain('Alla');
+
+  // The interface is English whatever the sheet is set to.
+  await expect(page.getByRole('button', { name: 'Print' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+});
+
+test('a language with no translated words still prints a correct sheet', async ({ page }) => {
+  await page.getByLabel('Language').selectOption('pl');
+  const text = await sheetText(page);
+  // Weekday names come from Intl, so far more languages work than are listed.
+  expect(text).toContain('PONIEDZIAŁEK');
+  expect(text).toContain('TYDZIEŃ');
 });
 
 test('adding a person adds a mark to every line and a legend entry', async ({ page }) => {
@@ -52,7 +66,6 @@ test('switching to initials replaces the symbols with letters', async ({ page })
 });
 
 test('choosing a week prints the dates and snaps to the first weekday', async ({ page }) => {
-  // Set the date before switching language, so the label is still in English.
   await page.getByLabel('Week starting').fill('2026-09-09');
   await page.getByLabel('Language').selectOption('sv');
   const text = await sheetText(page);
@@ -111,12 +124,6 @@ test('the picker filters by search and closes on Escape', async ({ page }) => {
 
   await page.keyboard.press('Escape');
   await expect(picker).toBeHidden();
-});
-
-test('the document language follows the sheet language', async ({ page }) => {
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await page.getByLabel('Language').selectOption('fi');
-  await expect(page.locator('html')).toHaveAttribute('lang', 'fi');
 });
 
 test('a change the engine refuses is explained rather than silently dropped', async ({ page }) => {

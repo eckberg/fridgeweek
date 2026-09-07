@@ -1,5 +1,6 @@
 ---
-import { t, UI_LOCALES } from '../i18n/index.js';
+import { SHEET_LOCALES } from '@fridgeweek/core';
+import { t } from '../i18n/index.js';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import '../styles/prose.css';
 
@@ -7,15 +8,15 @@ const repo = 'https://github.com/eckberg/fridgeweek';
 ---
 
 <BaseLayout
-  title={t('en', 'meta.aboutTitle')}
-  description={t('en', 'meta.aboutDescription')}
+  title={t('meta.aboutTitle')}
+  description={t('meta.aboutDescription')}
   current="about"
 >
   <article class="page prose">
     <p class="eyebrow">About</p>
-    <h1>{t('en', 'about.title')}</h1>
+    <h1>{t('about.title')}</h1>
 
-    <h2 id="what">{t('en', 'about.whatTitle')}</h2>
+    <h2 id="what">{t('about.whatTitle')}</h2>
     <p>
       Fridgeweek makes one thing: a print-ready sheet with a week on it, seven days from top to
       bottom, all the same height. You set your household up once, print a stack, and write the
@@ -39,12 +40,12 @@ const repo = 'https://github.com/eckberg/fridgeweek';
       </li>
     </ul>
     <p>
-      The interface is available in {UI_LOCALES.length} languages, and the weekday names, date
+      The interface is available in {SHEET_LOCALES.length} languages, and the weekday names, date
       formats and first day of the week come from your browser's own locale data, so a great many
       more languages print correctly on the sheet itself.
     </p>
 
-    <h2 id="privacy">{t('en', 'about.privacyTitle')}</h2>
+    <h2 id="privacy">{t('about.privacyTitle')}</h2>
     <p>
       There is no account, no database and no analytics on this site. No cookies are set. Nothing
       you type is recorded anywhere.
@@ -61,14 +62,14 @@ const repo = 'https://github.com/eckberg/fridgeweek';
       browser avoids even that, and every browser can save a printout as a PDF.
     </p>
 
-    <h2 id="terms">{t('en', 'about.termsTitle')}</h2>
+    <h2 id="terms">{t('about.termsTitle')}</h2>
     <p>
       Fridgeweek is provided as is, without warranty of any kind. It is a tool for printing a
       blank sheet of paper; please do not rely on it for anything that matters more than that.
       Use of the software is governed by the MIT licence below.
     </p>
 
-    <h2 id="licence">{t('en', 'about.licenceTitle')}</h2>
+    <h2 id="licence">{t('about.licenceTitle')}</h2>
     <p>
       The code is licensed under the MIT licence and the whole project is on GitHub at{' '}
       <a href={repo} rel="noopener">eckberg/fridgeweek</a>. You are free to read it, run your own

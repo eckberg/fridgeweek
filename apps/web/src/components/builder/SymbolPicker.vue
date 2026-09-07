@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { SYMBOL_IDS, type SymbolId, symbolLabel } from '@fridgeweek/core';
 import { computed, nextTick, ref, useId, watch } from 'vue';
-import type { MessageKey } from '../../i18n/index.js';
+import { t } from '../../i18n/index.js';
 import SymbolMark from './SymbolMark.vue';
 
 const model = defineModel<SymbolId>({ required: true });
@@ -9,8 +9,6 @@ const model = defineModel<SymbolId>({ required: true });
 const props = defineProps<{
   /** Symbols already taken by someone else, shown but not selectable. */
   taken: SymbolId[];
-  locale: string;
-  t: (key: MessageKey, params?: Record<string, string | number>) => string;
   buttonLabel: string;
 }>();
 
@@ -21,7 +19,7 @@ const dialog = ref<HTMLElement | null>(null);
 const panelId = useId();
 
 function labelFor(id: SymbolId): string {
-  return symbolLabel(id, props.locale);
+  return symbolLabel(id);
 }
 
 const matches = computed(() => {

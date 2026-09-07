@@ -174,9 +174,17 @@ rounded to three decimals. Snapshot tests rely on this.
   locales (most of Europe), and false otherwise.
 - Day dates and date ranges are formatted with `Intl.DateTimeFormat` so "14/9" and "9/14"
   come out right for free.
-- Only UI chrome needs translation files: `packages/core/src/i18n/locales/<lang>.json`.
-  Symbol labels live next to the symbols. Adding a language is documented in
-  CONTRIBUTING.md.
+- **The sheet is translated; the interface is not.** The sheet is the product, so it
+  prints correctly in a family's own language. The website around it is English, which
+  keeps one set of words to maintain and one page to review.
+- Almost everything printed comes from `Intl`, so a sheet is correct in far more
+  languages than are listed anywhere. Exactly two words are the project's own, "Week"
+  and "Everyone", and they live in `packages/core/src/i18n/locales/<lang>.json`. A
+  locale with no file still prints a correct sheet: those two words fall back to English.
+- `SHEET_LOCALES` in that folder's `index.ts` is the list the language picker offers:
+  the languages where every printed word is right. Adding one is a two-line JSON file
+  plus an entry in that list, documented in CONTRIBUTING.md.
+- Symbol names are shown in the picker and never printed, so they are English only.
 
 ## 7. Architecture
 

@@ -6,8 +6,8 @@ import {
   FAMILY_SYMBOL,
   getSymbol,
   isSymbolId,
-  LABEL_LANGUAGES,
   SYMBOL_IDS,
+  SYMBOL_LABELS,
   SYMBOL_LICENSES,
   type SymbolId,
   symbolLabel,
@@ -143,44 +143,17 @@ describe('symbol set', () => {
     expect(svg.endsWith('</symbol>')).toBe(true);
   });
 
-  it('labels every symbol in every language', () => {
+  it('names every symbol', () => {
     for (const id of SYMBOL_IDS) {
-      const { labels } = getSymbol(id);
-      expect(Object.keys(labels).sort()).toEqual([...LABEL_LANGUAGES].sort());
-      for (const [language, label] of Object.entries(labels)) {
-        expect(label.trim().length, `${id} in ${language}`).toBeGreaterThan(0);
-      }
+      expect(getSymbol(id).label, id).toBe(SYMBOL_LABELS[id]);
+      expect(symbolLabel(id).trim().length, id).toBeGreaterThan(0);
     }
+    expect(Object.keys(SYMBOL_LABELS).sort()).toEqual([...SYMBOL_IDS]);
   });
 
-  it('resolves a label for any locale, falling back to English', () => {
-    expect(symbolLabel('house', 'sv')).toBe('Hus');
-    expect(symbolLabel('house', 'sv-SE')).toBe('Hus');
-    expect(symbolLabel('unicorn', 'fi')).toBe('Yksisarvinen');
-    expect(symbolLabel('unicorn', 'ja')).toBe('Unicorn');
+  it('names symbols in English, because they are never printed on the sheet', () => {
+    expect(symbolLabel('house')).toBe('House');
     expect(symbolLabel('unicorn')).toBe('Unicorn');
-  });
-
-  it('ships a label file for every language the interface offers', () => {
-    // The interface and the symbols are translated together; a language with
-    // one and not the other would show a half-translated picker.
-    expect([...LABEL_LANGUAGES].sort()).toEqual([
-      'da',
-      'de',
-      'en',
-      'es',
-      'fi',
-      'fo',
-      'fr',
-      'is',
-      'it',
-      'nb',
-      'nl',
-      'nn',
-      'pl',
-      'pt',
-      'sv',
-    ]);
   });
 });
 

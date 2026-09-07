@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { LIMITS, type SheetConfig, SYMBOL_IDS } from '@fridgeweek/core';
-import { computed, onMounted, onUnmounted, ref, useId, watchEffect } from 'vue';
-import '../../i18n/catalogues.js';
-import { localeMeta, type MessageKey, translator, UI_LOCALES } from '../../i18n/index.js';
+import {
+  LIMITS,
+  SHEET_LOCALES,
+  type SheetConfig,
+  SYMBOL_IDS,
+  sheetLocaleMeta,
+} from '@fridgeweek/core';
+import { computed, onMounted, onUnmounted, ref, useId } from 'vue';
+import { t } from '../../i18n/index.js';
 import { downloadHtml, downloadPdf, printDocument, sheetFilename } from '../../lib/output.js';
 import ControlGroup from './ControlGroup.vue';
 import FieldRow from './FieldRow.vue';
@@ -17,9 +22,6 @@ import { useSheet } from './useSheet.js';
 
 const sheet = useSheet();
 const { config, layout, previewSvg, fit, rejected, linkWasBroken } = sheet;
-
-const t = computed(() => translator(config.value.locale));
-const tr = (key: MessageKey, params?: Record<string, string | number>) => t.value(key, params);
 
 const marginId = useId();
 const copiesId = useId();
@@ -113,9 +115,9 @@ const snapNotice = computed(() => {
   if (!printed || printed === chosen) return null;
 
   const weekday = firstDay?.name.text ?? '';
-  return tr('header.snapped', {
+  return t('header.snapped', {
     weekday: weekday.charAt(0) + weekday.slice(1).toLocaleLowerCase(config.value.locale),
-    language: localeMeta(config.value.locale).endonym,
+    language: sheetLocaleMeta(config.value.locale).endonym,
   });
 });
 
@@ -126,7 +128,7 @@ async function onPrint(): Promise<void> {
   try {
     await printDocument(sheet.printableHtml());
   } catch {
-    announce(tr('pdf.failed'));
+    announce(t('pdf.failed'));
   } finally {
     busy.value = false;
   }
@@ -134,11 +136,11 @@ async function onPrint(): Promise<void> {
 
 async function onPdf(): Promise<void> {
   busy.value = true;
-  announce(tr('pdf.preparing'));
+  announce(t('pdf.preparing'));
   const result = await downloadPdf(config.value, sheetFilename('pdf', config.value.weekStarting));
   busy.value = false;
   if (!result.ok) {
-    announce(result.reason === 'unavailable' ? tr('pdf.unavailable') : tr('pdf.failed'));
+    announce(result.reason === 'unavailable' ? t('pdf.unavailable') : t('pdf.failed'));
   } else {
     notice.value = '';
   }
@@ -151,7 +153,7 @@ function onDownloadHtml(): void {
 async function onCopyLink(): Promise<void> {
   try {
     await navigator.clipboard.writeText(sheet.link());
-    announce(tr('action.copied'));
+    announce(t('action.copied'));
   } catch {
     // Clipboard access can be refused; the address bar already holds the link.
   }
@@ -162,29 +164,18 @@ onMounted(() => window.addEventListener('hashchange', sheet.adoptHash));
 onUnmounted(() => window.removeEventListener('hashchange', sheet.adoptHash));
 
 /**
- * The page is served as English but the interface follows the sheet's
- * language, so the document has to say which language it is actually in or a
- * screen reader reads it with the wrong voice.
- */
-watchEffect(() => {
-  if (typeof document !== 'undefined') {
-    document.documentElement.lang = localeMeta(config.value.locale).code;
-  }
-});
-
-/**
  * One line of feedback, most urgent first: a change the engine refused, then a
  * link that could not be read, then whatever an action last reported.
  */
 const message = computed(() => {
   const refusal = rejected.value[0];
   if (refusal) return refusal.message;
-  if (linkWasBroken.value) return tr('error.invalidLink');
+  if (linkWasBroken.value) return t('error.invalidLink');
   return notice.value;
 });
 
 const languageSummary = computed(() => {
-  const meta = localeMeta(config.value.locale);
+  const meta = sheetLocaleMeta(config.value.locale);
   const first = layout.value.days[0]?.name.text ?? '';
   return `${config.value.locale} · ${first}`;
 });
@@ -194,16 +185,16 @@ const languageSummary = computed(() => {
   <div class="builder">
     <form
       class="panel"
-      :aria-label="tr('builder.settingsLabel')"
+      :aria-label="t('builder.settingsLabel')"
       @submit.prevent
       @input="dismissLinkWarning"
     >
       <div class="actions">
         <button type="button" class="primary" :disabled="busy" @click="onPdf">
-          {{ tr('action.downloadPdf') }}
+          {{ t('action.downloadPdf') }}
         </button>
         <button type="button" class="secondary" :disabled="busy" @click="onPrint">
-          {{ tr('action.print') }}
+          {{ t('action.print') }}
         </button>
       </div>
 
@@ -212,12 +203,17 @@ const languageSummary = computed(() => {
       <p class="notice" role="status" :class="{ 'visually-hidden': !message }">{{ message }}</p>
 
       <ControlGroup
-        :title="tr('language.group')"
-        :meta="tr('language.available', { count: UI_LOCALES.length })"
+        :title="t('language.group')"
+        :meta="t('language.available', { count: SHEET_LOCALES.length })"
       >
-        <FieldRow :label="tr('language.label')" :control-id="languageId" stacked>
+        <FieldRow
+          :label="t('language.label')"
+          :help="t('language.help')"
+          :control-id="languageId"
+          stacked
+        >
           <select :id="languageId" v-model="locale" class="select">
-            <option v-for="option in UI_LOCALES" :key="option.code" :value="option.code">
+            <option v-for="option in SHEET_LOCALES" :key="option.code" :value="option.code">
               {{ option.endonym }}
             </option>
           </select>
@@ -226,8 +222,8 @@ const languageSummary = computed(() => {
       </ControlGroup>
 
       <ControlGroup
-        :title="tr('people.group')"
-        :meta="tr('people.count', { count: config.people.length, max: LIMITS.people.max })"
+        :title="t('people.group')"
+        :meta="t('people.count', { count: config.people.length, max: LIMITS.people.max })"
       >
         <ul class="people">
           <PersonRow
@@ -237,42 +233,40 @@ const languageSummary = computed(() => {
             :position="index + 1"
             :taken="takenSymbols"
             :can-remove="canRemovePerson"
-            :locale="config.locale"
-            :t="tr"
             @update="(change) => sheet.updatePerson(index, change)"
             @remove="sheet.removePerson(index)"
           />
         </ul>
 
         <button v-if="canAddPerson" type="button" class="add" @click="addPerson">
-          <span aria-hidden="true">+</span> {{ tr('people.add') }}
+          <span aria-hidden="true">+</span> {{ t('people.add') }}
         </button>
 
-        <FieldRow :label="tr('people.familyMark')" :help="tr('people.familyMarkHelp')">
-          <ToggleSwitch v-model="familyMark" :label="tr('people.familyMark')" />
+        <FieldRow :label="t('people.familyMark')" :help="t('people.familyMarkHelp')">
+          <ToggleSwitch v-model="familyMark" :label="t('people.familyMark')" />
         </FieldRow>
 
-        <FieldRow :label="tr('people.markStyle')" stacked>
+        <FieldRow :label="t('people.markStyle')" stacked>
           <SegmentedControl
             v-model="markStyle"
-            :label="tr('people.markStyle')"
+            :label="t('people.markStyle')"
             :options="[
-              { value: 'symbol', label: tr('people.markStyle.symbol') },
-              { value: 'initial', label: tr('people.markStyle.initial') },
+              { value: 'symbol', label: t('people.markStyle.symbol') },
+              { value: 'initial', label: t('people.markStyle.initial') },
             ]"
           />
         </FieldRow>
       </ControlGroup>
 
-      <ControlGroup :title="tr('days.group')">
+      <ControlGroup :title="t('days.group')">
         <FieldRow
-          :label="tr('days.linesPerDay')"
-          :value="tr('days.linesEach', { height: layout.metrics.lineHeight })"
+          :label="t('days.linesPerDay')"
+          :value="t('days.linesEach', { height: layout.metrics.lineHeight })"
           stacked
         >
           <SegmentedControl
             v-model="linesPerDay"
-            :label="tr('days.linesPerDay')"
+            :label="t('days.linesPerDay')"
             :options="[
               { value: 1, label: '1' },
               { value: 2, label: '2' },
@@ -282,57 +276,57 @@ const languageSummary = computed(() => {
           />
         </FieldRow>
 
-        <FieldRow :label="tr('days.weekendNames')" stacked>
+        <FieldRow :label="t('days.weekendNames')" stacked>
           <SegmentedControl
             v-model="weekendStyle"
-            :label="tr('days.weekendNames')"
+            :label="t('days.weekendNames')"
             :options="[
-              { value: 'outline', label: tr('days.weekend.outline') },
-              { value: 'plain', label: tr('days.weekend.plain') },
+              { value: 'outline', label: t('days.weekend.outline') },
+              { value: 'plain', label: t('days.weekend.plain') },
             ]"
           />
         </FieldRow>
       </ControlGroup>
 
-      <ControlGroup :title="tr('header.group')">
+      <ControlGroup :title="t('header.group')">
         <FieldRow
-          :label="tr('header.weekStarting')"
-          :help="snapNotice ?? tr('header.undated')"
+          :label="t('header.weekStarting')"
+          :help="snapNotice ?? t('header.undated')"
           :control-id="weekStartingId"
           stacked
         >
           <input :id="weekStartingId" v-model="weekStarting" type="date" class="date" />
         </FieldRow>
 
-        <FieldRow :label="tr('header.weekNumber')">
-          <ToggleSwitch v-model="showWeekNumber" :label="tr('header.weekNumber')" />
+        <FieldRow :label="t('header.weekNumber')">
+          <ToggleSwitch v-model="showWeekNumber" :label="t('header.weekNumber')" />
         </FieldRow>
-        <FieldRow :label="tr('header.dateRange')">
-          <ToggleSwitch v-model="showDateRange" :label="tr('header.dateRange')" />
+        <FieldRow :label="t('header.dateRange')">
+          <ToggleSwitch v-model="showDateRange" :label="t('header.dateRange')" />
         </FieldRow>
-        <FieldRow :label="tr('header.dayDates')">
-          <ToggleSwitch v-model="showDayDates" :label="tr('header.dayDates')" />
+        <FieldRow :label="t('header.dayDates')">
+          <ToggleSwitch v-model="showDayDates" :label="t('header.dayDates')" />
         </FieldRow>
-        <FieldRow :label="tr('header.legend')">
-          <ToggleSwitch v-model="showLegend" :label="tr('header.legend')" />
+        <FieldRow :label="t('header.legend')">
+          <ToggleSwitch v-model="showLegend" :label="t('header.legend')" />
         </FieldRow>
       </ControlGroup>
 
-      <ControlGroup :title="tr('paper.group')">
-        <FieldRow :label="tr('paper.size')" stacked>
+      <ControlGroup :title="t('paper.group')">
+        <FieldRow :label="t('paper.size')" stacked>
           <SegmentedControl
             v-model="paper"
-            :label="tr('paper.size')"
+            :label="t('paper.size')"
             :options="[
-              { value: 'A4', label: tr('paper.a4') },
-              { value: 'Letter', label: tr('paper.letter') },
+              { value: 'A4', label: t('paper.a4') },
+              { value: 'Letter', label: t('paper.letter') },
             ]"
           />
         </FieldRow>
 
         <FieldRow
-          :label="tr('paper.margin')"
-          :value="`${config.marginMm} ${tr('paper.marginUnit')}`"
+          :label="t('paper.margin')"
+          :value="`${config.marginMm} ${t('paper.marginUnit')}`"
           :control-id="marginId"
           stacked
         >
@@ -341,36 +335,36 @@ const languageSummary = computed(() => {
             v-model="marginMm"
             :min="LIMITS.marginMm.min"
             :max="LIMITS.marginMm.max"
-            :label="tr('paper.margin')"
+            :label="t('paper.margin')"
           />
         </FieldRow>
 
-        <FieldRow :label="tr('paper.copies')" :help="tr('paper.copiesHelp')" :control-id="copiesId">
+        <FieldRow :label="t('paper.copies')" :help="t('paper.copiesHelp')" :control-id="copiesId">
           <StepperInput
             :id="copiesId"
             v-model="copies"
             :min="LIMITS.copies.min"
             :max="LIMITS.copies.max"
-            :label="tr('paper.copies')"
-            :decrease-label="tr('paper.decrease')"
-            :increase-label="tr('paper.increase')"
+            :label="t('paper.copies')"
+            :decrease-label="t('paper.decrease')"
+            :increase-label="t('paper.increase')"
           />
         </FieldRow>
       </ControlGroup>
 
-      <FitStatus :layout="layout" :fit="fit" :t="tr" />
+      <FitStatus :layout="layout" :fit="fit" />
 
       <div class="panel-foot">
-        <button type="button" class="ghost" @click="onCopyLink">{{ tr('action.copyLink') }}</button>
+        <button type="button" class="ghost" @click="onCopyLink">{{ t('action.copyLink') }}</button>
         <button type="button" class="ghost" @click="onDownloadHtml">
-          {{ tr('action.downloadHtml') }}
+          {{ t('action.downloadHtml') }}
         </button>
-        <p class="mono foot-note">{{ tr('builder.urlNote') }}<br />{{ tr('builder.privacyNote') }}</p>
+        <p class="mono foot-note">{{ t('builder.urlNote') }}<br />{{ t('builder.privacyNote') }}</p>
       </div>
     </form>
 
-    <div class="preview" :aria-label="tr('builder.previewLabel')" role="region">
-      <SheetPreview :svg="previewSvg" :t="tr" />
+    <div class="preview" :aria-label="t('builder.previewLabel')" role="region">
+      <SheetPreview :svg="previewSvg" />
     </div>
   </div>
 </template>

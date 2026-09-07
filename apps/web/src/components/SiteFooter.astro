@@ -1,17 +1,17 @@
 ---
+import { t } from '../i18n/index.js';
 import GithubMark from './GithubMark.astro';
 ---
 
 <footer class="site-footer">
   <p class="note">
-    Free and open source. No account, no cookies, no analytics
-    &mdash; <a href="/about#privacy">read the privacy note</a>.
+    {t('footer.note')} &mdash; <a href="/about#privacy">{t('footer.privacyLink')}</a>.
   </p>
-  <nav aria-label="Secondary">
-    <a href="/about">About, terms and privacy</a>
-    <a href="/about#what">What is Fridgeweek?</a>
+  <nav aria-label={t('nav.secondaryLabel')}>
+    <a href="/about">{t('footer.about')}</a>
+    <a href="/about#what">{t('footer.what')}</a>
     <a href="https://github.com/eckberg/fridgeweek" rel="noopener" class="source">
-      <GithubMark size={16} /> Source
+      <GithubMark size={16} /> {t('nav.source')}
     </a>
   </nav>
 </footer>

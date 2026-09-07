@@ -1,116 +1,75 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_UI_LOCALE,
+  DEFAULT_SHEET_LOCALE,
   type MessageKey,
   messages,
-  resolveUiLocale,
-  SUPPORTED_UI_LOCALES,
+  resolveSheetLocale,
+  SHEET_LOCALES,
+  sheetLocaleMeta,
   t,
 } from '../src/i18n/index.js';
-import en from '../src/i18n/locales/en.json' with { type: 'json' };
-import sv from '../src/i18n/locales/sv.json' with { type: 'json' };
 
-const bundles: Record<string, Record<string, string>> = { en, sv };
+const KEYS: MessageKey[] = ['sheet.week', 'sheet.family'];
+const codes = SHEET_LOCALES.map((locale) => locale.code);
 
-describe('locale bundles', () => {
-  it('ships a bundle for every supported locale', () => {
-    expect(SUPPORTED_UI_LOCALES).toEqual(['en', 'sv']);
-    for (const locale of SUPPORTED_UI_LOCALES) {
-      expect(Object.keys(bundles[locale] ?? {}).length).toBeGreaterThan(0);
+describe('sheet locales', () => {
+  it('defaults to English', () => {
+    expect(DEFAULT_SHEET_LOCALE).toBe('en');
+    expect(codes[0]).toBe('en');
+  });
+
+  it('lists each language once, with its own name for itself', () => {
+    expect(new Set(codes).size).toBe(codes.length);
+    for (const locale of SHEET_LOCALES) {
+      expect(locale.endonym.trim().length).toBeGreaterThan(1);
+      expect(locale.englishName.trim().length).toBeGreaterThan(1);
     }
   });
 
-  it('has the same keys in every bundle as in en', () => {
-    const expected = Object.keys(en).sort();
-    for (const locale of SUPPORTED_UI_LOCALES) {
-      expect(Object.keys(bundles[locale] ?? {}).sort(), `keys of ${locale}.json`).toEqual(expected);
+  it.each(codes)('%s translates every printed word', (code) => {
+    const bundle = messages(code);
+    expect(Object.keys(bundle).sort()).toEqual([...KEYS].sort());
+    for (const key of KEYS) {
+      expect(bundle[key].trim().length, `${code} ${key}`).toBeGreaterThan(0);
     }
   });
 
-  it('has a non-empty string for every key', () => {
-    for (const locale of SUPPORTED_UI_LOCALES) {
-      for (const [key, value] of Object.entries(bundles[locale] ?? {})) {
-        expect(typeof value, `${locale}.${key}`).toBe('string');
-        expect(value.trim().length, `${locale}.${key}`).toBeGreaterThan(0);
-      }
-    }
+  it('translates the words that actually reach paper', () => {
+    expect(t('sv', 'sheet.week')).toBe('Vecka');
+    expect(t('sv-SE', 'sheet.week')).toBe('Vecka');
+    expect(t('de-AT', 'sheet.week')).toBe('Woche');
+    expect(t('fi', 'sheet.family')).toBe('Kaikki');
+    expect(t('pl', 'sheet.week')).toBe('Tydzień');
   });
 
-  it('actually translates the Swedish bundle', () => {
-    expect(sv['sheet.week']).toBe('Vecka');
-    expect(sv['sheet.family']).toBe('Alla');
-    expect(sv['sheet.name']).toBe('Namn');
-    expect(sv['sheet.notes']).toBe('Anteckningar');
+  it('falls back to English for a language it has no words for', () => {
+    // The sheet is still correct: weekday names and dates come from Intl.
+    expect(t('ja-JP', 'sheet.week')).toBe('Week');
+    expect(t('not a locale', 'sheet.week')).toBe('Week');
   });
 });
 
-describe('resolveUiLocale', () => {
+describe('resolveSheetLocale', () => {
   it.each([
-    ['sv', 'sv'],
     ['sv-SE', 'sv'],
-    ['sv-FI', 'sv'],
-    ['SV', 'sv'],
-    ['sv_SE', 'sv'],
-    ['en', 'en'],
-    ['en-GB', 'en'],
-    ['xx-YY', 'en'],
-    ['de-DE', 'en'],
+    ['sv', 'sv'],
+    ['no', 'nb'],
+    ['nb-NO', 'nb'],
+    ['nn-NO', 'nn'],
+    ['pt-BR', 'pt'],
+    ['EN-GB', 'en'],
+    ['ja-JP', 'en'],
     ['', 'en'],
     ['not a locale', 'en'],
-    ['!!', 'en'],
-  ])('resolves %o to %o', (input, expected) => {
-    expect(resolveUiLocale(input)).toBe(expected);
-  });
-
-  it('defaults to English', () => {
-    expect(DEFAULT_UI_LOCALE).toBe('en');
+  ])('maps %s to %s', (input, expected) => {
+    expect(resolveSheetLocale(input)).toBe(expected);
   });
 });
 
-describe('t', () => {
-  it('returns the translated string', () => {
-    expect(t('sv-SE', 'sheet.week')).toBe('Vecka');
-    expect(t('sv', 'sheet.family')).toBe('Alla');
-    expect(t('en-US', 'sheet.week')).toBe('Week');
-  });
-
-  it('falls back to English for unsupported locales', () => {
-    expect(t('de-DE', 'sheet.week')).toBe('Week');
-    expect(t('', 'sheet.family')).toBe('Everyone');
-    expect(t('not a locale', 'sheet.notes')).toBe('Notes');
-  });
-
-  it('falls back to English when a bundle is missing the key', () => {
-    const key = 'sheet.week' satisfies MessageKey;
-    const patched: Record<string, string> = { ...sv };
-    delete patched[key];
-    // The public bundle is never patched; this only documents the contract that the
-    // English string is the last resort, which `t` implements with `?? en[key]`.
-    expect(patched[key]).toBeUndefined();
-    expect(t('sv-SE', key)).toBe('Vecka');
-  });
-
-  it('never returns an empty string for any supported locale and key', () => {
-    for (const locale of SUPPORTED_UI_LOCALES) {
-      for (const key of Object.keys(en) as MessageKey[]) {
-        expect(t(locale, key).length, `${locale}.${key}`).toBeGreaterThan(0);
-      }
-    }
-  });
-});
-
-describe('messages', () => {
-  it('returns the full bundle for a supported locale', () => {
-    expect(messages('sv-SE')).toEqual(sv);
-    expect(messages('en-GB')).toEqual(en);
-  });
-
-  it('returns English for anything else', () => {
-    expect(messages('de-DE')).toEqual(en);
-    expect(messages('')).toEqual(en);
-  });
-
-  it('exposes every key of en', () => {
-    expect(Object.keys(messages('sv')).sort()).toEqual(Object.keys(en).sort());
+describe('sheetLocaleMeta', () => {
+  it('names the language for a picker', () => {
+    expect(sheetLocaleMeta('sv-SE').endonym).toBe('Svenska');
+    expect(sheetLocaleMeta('fo').englishName).toBe('Faroese');
+    expect(sheetLocaleMeta('ja').code).toBe('en');
   });
 });

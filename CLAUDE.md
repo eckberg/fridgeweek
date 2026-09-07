@@ -28,6 +28,14 @@ the layout maths and the module contracts. Keep it in sync with the code.
 - `playwright-core` must stay external to the SSR bundle, or the PDF route cannot be built
   without it.
 
+## Languages
+The sheet is translated because it is the output. The website is English on purpose.
+- `packages/core/src/i18n/locales/*.json` holds the two words printed on a sheet.
+  `SHEET_LOCALES` is what the picker offers; an unlisted locale still prints correctly.
+- `apps/web/src/i18n/locales/en.json` is the interface vocabulary, English only. A test
+  fails on a key the code does not use and on a key the code asks for and does not exist.
+- Symbol names are never printed, so they are English only.
+
 ## Conventions
 - Millimetres everywhere in layout code. Round to 3 decimals; output must be deterministic.
 - Never shrink silently: a config that does not fit returns a `LayoutIssue` with remedies.

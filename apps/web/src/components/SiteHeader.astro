@@ -1,4 +1,5 @@
 ---
+import { t } from '../i18n/index.js';
 import Logo from './Logo.astro';
 
 interface Props {
@@ -16,10 +17,10 @@ const { current = null, compact = false } = Astro.props;
     <Logo size={28} />
     <span class="wordmark">Fridgeweek</span>
   </a>
-  <nav aria-label="Main">
-    <a href="/sheet" aria-current={current === 'builder' ? 'page' : undefined}>Make a sheet</a>
-    <a href="/about" aria-current={current === 'about' ? 'page' : undefined}>About</a>
-    <a href="https://github.com/eckberg/fridgeweek" rel="noopener">Source</a>
+  <nav aria-label={t('nav.mainLabel')}>
+    <a href="/sheet" aria-current={current === 'builder' ? 'page' : undefined}>{t('nav.builder')}</a>
+    <a href="/about" aria-current={current === 'about' ? 'page' : undefined}>{t('nav.about')}</a>
+    <a href="https://github.com/eckberg/fridgeweek" rel="noopener">{t('nav.source')}</a>
   </nav>
   <slot />
 </header>

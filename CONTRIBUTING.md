@@ -34,21 +34,29 @@ Everything runs on your own machine. No account, key or hosting platform is need
 
 ## Adding a language
 
-Every translation in the repository was drafted by its author rather than by a native speaker, so **corrections to an existing language are as welcome as a new one**. If something reads stiffly or is simply wrong in your language, please open a pull request; you do not need to justify it beyond being a speaker.
+The **sheet** is translated. The website around it is English on purpose: it keeps one set of words to maintain, and the sheet is the thing that ends up on the fridge.
 
-A language lives in three places. Take them in this order:
+Most of what a sheet prints already works in your language without anyone doing anything, because weekday names, day dates and the date range all come from `Intl`. Exactly two words are the project's own.
 
-1. **The interface.** Copy `apps/web/src/i18n/locales/en.json` to `<lang>.json` and translate the values, keeping the keys exactly as they are and every `{placeholder}` intact. Add the language to `UI_LOCALES` in `apps/web/src/i18n/index.ts` with its own name for itself, and register it in `apps/web/src/i18n/catalogues.ts`.
-2. **The symbol names.** Copy `packages/core/src/symbols/labels/en.json` to `<lang>.json`, translate the 65 nouns, and add the language to the table in `packages/core/src/symbols/labels.ts`. These are what the picker and screen readers say.
-3. **The few words printed on the sheet.** Copy `packages/core/src/i18n/locales/en.json` to `<lang>.json` and add the code to `SUPPORTED_UI_LOCALES` in that folder's `index.ts`.
+1. Create `packages/core/src/i18n/locales/<lang>.json` with those two words:
 
-Then check it on paper:
+   ```json
+   { "sheet.week": "Vecka", "sheet.family": "Alla" }
+   ```
 
-4. Weekday names and date formats come from `Intl`, so there is nothing to translate there. Run `pnpm sample` and check that the longest weekday name in your language still fits beside the date column, on both A4 and Letter. The known wide ones are German "Donnerstag", Finnish "keskiviikko" and Portuguese "quarta-feira".
-5. If your language has an unusual first day of week or week-numbering rule that `Intl` gets wrong, add it to the fallback table in `packages/core/src/dates.ts` with a test.
-6. Run `pnpm test` and `pnpm lint`, then open a pull request with a screenshot of a sample sheet in the new language.
+   `sheet.week` labels the week-number box. `sheet.family` names the household mark in the legend, so it should read as "everyone" rather than as "family".
 
-The tests check that every catalogue has exactly the English key set, uses the same placeholders, and is not simply a copy of English, so a partial or accidental translation is caught before review. A key a translation has not covered falls back to English at runtime rather than breaking, so a partial translation is still worth opening.
+2. Add the language to `SHEET_LOCALES` in `packages/core/src/i18n/index.ts`, with its own name for itself. That list is what the language picker offers.
+
+3. If your language has an unusual first day of week or week-numbering rule that `Intl` gets wrong, add it to the fallback table in `packages/core/src/dates.ts` with a test.
+
+4. Run `pnpm sample` and check that the longest weekday name in your language still fits beside the date column, on both A4 and Letter. The known wide ones are German "Donnerstag", Finnish "keskiviikko" and Portuguese "quarta-feira".
+
+5. Run `pnpm test` and `pnpm lint`, then open a pull request with a screenshot of a sample sheet in the new language.
+
+Every translation here was written by its author rather than by a native speaker, so **corrections are as welcome as new languages**. If a word reads wrong in your language, please say so; you do not need to justify it beyond being a speaker.
+
+A locale with no file is not broken. Its sheet prints with correct weekday names and dates, and those two words fall back to English.
 
 ## Adding a symbol
 
@@ -56,7 +64,7 @@ Lucide icons are preferred, because they are already consistent with the rest of
 
 1. Add the icon id to `LUCIDE_IDS` in `packages/core/src/symbols/curated.ts`.
 2. Run `pnpm generate` to copy the icon into the generated module.
-3. Add a name for it to `packages/core/src/symbols/labels/en.json`, which is required, and to as many of the other language files as you can. A missing English name is a compile error; a missing translation falls back to English.
+3. Add a name for it to `packages/core/src/symbols/labels/en.json`. A symbol without a name is a compile error. These names appear in the picker and to screen readers, never on the printed sheet, so they are English only.
 
 If the icon you need does not exist in Lucide, draw it and put it in `packages/core/src/symbols/custom.ts`. Follow the Lucide conventions so it sits beside the others:
 
