@@ -68,6 +68,7 @@
   "pdf.preparing": "Preparing your PDF",
   "pdf.failed": "The PDF could not be made. Print from your browser instead.",
   "pdf.unavailable": "PDF downloads are not available on this deployment. Use Print instead; every browser can save the print dialog as a PDF.",
+  "pdf.limited": "Too many PDFs from here just now. Wait a minute, or use Print; every browser can save the print dialog as a PDF.",
   "error.invalidLink": "That link could not be read, so the sheet was reset to the defaults.",
   "landing.heroTitle": "The week, on the fridge, in your own handwriting",
   "landing.heroBody": "Set a handful of parameters and print a skeleton: one week, seven days top to bottom, every day the same height. Then it is paper. No app to open, no account, nothing to sync, nothing that runs out of battery on a Tuesday.",

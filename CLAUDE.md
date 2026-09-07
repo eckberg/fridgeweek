@@ -27,6 +27,19 @@ the layout maths and the module contracts. Keep it in sync with the code.
   published `dist` cannot be loaded by plain Node; `pnpm build` runs `check:dist` to prove it can.
 - `playwright-core` must stay external to the SSR bundle, or the PDF route cannot be built
   without it.
+- `apps/web` builds for Node unless `DEPLOY_TARGET=cloudflare` is set, which swaps the adapter
+  in `astro.config.mjs`. Both adapters are dependencies; only one is active per build, and
+  `dev`, `preview` and the e2e suite always use Node. `__DEPLOY_TARGET__` is a Vite `define`,
+  not an environment variable, precisely so the branches it guards are *removed*: the Worker
+  must not contain Playwright and the Node bundle must not contain `cloudflare:workers`. Set
+  it in `vitest.config.ts` too, or tests hit an undefined global.
+- `@astrojs/cloudflare` v14 removed `Astro.locals.runtime.env`; the getter throws. Worker
+  bindings come from `import { env } from 'cloudflare:workers'`, dynamically, behind that same
+  build-time constant.
+- `@cloudflare/workers-types` is a dev dependency, imported as types only. Do not add it to
+  `types` in a tsconfig: its globals collide with the DOM ones Astro relies on.
+- `wrangler dev` stubs the Browser Rendering binding and its stub has no quick actions, so a
+  local render answers 502. The rate limiter, though, is real locally and worth rehearsing.
 
 ## Languages
 The sheet is translated because it is the output. The website is English on purpose.

@@ -40,7 +40,7 @@ ones you can see:
 
 The header is optional and each part has its own toggle: week number, date range, and a
 legend pairing every symbol with a name. Dates are blank by default, which suits printing
-twenty sheets at a time. Set a week starting date and the sheet prints the week number, the
+a stack of sheets at a time. Set a week starting date and the sheet prints the week number, the
 range and each day's date, with the same layout either way.
 
 Nothing is ever shrunk silently. The layout engine is a pure function that returns every
@@ -117,7 +117,12 @@ browser uses, renders it and streams the bytes back. A deployment without a rend
 501, and the interface says to print instead, which every browser can save as a PDF. Set
 `CHROMIUM_PATH` if Playwright cannot find a browser.
 
-No account, key or hosting platform is needed for any part of this project.
+Built for Cloudflare with `DEPLOY_TARGET=cloudflare`, the same route renders through
+Cloudflare Browser Rendering instead of a local Chromium. That path is entirely optional and
+is the only part of this project that costs money; [docs/DEPLOYING.md](docs/DEPLOYING.md)
+covers all three deployments.
+
+No account, key or hosting platform is needed to run or develop this project.
 
 ## Repository layout
 

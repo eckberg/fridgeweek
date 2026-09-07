@@ -79,7 +79,7 @@ interface SheetConfig {
   familyMark: boolean;        // default true
   linesPerDay: number;        // 1..4, default 3
   weekendStyle: 'outline' | 'plain'; // default 'outline'
-  copies: number;             // 1..20, default 1. Pages in the PDF.
+  copies: number;             // 1..25, default 1. Pages in the PDF.
 }
 ```
 
@@ -191,8 +191,8 @@ rounded to three decimals. Snapshot tests rely on this.
 ```
 packages/core   @fridgeweek/core - config, layout, SVG/HTML renderer, symbols, fonts, dates,
                 i18n. Strict TypeScript, zero runtime dependencies, no DOM. Publishable.
-apps/web        (planned) Astro site with a Vue island for the config panel, live preview
-                of the SVG, and /api/pdf on Cloudflare Workers.
+apps/web        Astro site with a Vue island for the config panel, live preview of the SVG,
+                and /api/pdf. Static except that one route.
 ```
 
 Why SVG from a layout function rather than HTML + CSS: the geometry is deterministic and
@@ -201,8 +201,58 @@ flexbox rounding or `@page` drift between browsers.
 
 Why a server-side PDF: the browser print dialog is the free fallback and works offline, but
 Firefox, Safari and Chrome disagree about margins, scaling and headers. Rendering the same
-HTML in headless Chromium on Cloudflare gives every family an identical PDF. Cost is
-accepted; the endpoint still gets per-IP rate limiting and a cap on `copies`.
+HTML in headless Chromium gives every family an identical PDF. It is never the only way to
+get one.
+
+### The PDF endpoint
+
+`POST /api/pdf` takes a configuration and nothing else, validates it with the same function
+the browser uses, and streams the bytes back. Nothing is stored, logged or identified.
+
+A renderer implements one interface, `PdfRenderer`, and `resolveRenderer(env)` picks one per
+request:
+
+```
+apps/web/src/lib/pdf/handler.ts     the endpoint's decisions, as a function of (request, env)
+apps/web/src/lib/pdf/renderer.ts    the PdfRenderer interface and resolveRenderer(env)
+apps/web/src/lib/pdf/local.ts       Playwright's Chromium. No account, no key, no network.
+apps/web/src/lib/pdf/cloudflare.ts  Cloudflare Browser Rendering, from inside the Worker
+apps/web/src/lib/pdf/limits.ts      the page cap and the rate limiter
+apps/web/src/lib/pdf/runtime.ts     finding the Worker environment, when there is one
+```
+
+Three deployments, one codebase:
+
+- **Static files.** The route is not there, or answers 501. Printing from the browser is the
+  whole product and works offline.
+- **Node** (the default adapter). `local.ts` renders with the Chromium Playwright installs.
+  This is what `dev`, `build`, `preview` and the end-to-end tests use.
+- **Cloudflare.** `DEPLOY_TARGET=cloudflare` selects the Cloudflare adapter at build time.
+  `cloudflare.ts` renders through the `BROWSER` binding's `pdf` quick action, passing the
+  document as HTML rather than as a URL so that nothing has to be published to be rendered.
+  `DEPLOY_TARGET` is a build-time constant, not a runtime one: it is what lets Vite drop
+  Playwright from the Worker bundle and `cloudflare:workers` from the Node bundle.
+
+The renderer is chosen from the request's environment, never cached: a binding belongs to the
+request it arrived with. The local Chromium is cached, because launching it costs a second
+and the process outlives the request.
+
+Two limits, because a public endpoint that starts browsers is the only part of this project
+that can cost real money:
+
+- **25 pages per request.** The same number as `LIMITS.copies.max`, so there is one real
+  limit rather than two that can disagree. The endpoint checks it again itself, because it
+  validates untrusted input and should not be uncapped by a change to the schema.
+- **Five requests per minute per client IP**, keyed on `CF-Connecting-IP`, enforced by
+  Cloudflare's Rate Limiting binding and nothing else — no KV, no D1, no Durable Object, so
+  the deployment needs no storage product. Refusal is 429 with `Retry-After`. A deployment
+  with no limiter binding refuses nothing, which is how the endpoint has always behaved.
+
+Deliberately not done: no challenge in front of the button, and no account of any kind. A
+challenge is a third-party script on a page that otherwise makes no third-party requests, and
+the rate limit plus the page cap bound the spend well enough to try without one.
+
+See [docs/DEPLOYING.md](docs/DEPLOYING.md) for what each deployment needs and what it costs.
 
 ### Core module contracts
 
