@@ -5,7 +5,7 @@ Fridgeweek has three deployments, and the first one is the one most people want.
 | | What it needs | What `/api/pdf` does | Cost |
 |---|---|---|---|
 | **Static files** | Any file host | Nothing; the route is not there | Free |
-| **Node** (default) | A machine with Node 22 and Chromium | Renders locally with Playwright | Free |
+| **Node** (default) | A machine with Node 24 and Chromium | Renders locally with Playwright | Free |
 | **Cloudflare** | A Cloudflare account | Renders with Browser Rendering | See [What it costs](#what-it-costs) |
 
 Printing from the browser is the primary path in every one of them. It produces the same

@@ -20,6 +20,12 @@ the layout maths and the module contracts. Keep it in sync with the code.
 ## Gotchas
 - `apps/web` pins TypeScript 6 because `astro check` does not yet support the 7.x compiler API.
   Do not raise it until Astro's language server does.
+- Every pnpm setting lives in `pnpm-workspace.yaml`. From pnpm 11 only auth and registry
+  settings are read from `.npmrc`, and pnpm 12 fails the command on a key it does not
+  recognise, so a typo there is an error rather than a silent no-op. Two entries need
+  explaining: a dependency that runs a build script must be listed in `allowBuilds` or the
+  install fails, and `@cloudflare/workers-types` is exempt from the release-age policy
+  because it publishes a new date-stamped version every morning.
 - Biome does not parse Vue or Astro templates, so unused-symbol rules are off for those files.
   Type checking needs both tools: `astro check` covers `.astro`, `vue-tsc` covers `.vue`.
   Neither covers the other, and `pnpm typecheck` runs both.

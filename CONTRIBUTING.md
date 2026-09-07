@@ -4,7 +4,7 @@ Thanks for looking. The two contributions we want most are a new language and a 
 
 ## Setup
 
-You need Node 22 and pnpm 10 (`corepack enable`). See the [README](README.md#development) for the full command list. The short version:
+You need Node 24 and pnpm 12 (`corepack enable`). See the [README](README.md#development) for the full command list. The short version:
 
 ```sh
 pnpm install
