@@ -10,3 +10,7 @@ playwright-report/
 .env.*
 .wrangler/
 .astro/
+
+# Claude Code creates git worktrees here when it runs isolated agents. They are
+# checkouts of this repository, so committing them would nest the repo in itself.
+.claude/worktrees/
