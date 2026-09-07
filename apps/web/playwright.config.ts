@@ -18,8 +18,15 @@ export default defineConfig({
       : {}),
   },
   webServer: {
-    command: 'pnpm build && pnpm preview --port 4321',
+    // The built server entry, not `astro preview`. It is the command
+    // `docs/DEPLOYING.md` gives for a Node deployment, so the tests drive the
+    // artifact that actually ships, and it stays in the foreground. `astro
+    // preview` does not: since 7.2 it detaches into the background whenever it
+    // detects an AI agent environment, and a server that forks away is one
+    // Playwright reports as having exited early.
+    command: 'pnpm build && node dist/server/entry.mjs',
     url: 'http://localhost:4321',
+    env: { PORT: '4321' },
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

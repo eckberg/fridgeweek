@@ -75,7 +75,7 @@ There is no hosted instance yet. Everything below runs on your own machine.
 
 ## Development
 
-You need Node 22 and pnpm 10. Enable pnpm with corepack:
+You need Node 24 and pnpm 12. Enable pnpm with corepack:
 
 ```sh
 corepack enable

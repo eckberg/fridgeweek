@@ -4,9 +4,16 @@
   "version": "0.0.0",
   "description": "Printable weekly sheet for the fridge, filled in by hand.",
   "license": "MIT",
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@12.3.4",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "24.20.0",
+      "onFail": "error"
+    }
   },
   "scripts": {
     "build": "pnpm -r build",

@@ -1,3 +1,27 @@
 packages:
   - packages/*
   - apps/*
+
+# From pnpm 11 only auth and registry settings are read from `.npmrc`, so these
+# two live here instead. `engineStrict` is what makes the Node pin in
+# `package.json` a refusal rather than a warning.
+engineStrict: true
+autoInstallPeers: true
+
+# pnpm refuses versions published in the last day, which is a supply-chain guard
+# worth keeping. `@cloudflare/workers-types` cannot satisfy it: it is published
+# every morning with the date in its version, so every bump of it is hours old
+# and would fail the check until the following day. It is a types-only dev
+# dependency and contributes no code to any build output, so it is exempt and
+# nothing else is.
+minimumReleaseAgeExclude:
+  - '@cloudflare/workers-types'
+
+# pnpm 11 made an unreviewed build script an install failure rather than a
+# warning. Both entries here install a platform binary the toolchain cannot work
+# without, and neither ships in anything this project publishes: esbuild is what
+# Vite and Astro build with, and workerd is the Workers runtime `wrangler dev`
+# starts. Nothing else in the tree is allowed to run a script.
+allowBuilds:
+  esbuild: true
+  workerd: true
