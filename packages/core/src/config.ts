@@ -38,7 +38,7 @@ export interface SheetConfig {
   /** Writing lines per day, 1 to 4. */
   linesPerDay: number;
   weekendStyle: WeekendStyle;
-  /** Identical pages in the printed document, 1 to 20. */
+  /** Identical pages in the printed document, 1 to 25. */
   copies: number;
 }
 
@@ -60,7 +60,7 @@ export const LIMITS = {
   people: { min: 1, max: 6 },
   linesPerDay: { min: 1, max: 4 },
   marginMm: { min: 5, max: 20 },
-  copies: { min: 1, max: 20 },
+  copies: { min: 1, max: 25 },
   nameLength: { min: 1, max: 24 },
   initialLength: { min: 1, max: 2 },
 } as const;

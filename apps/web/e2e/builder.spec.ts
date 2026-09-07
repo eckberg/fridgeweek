@@ -160,5 +160,5 @@ test('the copies field snaps a silly number back into range', async ({ page }) =
   const copies = page.getByLabel('Copies', { exact: true });
   await copies.fill('500');
   await copies.blur();
-  await expect(copies).toHaveValue('20');
+  await expect(copies).toHaveValue('25');
 });
