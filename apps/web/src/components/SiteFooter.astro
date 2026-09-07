@@ -26,7 +26,7 @@ const repo = 'https://github.com/eckberg/fridgeweek';
       <div class="column">
         <span class="eyebrow">{t('footer.projectColumn')}</span>
         <a href="/about">{t('footer.about')}</a>
-        <a href="/about#changelog">{t('footer.changelog')}</a>
+        <a href={`${repo}/releases`} rel="noopener">{t('footer.changelog')}</a>
         <a href={`${repo}/issues`} rel="noopener">{t('footer.contact')}</a>
         <a href={repo} rel="noopener" class="with-mark">
           <GithubMark size={16} />{t('footer.source')}

@@ -1,4 +1,5 @@
 import node from '@astrojs/node';
+import sitemap from '@astrojs/sitemap';
 import vue from '@astrojs/vue';
 import { defineConfig } from 'astro/config';
 
@@ -22,6 +23,10 @@ const target = process.env.DEPLOY_TARGET === 'cloudflare' ? 'cloudflare' : 'node
 const cloudflare = target === 'cloudflare' ? (await import('@astrojs/cloudflare')).default : null;
 
 export default defineConfig({
+  // The canonical origin. Absolute URLs in the sitemap, the canonical link and
+  // the social card are all derived from it, so it has to be set even though
+  // every page is otherwise origin-agnostic.
+  site: 'https://fridgeweek.com',
   output: 'static',
   adapter: cloudflare
     ? // `passthrough` keeps the Cloudflare Images binding out of the deployment.
@@ -34,7 +39,11 @@ export default defineConfig({
   // kind, and the point of the Cloudflare path is that it needs no storage
   // product at all.
   ...(cloudflare ? { session: false } : {}),
-  integrations: [vue()],
+  integrations: [
+    vue(),
+    // `/api/pdf` is the one route that is not a page; it has nothing to index.
+    sitemap({ filter: (page) => !page.includes('/api/') }),
+  ],
   server: { port: 4321 },
   devToolbar: { enabled: false },
   build: { inlineStylesheets: 'auto' },

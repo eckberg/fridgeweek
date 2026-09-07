@@ -1,5 +1,6 @@
 ---
 import { t } from '../i18n/index.js';
+import GithubMark from './GithubMark.astro';
 import Logo from './Logo.astro';
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 }
 
 const { current = null, variant = 'site' } = Astro.props;
+const repo = 'https://github.com/eckberg/fridgeweek';
 ---
 
 <header class:list={['site-header', variant]}>
@@ -27,11 +29,11 @@ const { current = null, variant = 'site' } = Astro.props;
         <a href="/#how" class="jump">
           {t('nav.how')}
         </a>
-        <a href="/#samples" class="jump">
-          {t('nav.samples')}
-        </a>
         <a href="/about" aria-current={current === 'about' ? 'page' : undefined}>
           {t('nav.about')}
+        </a>
+        <a href={repo} rel="noopener" class="icon" aria-label={t('nav.github')}>
+          <GithubMark size={21} />
         </a>
         <a href="/sheet" class="cta">
           {t('nav.builder')}
@@ -87,6 +89,7 @@ const { current = null, variant = 'site' } = Astro.props;
     padding: 12px 14px;
     border-radius: var(--radius-sm);
     font-size: 15px;
+    font-weight: 700;
     color: var(--ink-soft);
     text-decoration: none;
     white-space: nowrap;
@@ -95,6 +98,19 @@ const { current = null, variant = 'site' } = Astro.props;
   nav a:hover {
     background: var(--paper-sunk);
     color: var(--ink);
+  }
+
+  /*
+   * Icon-only, so it is a square 44 px target instead of the text links'
+   * padding. Qualified for the same reason as .cta below.
+   */
+  nav a.icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
   }
 
   nav a[aria-current='page'] {
@@ -117,11 +133,11 @@ const { current = null, variant = 'site' } = Astro.props;
     padding: 0 20px;
     background: var(--accent);
     color: var(--paper);
-    font-weight: 700;
+    font-weight: 800;
   }
 
   nav a.cta:hover {
-    background: var(--ink);
+    background: var(--accent-deep);
     color: var(--paper);
   }
 

@@ -27,10 +27,10 @@ const family = [
   { name: 'Milo', symbol: 'rocket' as const },
 ];
 
-const entries = ['swimming kit', 'preschool closed', 'football at five', 'grandma picks up'];
+const entries = ['library book', 'preschool closed', 'football at five', 'grandma picks up'];
 ---
 
-<BaseLayout title="Fridgeweek" description={t('site.tagline')}>
+<BaseLayout title="Fridgeweek" description={t('meta.homeDescription')}>
   <section class="hero">
     <div class="hero-text">
       <p class="eyebrow">{t('landing.heroEyebrow')}</p>
@@ -44,7 +44,7 @@ const entries = ['swimming kit', 'preschool closed', 'football at five', 'grandm
     </div>
 
     <div class="hero-frame">
-      <SheetSample id="hero" config={{ locale: 'sv-SE', people: family, weekStarting: '2026-09-07' }} />
+      <SheetSample id="hero" config={{ locale: 'en-GB', people: family, weekStarting: '2026-09-07' }} />
     </div>
   </section>
 
@@ -71,7 +71,7 @@ const entries = ['swimming kit', 'preschool closed', 'football at five', 'grandm
 
         <StepCard number="03" title={t('landing.step3Title')}>
           {t('landing.step3Body')}
-          <RingLine slot="extra" text="swimming kit" ruled />
+          <RingLine slot="extra" text="library book" ruled />
         </StepCard>
       </div>
     </div>
@@ -156,8 +156,24 @@ const entries = ['swimming kit', 'preschool closed', 'football at five', 'grandm
     gap: 22px;
   }
 
+  /*
+   * The display size is set tighter than the shared h1/h2/h3 rule in base.css:
+   * at 60px the -0.02em/1.15 that suits a section heading reads loose and airy,
+   * so the hero takes the brand system's own display values instead.
+   */
   h1 {
     font-size: clamp(38px, 5.4vw, 60px);
+    letter-spacing: -0.03em;
+    line-height: 1.03;
+  }
+
+  /*
+   * Every eyebrow on this page is accent: they open a section and belong to the
+   * headings under them. The grey default stays for the ones that label a
+   * control or a footer column, which are quieter by design.
+   */
+  .eyebrow {
+    color: var(--accent);
   }
 
   .lede {
@@ -214,7 +230,7 @@ const entries = ['swimming kit', 'preschool closed', 'football at five', 'grandm
   }
 
   .primary:hover {
-    background: var(--ink);
+    background: var(--accent-deep);
     color: var(--paper);
   }
 
