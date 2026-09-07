@@ -1,120 +1,492 @@
 ---
-import { SHEET_LOCALES } from '@fridgeweek/core';
+import GithubMark from '../components/GithubMark.astro';
 import { t } from '../i18n/index.js';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import '../styles/prose.css';
 
 const repo = 'https://github.com/eckberg/fridgeweek';
+
+const sections = [
+  { id: 'about', label: 'About' },
+  { id: 'paper', label: 'Why paper' },
+  { id: 'privacy', label: 'Privacy' },
+  { id: 'terms', label: 'Terms' },
+  { id: 'credits', label: 'Licence and credits' },
+  { id: 'contact', label: 'Contact' },
+  { id: 'changelog', label: 'Changelog' },
+];
+
+const principles = ['Equal day heights', 'Uppercase names', 'Outline weekends', 'Mono print'];
+
+/** What actually happens to anything you type, stated as a table of facts. */
+const dataFacts = [
+  ['state', 'URL hash + localStorage, in your browser'],
+  ['server storage', 'none'],
+  ['analytics', 'none'],
+  ['cookies', 'none, so no consent banner'],
+  ['third-party requests', 'none; fonts and icons are bundled'],
+];
+
+const credits = [
+  { name: 'Fridgeweek code', licence: 'MIT', href: `${repo}/blob/main/LICENSE` },
+  {
+    name: 'Atkinson Hyperlegible Next',
+    licence: 'SIL OFL 1.1',
+    href: 'https://github.com/googlefonts/atkinson-hyperlegible-next',
+  },
+  { name: 'Lucide icons', licence: 'ISC', href: 'https://lucide.dev' },
+  { name: 'IBM Plex Mono', licence: 'SIL OFL 1.1', href: 'https://github.com/IBM/plex' },
+];
+
+const releases = [
+  {
+    version: 'v0.2',
+    state: 'current',
+    body: 'The web page: the sheet builder with a live preview, state in the address bar and in local storage, printing from the browser, a PDF endpoint, and the landing and about pages.',
+  },
+  {
+    version: 'v0.1',
+    state: 'done',
+    body: 'The engine: configuration and validation, the layout solver in millimetres, the SVG and HTML renderers, symbols, embedded fonts, dates and week numbers. No interface yet.',
+  },
+];
 ---
 
-<BaseLayout
-  title={t('meta.aboutTitle')}
-  description={t('meta.aboutDescription')}
-  current="about"
->
-  <article class="page prose">
-    <p class="eyebrow">About</p>
-    <h1>{t('about.title')}</h1>
+<BaseLayout title={t('meta.aboutTitle')} description={t('meta.aboutDescription')} current="about">
+  <div class="page">
+    <nav class="toc" aria-label="On this page">
+      <span class="eyebrow">On this page</span>
+      {sections.map((section) => <a href={`#${section.id}`}>{section.label}</a>)}
+    </nav>
 
-    <h2 id="what">{t('about.whatTitle')}</h2>
-    <p>
-      Fridgeweek makes one thing: a print-ready sheet with a week on it, seven days from top to
-      bottom, all the same height. You set your household up once, print a stack, and write the
-      week on paper with a pen. It was built for a household that was already drawing this sheet
-      by hand every Sunday and wanted to stop redrawing the skeleton.
-    </p>
-    <p>
-      It is deliberately small. These are the things it will not do, and they are choices rather
-      than a roadmap:
-    </p>
-    <ul>
-      <li>No calendar sync, no accounts, no server-side storage of any kind.</li>
-      <li>
-        Nothing is pre-printed except dates. The sheet is a skeleton; its value is that it stays
-        paper.
-      </li>
-      <li>No screen view, no app, no recurring events.</li>
-      <li>
-        No poster aesthetics. The sheet is plain, dense and functional, printed in black on
-        whatever paper you have.
-      </li>
-    </ul>
-    <p>
-      The interface is available in {SHEET_LOCALES.length} languages, and the weekday names, date
-      formats and first day of the week come from your browser's own locale data, so a great many
-      more languages print correctly on the sheet itself.
-    </p>
+    <article class="body">
+      <header class="intro">
+        <p class="eyebrow">Everything else, on one page</p>
+        <h1>About Fridgeweek</h1>
+        <p class="lede">
+          What this is, who made it, what happens to your data &mdash; which is close to nothing
+          &mdash; and what changed. Short on purpose: a project this small does not need seven
+          legal pages.
+        </p>
+      </header>
 
-    <h2 id="privacy">{t('about.privacyTitle')}</h2>
-    <p>
-      There is no account, no database and no analytics on this site. No cookies are set. Nothing
-      you type is recorded anywhere.
-    </p>
-    <p>
-      Your sheet's configuration lives in two places, both of them yours: the address bar, which
-      is what makes a sheet a shareable link, and your browser's local storage, so that coming
-      back to the bare address restores your household. Clearing your browser data removes it.
-    </p>
-    <p>
-      The one exception is the PDF button. If a deployment has a PDF renderer, pressing it sends
-      your configuration &mdash; the names, symbols and settings, nothing else &mdash; to that
-      renderer, which draws the sheet, returns the file and keeps nothing. Printing from your
-      browser avoids even that, and every browser can save a printout as a PDF.
-    </p>
+      <section id="about">
+        <h2>About</h2>
+        <p>
+          Fridgeweek is a web page where you set a handful of parameters and get a print-ready
+          sheet: one week, seven days top to bottom, filled in by hand and stuck on the fridge. It
+          was written for households with pre-school and early-school children who were already
+          drawing this sheet by hand every week and wanted to stop redrawing the skeleton.
+        </p>
+        <p>
+          It is a small open-source project, not a company and not a product with a plan. Every
+          line of it, and a design document that records every decision and the reason behind it,
+          is public. Features that contradict that document get closed with a link rather than an
+          argument.
+        </p>
+        <div class="button-row">
+          <a class="button dark" href={repo} rel="noopener">
+            <GithubMark size={16} />eckberg/fridgeweek
+          </a>
+          <a class="button outline" href={`${repo}/blob/main/DESIGN.md`} rel="noopener">DESIGN.md</a>
+          <a class="button outline" href={`${repo}/blob/main/CONTRIBUTING.md`} rel="noopener">
+            CONTRIBUTING.md
+          </a>
+          <a class="button outline" href={`${repo}/blob/main/LICENSE`} rel="noopener">MIT licence</a>
+        </div>
+      </section>
 
-    <h2 id="terms">{t('about.termsTitle')}</h2>
-    <p>
-      Fridgeweek is provided as is, without warranty of any kind. It is a tool for printing a
-      blank sheet of paper; please do not rely on it for anything that matters more than that.
-      Use of the software is governed by the MIT licence below.
-    </p>
+      <section id="paper">
+        <h2>Why paper</h2>
+        <p>
+          A sheet on the fridge is visible to everyone in the house, including the people who
+          cannot read yet and the ones who do not have a phone. It never needs charging, it does
+          not notify anyone, and a four-year-old can point at Thursday. Every day is the same
+          height so today can be found by counting rows, weekday names are set in capitals because
+          pre-readers recognise capitals first, and weekend names are drawn as outline letters so
+          they can be coloured in.
+        </p>
+        <ul class="pills">
+          {principles.map((principle) => <li class="mono">{principle}</li>)}
+        </ul>
+      </section>
 
-    <h2 id="licence">{t('about.licenceTitle')}</h2>
-    <p>
-      The code is licensed under the MIT licence and the whole project is on GitHub at{' '}
-      <a href={repo} rel="noopener">eckberg/fridgeweek</a>. You are free to read it, run your own
-      copy, change it, or fold it into something else.
-    </p>
-    <p>Two bundled works keep their own licences:</p>
-    <ul>
-      <li>
-        <strong>Atkinson Hyperlegible Next</strong>, the typeface, under the SIL Open Font
-        License 1.1. It was designed for maximum distinction between letterforms, which is why a
-        sheet meant for children learning to read uses it.
-      </li>
-      <li>
-        <strong>Lucide</strong>, the icon set the symbols come from, under the ISC licence. A few
-        symbols are drawn for this project and are MIT like the rest of the code.
-      </li>
-    </ul>
-    <p>
-      Neither licence puts any attribution requirement on a sheet you print. The full notices are
-      in <a href={`${repo}/blob/main/THIRD_PARTY_NOTICES.md`} rel="noopener">THIRD_PARTY_NOTICES.md</a>.
-    </p>
+      <section id="privacy">
+        <h2>Privacy</h2>
+        <p>
+          There are no accounts and no cookies. The names and symbols you type stay in your
+          browser: they are encoded in the page's own address so you can bookmark or share a
+          configuration, and kept in local storage so the page remembers it next time. Clearing
+          your browser data deletes them.
+        </p>
+        <p>
+          One exception, and only if you ask for it: choosing <strong>Download PDF</strong> sends
+          your configuration to a rendering endpoint that draws the same sheet in headless
+          Chromium and returns the file. Nothing is stored there and nothing is kept after the
+          file is sent. Printing from your browser instead sends nothing anywhere and works
+          offline.
+        </p>
 
-    <h2 id="contributing">Contributing</h2>
-    <p>
-      Bug reports and fixes are welcome, and the two contributions most wanted are a new language
-      and a new symbol. Both have a step-by-step recipe in{' '}
-      <a href={`${repo}/blob/main/CONTRIBUTING.md`} rel="noopener">CONTRIBUTING.md</a>, and
-      neither asks you to understand the layout engine.
-    </p>
-  </article>
+        <h3>Visitor numbers</h3>
+        <p>
+          There are none. This deployment runs no analytics of any kind, so there is nothing to
+          consent to and no script to block. If that ever changes, it will be a cookieless,
+          aggregate service and this page will say which one before it is switched on.
+        </p>
+
+        <dl class="facts">
+          {
+            dataFacts.map(([key, value]) => (
+              <div class="fact">
+                <dt class="mono">{key}</dt>
+                <dd class="mono">{value}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </section>
+
+      <section id="terms">
+        <h2>Terms</h2>
+        <p>
+          Use it, print it, put it on your fridge, hand it to a school, translate it, fork it. The
+          code is MIT licensed, which is the whole of the legal position. The sheets you print are
+          yours and nobody claims anything in them.
+        </p>
+        <p>
+          There is no warranty: the software is provided as is. Printers are printers. Check a
+          sheet before you print twenty of them.
+        </p>
+      </section>
+
+      <section id="credits">
+        <h2>Licence and credits</h2>
+        <div class="credits">
+          {
+            credits.map((credit) => (
+              <div class="credit">
+                <a href={credit.href} rel="noopener">
+                  {credit.name}
+                </a>
+                <span class="mono">{credit.licence}</span>
+              </div>
+            ))
+          }
+        </div>
+        <p>
+          The typeface was designed for maximum letter distinction, which is exactly what a child
+          learning letters needs; it is embedded in the sheet so preview, print and PDF are
+          identical everywhere. Neither the font licence nor the icon licence puts any attribution
+          requirement on a sheet you print. Full notices are in{' '}
+          <a href={`${repo}/blob/main/THIRD_PARTY_NOTICES.md`} rel="noopener">
+            THIRD_PARTY_NOTICES.md
+          </a>.
+        </p>
+      </section>
+
+      <section id="contact">
+        <h2>Contact</h2>
+        <p>
+          Bugs, fixes and small improvements are welcome on the repository. The two contributions
+          wanted most are a new language and a new symbol, and both are a step-by-step recipe that
+          does not require understanding the layout engine.
+        </p>
+        <div class="button-row">
+          <a class="button dark" href={`${repo}/issues/new`} rel="noopener">
+            <GithubMark size={16} />Open an issue
+          </a>
+          <a
+            class="button outline"
+            href={`${repo}/blob/main/CONTRIBUTING.md#adding-a-language`}
+            rel="noopener"
+          >
+            Add a language
+          </a>
+          <a
+            class="button outline"
+            href={`${repo}/blob/main/CONTRIBUTING.md#adding-a-symbol`}
+            rel="noopener"
+          >
+            Add a symbol
+          </a>
+        </div>
+      </section>
+
+      <section id="changelog">
+        <h2>Changelog</h2>
+        <div class="releases">
+          {
+            releases.map((release) => (
+              <div class="release">
+                <div class="version">
+                  <span class="mono tag">{release.version}</span>
+                  <span class="mono state">{release.state}</span>
+                </div>
+                <p>{release.body}</p>
+              </div>
+            ))
+          }
+        </div>
+        <p>
+          Next: a hosted PDF renderer with rate limiting, then pictures in the README and the first
+          published release. Every release is tagged on{' '}
+          <a href={`${repo}/releases`} rel="noopener">GitHub</a>.
+        </p>
+      </section>
+    </article>
+  </div>
 </BaseLayout>
 
 <style>
   .page {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 56px;
+    max-width: 1080px;
     margin: 0 auto;
-    padding: var(--space-8) var(--space-5) var(--space-9);
+    padding: 56px var(--space-6) 72px;
+  }
+
+  /* The page is one long read, so the map of it stays in view. */
+  .toc {
+    position: sticky;
+    top: var(--space-5);
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .toc .eyebrow {
+    margin-bottom: var(--space-2);
+  }
+
+  .toc a {
+    padding: 9px 0;
+    font-size: 15px;
+    color: var(--ink-soft);
+    text-decoration: none;
+  }
+
+  .toc a:hover {
+    color: var(--accent);
+  }
+
+  .intro {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
   }
 
   h1 {
-    margin-top: var(--space-2);
+    font-size: clamp(34px, 4.6vw, 48px);
   }
 
-  @media (max-width: 640px) {
+  .lede {
+    max-width: 60ch;
+    font-size: 19px;
+    color: var(--ink-soft);
+  }
+
+  section {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 36px;
+    padding-top: 36px;
+    border-top: 1px solid var(--border);
+    scroll-margin-top: var(--space-5);
+  }
+
+  h2 {
+    font-size: 27px;
+  }
+
+  h3 {
+    margin-top: var(--space-4);
+    font-size: 19px;
+  }
+
+  p {
+    max-width: 66ch;
+    font-size: 17px;
+    color: var(--ink-soft);
+  }
+
+  strong {
+    color: var(--ink);
+  }
+
+  .button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: var(--space-1) 0 var(--space-2);
+    max-width: 66ch;
+  }
+
+  .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .dark {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .dark:hover {
+    background: var(--accent);
+    color: var(--paper);
+  }
+
+  .outline {
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    color: var(--ink);
+  }
+
+  .outline:hover {
+    border-color: var(--accent-mid);
+    color: var(--accent);
+  }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: var(--space-1);
+    list-style: none;
+  }
+
+  .pills li {
+    padding: 9px 12px;
+    border-radius: var(--radius-pill);
+    background: var(--paper-tint);
+    color: var(--accent);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .facts {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 66ch;
+    margin: var(--space-2) 0 0;
+    padding: 20px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .fact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    font-size: 13px;
+  }
+
+  .fact dt {
+    min-width: 11rem;
+    color: var(--ink-faint);
+  }
+
+  .fact dd {
+    margin: 0;
+    color: var(--ink);
+  }
+
+  .credits {
+    display: flex;
+    flex-direction: column;
+    max-width: 66ch;
+  }
+
+  .credit {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px 20px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .credit a {
+    font-size: 16px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .credit span {
+    color: var(--ink-faint);
+  }
+
+  .releases {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    max-width: 66ch;
+  }
+
+  .release {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+  }
+
+  .version {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    min-width: 9rem;
+  }
+
+  .tag {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  .state {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .release p {
+    flex: 1 1 22ch;
+    font-size: 16px;
+  }
+
+  @media (max-width: 860px) {
     .page {
-      padding: var(--space-7) var(--space-4) var(--space-8);
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-5);
+      padding: 40px var(--space-4) 56px;
+    }
+
+    .toc {
+      position: static;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: var(--space-1) var(--space-4);
+      padding-bottom: var(--space-4);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .toc .eyebrow {
+      flex-basis: 100%;
+      margin-bottom: 0;
     }
   }
 </style>

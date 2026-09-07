@@ -6,8 +6,8 @@ import '../styles/base.css';
 interface Props {
   title: string;
   description: string;
-  current?: 'builder' | 'about' | null;
-  /** The builder fills the viewport and manages its own scrolling. */
+  current?: 'about' | null;
+  /** The builder fills the viewport, manages its own scrolling and has its own chrome. */
   fullHeight?: boolean;
 }
 
@@ -37,11 +37,14 @@ const fullTitle = title === 'Fridgeweek' ? title : `${title} · Fridgeweek`;
   </head>
   <body class:list={{ 'full-height': fullHeight }}>
     <a href="#main" class="skip-link">Skip to content</a>
-    <SiteHeader current={current} />
+    <SiteHeader current={current} variant={fullHeight ? 'app' : 'site'}>
+      {/* The builder teleports its Print and Download buttons in here. */}
+      {fullHeight && <div id="builder-actions" />}
+    </SiteHeader>
     <main id="main">
       <slot />
     </main>
-    {!fullHeight && <SiteFooter />}
+    {fullHeight ? <slot name="app-footer" /> : <SiteFooter />}
   </body>
 </html>
 

@@ -31,6 +31,12 @@ const weekStartingId = useId();
 /** Announces the result of an action to assistive technology and to everyone else. */
 const notice = ref('');
 const busy = ref(false);
+/** Index of the person whose symbol grid is open, or null. */
+const openPerson = ref<number | null>(null);
+
+function togglePerson(index: number): void {
+  openPerson.value = openPerson.value === index ? null : index;
+}
 
 function announce(message: string): void {
   notice.value = message;
@@ -90,7 +96,13 @@ function dismissLinkWarning(): void {
   linkWasBroken.value = false;
 }
 
+function removePerson(index: number): void {
+  openPerson.value = null;
+  sheet.removePerson(index);
+}
+
 function addPerson(): void {
+  openPerson.value = null;
   const used = new Set(takenSymbols.value);
   const symbol = SYMBOL_IDS.find((id) => !used.has(id));
   if (!symbol) return;
@@ -183,25 +195,25 @@ const languageSummary = computed(() => {
 
 <template>
   <div class="builder">
+    <Teleport to="#builder-actions" defer>
+      <button type="button" class="header-button secondary" :disabled="busy" @click="onPrint">
+        {{ t('action.print') }}
+      </button>
+      <button type="button" class="header-button primary" :disabled="busy" @click="onPdf">
+        {{ t('action.downloadPdf') }}
+      </button>
+    </Teleport>
+
+    <!-- One live region that always exists: swapping the element out would
+         insert the text with its container and typically go unannounced. -->
+    <p class="notice" role="status" :class="{ 'visually-hidden': !message }">{{ message }}</p>
+
     <form
       class="panel"
       :aria-label="t('builder.settingsLabel')"
       @submit.prevent
       @input="dismissLinkWarning"
     >
-      <div class="actions">
-        <button type="button" class="primary" :disabled="busy" @click="onPdf">
-          {{ t('action.downloadPdf') }}
-        </button>
-        <button type="button" class="secondary" :disabled="busy" @click="onPrint">
-          {{ t('action.print') }}
-        </button>
-      </div>
-
-      <!-- One live region that always exists: swapping the element out would
-           insert the text with its container and typically go unannounced. -->
-      <p class="notice" role="status" :class="{ 'visually-hidden': !message }">{{ message }}</p>
-
       <ControlGroup
         :title="t('language.group')"
         :meta="t('language.available', { count: SHEET_LOCALES.length })"
@@ -233,8 +245,10 @@ const languageSummary = computed(() => {
             :position="index + 1"
             :taken="takenSymbols"
             :can-remove="canRemovePerson"
+            :open="openPerson === index"
             @update="(change) => sheet.updatePerson(index, change)"
-            @remove="sheet.removePerson(index)"
+            @remove="removePerson(index)"
+            @toggle="togglePerson(index)"
           />
         </ul>
 
@@ -352,8 +366,6 @@ const languageSummary = computed(() => {
         </FieldRow>
       </ControlGroup>
 
-      <FitStatus :layout="layout" :fit="fit" />
-
       <div class="panel-foot">
         <button type="button" class="ghost" @click="onCopyLink">{{ t('action.copyLink') }}</button>
         <button type="button" class="ghost" @click="onDownloadHtml">
@@ -363,8 +375,13 @@ const languageSummary = computed(() => {
       </div>
     </form>
 
-    <div class="preview" :aria-label="t('builder.previewLabel')" role="region">
+    <div class="stage" :aria-label="t('builder.previewLabel')" role="region">
+      <FitStatus :layout="layout" :fit="fit" />
       <SheetPreview :svg="previewSvg" />
+      <aside class="stage-note">
+        <span class="eyebrow">{{ t('builder.noteLabel') }}</span>
+        <p>{{ t('builder.urlNote') }} {{ t('builder.privacyNote') }}</p>
+      </aside>
     </div>
   </div>
 </template>
@@ -372,69 +389,60 @@ const languageSummary = computed(() => {
 <style scoped>
 .builder {
   display: grid;
-  grid-template-columns: var(--panel-width) 1fr;
+  grid-template-columns: 340px minmax(0, 1fr);
   height: 100%;
   min-height: 0;
 }
 
 .panel {
-  /* A grid item defaults to its content's minimum width, which a stepper or a
-     segmented control can push past a narrow viewport. */
+  /* A grid item defaults to the size of its content in both axes, which lets a
+     stepper widen the column and a long panel push past the viewport. */
   min-width: 0;
+  min-height: 0;
   overflow-y: auto;
   border-right: 1px solid var(--border);
   background: var(--paper);
 }
 
-.preview {
-  min-width: 0;
-  height: 100%;
-}
-
-.actions {
+/* The sheet, its verdict and its footnote read as one column. */
+.stage {
   display: flex;
-  gap: var(--space-2);
-  padding: var(--space-4) var(--space-5);
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  background: var(--paper);
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--desk);
 }
 
-.actions button {
+.stage :deep(.stage-scroll) {
   flex: 1;
-  height: 40px;
+  min-height: 0;
+}
+
+.stage :deep(.status) {
+  flex: none;
+}
+
+.stage-note {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 var(--space-5) 18px;
+  padding: 10px 14px;
+  background: var(--paper-tint);
   border-radius: var(--radius-md);
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  border: 1px solid transparent;
 }
 
-.actions button:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.primary {
-  background: var(--accent);
-  color: var(--paper);
-}
-
-.primary:hover:not(:disabled) {
-  background: var(--ink);
-}
-
-.secondary {
-  background: var(--white);
-  border-color: var(--border);
-  color: var(--ink);
-}
-
-.secondary:hover:not(:disabled) {
-  border-color: var(--accent-mid);
+.stage-note .eyebrow {
+  flex: none;
   color: var(--accent);
+}
+
+.stage-note p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
 }
 
 .notice {
@@ -454,33 +462,40 @@ const languageSummary = computed(() => {
 
 .add {
   align-self: flex-start;
-  padding: var(--space-2) var(--space-3);
-  border: 1px dashed var(--border);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 14px;
+  border: none;
   border-radius: var(--radius-md);
-  background: transparent;
-  font-size: 14px;
+  background: var(--paper-tint);
+  font-size: 15px;
   font-weight: 700;
-  color: var(--ink-soft);
+  color: var(--accent);
   cursor: pointer;
 }
 
 .add:hover {
-  border-color: var(--accent-mid);
-  border-style: solid;
-  color: var(--accent);
+  background: var(--accent-pale);
 }
 
 .select,
 .date {
   width: 100%;
-  height: 38px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--border);
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--rule);
   border-radius: var(--radius-md);
   background: var(--white);
   font: inherit;
   font-size: 15px;
   color: var(--ink);
+}
+
+.select:focus,
+.date:focus {
+  border-color: var(--accent-mid);
 }
 
 .summary {
@@ -510,13 +525,6 @@ const languageSummary = computed(() => {
   color: var(--accent);
 }
 
-.foot-note {
-  flex-basis: 100%;
-  margin-top: var(--space-2);
-  font-size: 11px;
-  line-height: 1.6;
-}
-
 @media (max-width: 900px) {
   .builder {
     grid-template-columns: 1fr;
@@ -530,8 +538,57 @@ const languageSummary = computed(() => {
     overflow: visible;
   }
 
-  .preview {
+  .stage {
     min-height: 70vh;
   }
+}
+</style>
+
+<style>
+/* Teleported into the site header, so these cannot be scoped to this component. */
+#builder-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+#builder-actions .header-button {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#builder-actions .header-button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* See SiteHeader: the mid orange fails contrast for button text. */
+#builder-actions .primary {
+  padding: 0 22px;
+  border: none;
+  background: var(--accent);
+  color: var(--paper);
+}
+
+#builder-actions .primary:hover:not(:disabled) {
+  background: var(--ink);
+}
+
+#builder-actions .secondary {
+  padding: 0 18px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+#builder-actions .secondary:hover:not(:disabled) {
+  border-color: var(--accent-mid);
+  color: var(--accent);
 }
 </style>

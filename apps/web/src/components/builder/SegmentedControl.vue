@@ -30,7 +30,7 @@ defineProps<{ options: Option[]; label: string }>();
   padding: 3px;
   gap: 3px;
   border-radius: var(--radius-md);
-  background: var(--paper-tint);
+  background: var(--paper-sunk);
 }
 
 .segment {

@@ -1,5 +1,6 @@
 ---
 import SheetBuilder from '../components/builder/SheetBuilder.vue';
+import GithubMark from '../components/GithubMark.astro';
 import { t } from '../i18n/index.js';
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
@@ -7,7 +8,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 <BaseLayout
   title={t('meta.builderTitle')}
   description={t('meta.builderDescription')}
-  current="builder"
   fullHeight
 >
   <SheetBuilder client:only="vue">
@@ -15,6 +15,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <p>Loading the sheet builder…</p>
     </div>
   </SheetBuilder>
+
+  <footer slot="app-footer" class="app-footer">
+    <p class="mono">{t('footer.legal')}</p>
+    <nav aria-label={t('nav.secondaryLabel')}>
+      <a href="/about">{t('footer.about')}</a>
+      <a href="/about#changelog">{t('footer.changelog')}</a>
+      <a href="/">{t('nav.how')}</a>
+      <a href="https://github.com/eckberg/fridgeweek" rel="noopener" class="with-mark">
+        <GithubMark size={15} />{t('nav.source')}
+      </a>
+    </nav>
+  </footer>
 </BaseLayout>
 
 <style is:global>
@@ -27,9 +39,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     display: contents;
   }
 
-  /* The builder owns the viewport below the header. */
+  /* The builder owns whatever the header and footer leave. */
   body.full-height main {
-    height: calc(100vh - var(--header-height));
+    flex: 1;
+    min-height: 0;
     overflow: hidden;
   }
 
@@ -50,5 +63,43 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     place-items: center;
     height: 100%;
     color: var(--ink-faint);
+  }
+
+  .app-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 28px;
+    padding: 18px var(--space-5);
+    border-top: 1px solid var(--border);
+    background: var(--paper);
+  }
+
+  .app-footer .mono {
+    font-size: 12px;
+  }
+
+  .app-footer nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .app-footer nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--ink-soft);
+    text-decoration: none;
+  }
+
+  .app-footer nav a:hover {
+    background: var(--paper-sunk);
+    color: var(--ink);
   }
 </style>

@@ -1,0 +1,42 @@
+---
+import { getSymbol, type SymbolId } from '@fridgeweek/core';
+
+/** A few marks at reading size, to show what "pick a symbol" means. */
+interface Props {
+  ids: SymbolId[];
+}
+
+const { ids } = Astro.props;
+---
+
+<ul class="row">
+  {
+    ids.map((id) => (
+      <li>
+        <svg
+          viewBox="0 0 24 24"
+          width="26"
+          height="26"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          role="img"
+          aria-label={getSymbol(id).label}
+          set:html={getSymbol(id).body}
+        />
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .row {
+    display: flex;
+    gap: 14px;
+    padding-top: 4px;
+    list-style: none;
+    color: var(--ink-soft);
+  }
+</style>

@@ -61,11 +61,10 @@ function commit(event: Event): void {
 .stepper {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 2px;
   padding: 3px;
-  border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--white);
+  background: var(--paper-sunk);
 }
 
 button {
@@ -73,7 +72,7 @@ button {
   height: 30px;
   border: none;
   border-radius: var(--radius-sm);
-  background: var(--paper-sunk);
+  background: var(--white);
   font-size: 17px;
   line-height: 1;
   cursor: pointer;
@@ -81,6 +80,7 @@ button {
 
 button:hover:not(:disabled) {
   background: var(--paper-tint);
+  color: var(--accent);
 }
 
 button:disabled {

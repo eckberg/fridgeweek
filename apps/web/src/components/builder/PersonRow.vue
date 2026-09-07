@@ -9,11 +9,14 @@ const props = defineProps<{
   position: number;
   taken: SymbolId[];
   canRemove: boolean;
+  /** Only one person's symbol grid is open at a time, so the panel stays short. */
+  open: boolean;
 }>();
 
 const emit = defineEmits<{
   update: [change: Partial<Person>];
   remove: [];
+  toggle: [];
 }>();
 
 const nameId = useId();
@@ -29,8 +32,6 @@ const symbol = computed({
   set: (value: SymbolId) => emit('update', { symbol: value }),
 });
 
-const shownInitial = computed(() => personInitial(props.person));
-
 function onName(event: Event): void {
   emit('update', { name: (event.target as HTMLInputElement).value });
 }
@@ -42,70 +43,95 @@ function onInitial(event: Event): void {
 </script>
 
 <template>
-  <li class="person">
-    <SymbolPicker
-      v-model="symbol"
-      :taken="taken"
-      :t="t"
-      :button-label="t('people.symbolLabel', { name: displayName })"
-    />
+  <li class="person" :class="{ open }">
+    <div class="row">
+      <SymbolPicker
+        v-model="symbol"
+        :taken="taken"
+        :open="open"
+        :button-label="t('people.symbolLabel', { name: displayName })"
+        @toggle="emit('toggle')"
+      />
 
-    <input
-      :id="nameId"
-      class="name"
-      type="text"
-      :value="person.name"
-      maxlength="24"
-      :placeholder="t('people.namePlaceholder')"
-      :aria-label="t('people.nameLabel', { position })"
-      @input="onName"
-    />
+      <input
+        :id="nameId"
+        class="name"
+        type="text"
+        :value="person.name"
+        maxlength="24"
+        :placeholder="t('people.namePlaceholder')"
+        :aria-label="t('people.nameLabel', { position })"
+        @input="onName"
+      />
 
-    <input
-      :id="initialId"
-      class="initial"
-      type="text"
-      :value="shownInitial"
-      maxlength="2"
-      :aria-label="t('people.initialLabel', { name: displayName })"
-      @input="onInitial"
-    />
+      <input
+        :id="initialId"
+        class="initial"
+        type="text"
+        :value="personInitial(person)"
+        maxlength="2"
+        :aria-label="t('people.initialLabel', { name: displayName })"
+        @input="onInitial"
+      />
 
-    <button
-      v-if="canRemove"
-      type="button"
-      class="remove"
-      :aria-label="t('people.removeLabel', { name: displayName })"
-      @click="emit('remove')"
-    >
-      <span aria-hidden="true">&times;</span>
-    </button>
-    <span v-else class="remove-spacer" />
+      <button
+        v-if="canRemove"
+        type="button"
+        class="remove"
+        :aria-label="t('people.removeLabel', { name: displayName })"
+        @click="emit('remove')"
+      >
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <span v-else class="remove-spacer" />
+    </div>
   </li>
 </template>
 
 <style scoped>
+/*
+ * A person is a bordered row. Opening the symbol grid turns the row into a
+ * card in the accent colour, so it is obvious which person is being changed.
+ */
 .person {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
   list-style: none;
+  padding: 6px 8px 6px 12px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.person.open {
+  padding: 12px;
+  border: 2px solid var(--accent-mid);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
 }
 
 input {
-  height: 38px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--white);
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
   font: inherit;
   font-size: 15px;
   color: var(--ink);
   min-width: 0;
 }
 
+input:hover {
+  border-color: var(--border);
+}
+
 input:focus {
   border-color: var(--accent-mid);
+  background: var(--white);
 }
 
 .name {
@@ -113,7 +139,7 @@ input:focus {
 }
 
 .initial {
-  width: 46px;
+  width: 42px;
   flex: none;
   text-align: center;
   font: 500 15px/1 var(--font-mono);
@@ -121,8 +147,8 @@ input:focus {
 
 .remove,
 .remove-spacer {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   flex: none;
 }
 
@@ -133,7 +159,7 @@ input:focus {
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--ink-faint);
-  font-size: 20px;
+  font-size: 19px;
   line-height: 1;
   cursor: pointer;
 }

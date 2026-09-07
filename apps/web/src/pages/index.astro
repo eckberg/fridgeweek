@@ -1,11 +1,13 @@
 ---
 import { SHEET_LOCALES } from '@fridgeweek/core';
+import RingLine from '../components/landing/RingLine.astro';
 import SheetSample from '../components/landing/SheetSample.astro';
 import StepCard from '../components/landing/StepCard.astro';
+import SymbolRow from '../components/landing/SymbolRow.astro';
 import { t } from '../i18n/index.js';
 import BaseLayout from '../layouts/BaseLayout.astro';
 
-/** What the builder can set, listed as the sheet's own vocabulary. */
+/** What the builder can set, in the sheet's own vocabulary. */
 const choices = [
   { label: 'People', value: '1 to 6' },
   { label: 'Marks', value: 'symbol or initial' },
@@ -15,7 +17,7 @@ const choices = [
   { label: 'Week starting', value: 'blank, or a date' },
   { label: 'Weekends', value: 'outline or plain' },
   { label: 'Paper', value: 'A4 or Letter · 5 to 20 mm' },
-  { label: 'Language', value: `${SHEET_LOCALES.length}, in your own` },
+  { label: 'Language', value: `${SHEET_LOCALES.length}, and Intl for the rest` },
 ];
 
 const family = [
@@ -24,30 +26,41 @@ const family = [
   { name: 'Sara', symbol: 'flower' as const },
   { name: 'Karl', symbol: 'rocket' as const },
 ];
+
+const entries = ['swimming kit', 'preschool closed', 'football at five', 'grandma picks up'];
 ---
 
 <BaseLayout title="Fridgeweek" description={t('site.tagline')}>
   <section class="hero">
-    <p class="eyebrow">Paper · a pen · seven rows</p>
-    <h1>{t('landing.heroTitle')}</h1>
-    <p class="lede">{t('landing.heroBody')}</p>
-    <div class="hero-actions">
-      <a class="cta" href="/sheet">{t('landing.heroCta')}</a>
-      <a class="cta-quiet" href="#samples">{t('landing.heroSecondary')}</a>
+    <div class="hero-text">
+      <p class="eyebrow">{t('landing.heroEyebrow')}</p>
+      <h1>{t('landing.heroTitle')}</h1>
+      <p class="lede">{t('landing.heroBody')}</p>
+      <div class="hero-actions">
+        <a class="button primary" href="/sheet">{t('landing.heroCta')}</a>
+        <a class="button quiet" href="#samples">{t('landing.heroSecondary')}</a>
+      </div>
+      <p class="mono facts">{t('landing.heroFacts', { count: SHEET_LOCALES.length })}</p>
     </div>
-    <p class="mono facts">
-      Free · MIT · A4 and Letter · {SHEET_LOCALES.length} languages · no account
-    </p>
+
+    <div class="hero-frame">
+      <SheetSample id="hero" config={{ locale: 'sv-SE', people: family, weekStarting: '2026-09-07' }} />
+    </div>
   </section>
 
-  <section class="band" id="how">
-    <div class="band-inner">
-      <p class="eyebrow">{t('landing.howEyebrow')}</p>
-      <h2>{t('landing.howTitle')}</h2>
+  <section class="band tint" id="how">
+    <div class="inner">
+      <header class="section-head">
+        <p class="eyebrow">{t('landing.howEyebrow')}</p>
+        <h2>{t('landing.howTitle')}</h2>
+      </header>
+
       <div class="steps">
         <StepCard number="01" title={t('landing.step1Title')}>
           {t('landing.step1Body')}
+          <SymbolRow slot="extra" ids={['cat', 'rocket', 'flower', 'house']} />
         </StepCard>
+
         <StepCard
           number="02"
           title={t('landing.step2Title')}
@@ -55,113 +68,126 @@ const family = [
         >
           {t('landing.step2Body')}
         </StepCard>
+
         <StepCard number="03" title={t('landing.step3Title')}>
           {t('landing.step3Body')}
+          <RingLine slot="extra" text="swimming kit" ruled />
         </StepCard>
       </div>
     </div>
   </section>
 
-  <section class="section" id="what-you-set">
-    <p class="eyebrow">What you set</p>
-    <h2>Nine choices, and the layout does the arithmetic</h2>
-    <p class="lede">
-      Fridgeweek never shrinks a line behind your back. If a configuration will not fit on the
-      paper, it says so and tells you exactly what to change.
-    </p>
-    <ul class="choices">
-      {
-        choices.map((choice) => (
-          <li>
-            <span class="choice-label">{choice.label}</span>
-            <span class="mono choice-value">{choice.value}</span>
-          </li>
-        ))
-      }
-    </ul>
+  <section class="band" id="what-you-set">
+    <div class="inner">
+      <header class="section-head">
+        <p class="eyebrow">{t('landing.setEyebrow')}</p>
+        <h2>{t('landing.setTitle')}</h2>
+        <p class="lede narrow">{t('landing.setBody')}</p>
+      </header>
+
+      <ul class="choices">
+        {
+          choices.map((choice) => (
+            <li>
+              <span class="choice-label">{choice.label}</span>
+              <span class="mono choice-value">{choice.value}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
   </section>
 
-  <section class="band" id="samples">
-    <div class="band-inner">
-      <p class="eyebrow">Samples</p>
-      <h2>Two real sheets, exactly as they print</h2>
-      <p class="lede">
-        Both are rendered by the same function the printer receives, at build time. Start from
-        one of these.
-      </p>
+  <section class="band desk" id="samples">
+    <div class="inner">
+      <header class="section-head row">
+        <div>
+          <p class="eyebrow">{t('landing.samplesEyebrow')}</p>
+          <h2>{t('landing.samplesTitle')}</h2>
+        </div>
+        <a class="button primary" href="/sheet">{t('landing.samplesCta')}</a>
+      </header>
+
       <div class="samples">
         <SheetSample
+          id="sa"
           caption="en-GB · A4 · blank dates · 2 people and the house"
           config={{ locale: 'en-GB', people: family.slice(0, 2) }}
         />
         <SheetSample
+          id="sb"
           caption="sv-SE · A4 · week 37 dated · 4 people and the house"
           config={{ locale: 'sv-SE', people: family, weekStarting: '2026-09-07' }}
         />
+
+        <div class="ends-up">
+          <h3>{t('landing.endsUpTitle')}</h3>
+          <div class="entries">
+            {entries.map((entry) => <RingLine text={entry} />)}
+          </div>
+          <p class="note">{t('landing.endsUpBody')}</p>
+        </div>
       </div>
     </div>
-  </section>
-
-  <section class="section closing">
-    <h2>{t('landing.ctaTitle')}</h2>
-    <p class="lede">{t('landing.ctaBody')}</p>
-    <a class="cta" href="/sheet">{t('landing.heroCta')}</a>
   </section>
 </BaseLayout>
 
 <style>
-  .hero,
-  .section,
-  .band-inner {
+  .inner,
+  .hero {
     max-width: var(--page-max);
     margin: 0 auto;
-    padding: var(--space-8) var(--space-5);
   }
 
+  /* Hero: the words on the left, a real sheet framed on the right. */
   .hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-7);
+    padding: 64px var(--space-6) 56px;
+  }
+
+  .hero-text {
+    flex: 1 1 420px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--space-4);
-    padding-top: var(--space-9);
+    gap: 22px;
+  }
+
+  h1 {
+    font-size: clamp(38px, 5.4vw, 60px);
   }
 
   .lede {
-    max-width: 62ch;
-    font-size: 18px;
+    max-width: 52ch;
+    font-size: 19px;
     color: var(--ink-soft);
+  }
+
+  .narrow {
+    max-width: 46ch;
+    font-size: 16px;
   }
 
   .hero-actions {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-4);
-    margin-top: var(--space-2);
+    gap: var(--space-3);
   }
 
-  .cta {
-    display: inline-block;
-    padding: var(--space-3) var(--space-5);
-    border-radius: var(--radius-md);
-    background: var(--accent);
-    color: var(--paper);
-    font-weight: 700;
-    text-decoration: none;
+  .hero-frame {
+    flex: 0 1 420px;
+    display: flex;
+    justify-content: center;
+    padding: 36px;
+    border-radius: 16px;
+    background: var(--desk);
   }
 
-  .cta:hover {
-    background: var(--ink);
-    color: var(--paper);
-  }
-
-  .cta-quiet {
-    font-weight: 700;
-    text-decoration: none;
-  }
-
-  .cta-quiet:hover {
-    text-decoration: underline;
+  .hero-frame :global(.sample) {
+    max-width: 360px;
   }
 
   .facts {
@@ -170,70 +196,144 @@ const family = [
     font-size: 11px;
   }
 
+  .button {
+    display: inline-flex;
+    align-items: center;
+    height: 48px;
+    border-radius: var(--radius-md);
+    font-size: 17px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  /* See SiteHeader: the mid orange fails contrast for button text. */
+  .primary {
+    padding: 0 26px;
+    background: var(--accent);
+    color: var(--paper);
+  }
+
+  .primary:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .quiet {
+    padding: 0 22px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+  }
+
+  .quiet:hover {
+    border-color: var(--accent-mid);
+    color: var(--accent);
+  }
+
   .band {
-    background: var(--paper-sunk);
+    padding: 56px var(--space-6);
+  }
+
+  .band.tint {
+    background: var(--paper-tint);
     border-block: 1px solid var(--border);
   }
 
-  .section h2,
-  .band-inner h2 {
-    margin-top: var(--space-2);
-    margin-bottom: var(--space-4);
+  .band.desk {
+    background: var(--desk);
+    border-top: 1px solid var(--border);
+  }
+
+  .section-head {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+
+  .section-head.row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .section-head h2 {
+    font-size: clamp(26px, 3.4vw, 38px);
   }
 
   .steps {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--space-4);
-    margin-top: var(--space-5);
+    grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+    gap: 20px;
   }
 
-  /* Nine choices, so three by three reads as one block rather than a ragged list. */
   .choices {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-    max-width: 1000px;
-    gap: var(--space-1) var(--space-5);
-    margin-top: var(--space-5);
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 12px;
     list-style: none;
   }
 
   .choices li {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--space-3);
-    padding: var(--space-3) 0;
-    border-bottom: 1px solid var(--border);
+    flex-direction: column;
+    gap: 5px;
+    padding: 16px;
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 10px;
   }
 
   .choice-label {
+    font-size: 15px;
     font-weight: 700;
-  }
-
-  .choice-value {
-    text-align: right;
   }
 
   .samples {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: var(--space-6);
-    margin-top: var(--space-5);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 28px;
+    align-items: start;
   }
 
-  .closing {
+  .ends-up {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-4);
+    gap: 18px;
+    padding: 28px;
+    background: var(--paper);
+    border-radius: 12px;
   }
 
-  @media (max-width: 640px) {
-    .hero,
-    .section,
-    .band-inner {
-      padding: var(--space-7) var(--space-4);
+  .ends-up h3 {
+    font-size: 20px;
+  }
+
+  .entries {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .note {
+    font-size: 15px;
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 720px) {
+    .hero {
+      padding: 40px var(--space-4);
+      gap: var(--space-6);
+    }
+
+    .band {
+      padding: 40px var(--space-4);
+    }
+
+    .hero-frame {
+      padding: 20px;
     }
   }
 </style>
