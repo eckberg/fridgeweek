@@ -33,7 +33,7 @@ Early development, and everything runs locally with no account, key or hosting p
 
 - `@fridgeweek/core` is complete: config, layout solver, renderer, symbols, embedded fonts, dates and i18n.
 - The website has a landing page, an about page and the sheet builder with a live preview. The interface is English; the *sheet* prints in 15 languages, and correctly in many more, because weekday names and dates come from the browser's own locale data.
-- `POST /api/pdf` renders a PDF with a local Chromium. Deployments without a renderer answer 501 and the interface tells people to print instead, which every browser can save as a PDF.
+- `POST /api/pdf` renders a PDF with a local Chromium, or with Cloudflare Browser Rendering when built for Cloudflare. Deployments without a renderer answer 501 and the interface tells people to print instead, which every browser can save as a PDF. See [docs/DEPLOYING.md](docs/DEPLOYING.md).
 
 See [DESIGN.md section 9](DESIGN.md#9-milestones) for the milestones and [PLAN.md](PLAN.md) for what this phase set out to build.
 
