@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { MessageKey } from '../../i18n/index.js';
+import { t } from '../../i18n/index.js';
 
 /**
  * The preview is the sheet itself: the same SVG the printer gets, scaled to the
@@ -8,7 +8,6 @@ import type { MessageKey } from '../../i18n/index.js';
  */
 defineProps<{
   svg: string;
-  t: (key: MessageKey, params?: Record<string, string | number>) => string;
 }>();
 </script>
 

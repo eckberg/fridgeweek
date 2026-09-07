@@ -32,7 +32,7 @@ Output is mono only. Colour is decoration, not information, so a cheap laser pri
 Early development, and everything runs locally with no account, key or hosting platform.
 
 - `@fridgeweek/core` is complete: config, layout solver, renderer, symbols, embedded fonts, dates and i18n.
-- The website has a landing page, an about page and the sheet builder with a live preview, in 15 languages.
+- The website has a landing page, an about page and the sheet builder with a live preview. The interface is English; the *sheet* prints in 15 languages, and correctly in many more, because weekday names and dates come from the browser's own locale data.
 - `POST /api/pdf` renders a PDF with a local Chromium. Deployments without a renderer answer 501 and the interface tells people to print instead, which every browser can save as a PDF.
 
 See [DESIGN.md section 9](DESIGN.md#9-milestones) for the milestones and [PLAN.md](PLAN.md) for what this phase set out to build.

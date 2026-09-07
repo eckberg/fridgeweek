@@ -21,7 +21,9 @@ const required = [
   'encodeConfig',
   'decodeConfig',
   'symbolLabel',
+  'SHEET_LOCALES',
   'SYMBOL_IDS',
+  't',
   'fontFaceCss',
 ];
 
@@ -35,7 +37,8 @@ if (missing.length > 0) {
 const config = core.resolveConfig({ locale: 'sv-SE', weekStarting: '2026-09-07' });
 const svg = core.renderSvg(config);
 if (!svg.includes('MÅNDAG')) throw new Error('The rendered sheet is not in the requested locale.');
-if (core.symbolLabel('house', 'sv') !== 'Hus') throw new Error('Symbol labels did not load.');
+if (core.symbolLabel('house') !== 'House') throw new Error('Symbol names did not load.');
+if (core.t('sv', 'sheet.week') !== 'Vecka') throw new Error('Sheet translations did not load.');
 if (!core.fontFaceCss().includes('data:font/woff2')) throw new Error('Fonts did not load.');
 
 console.log(

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { type Person, personInitial, type SymbolId } from '@fridgeweek/core';
 import { computed, useId } from 'vue';
-import type { MessageKey } from '../../i18n/index.js';
+import { t } from '../../i18n/index.js';
 import SymbolPicker from './SymbolPicker.vue';
 
 const props = defineProps<{
@@ -9,8 +9,6 @@ const props = defineProps<{
   position: number;
   taken: SymbolId[];
   canRemove: boolean;
-  locale: string;
-  t: (key: MessageKey, params?: Record<string, string | number>) => string;
 }>();
 
 const emit = defineEmits<{
@@ -23,7 +21,7 @@ const initialId = useId();
 
 /** Falls back to the position when the name is still empty, so labels are never blank. */
 const displayName = computed(
-  () => props.person.name.trim() || props.t('people.nameLabel', { position: props.position }),
+  () => props.person.name.trim() || t('people.nameLabel', { position: props.position }),
 );
 
 const symbol = computed({
@@ -48,7 +46,6 @@ function onInitial(event: Event): void {
     <SymbolPicker
       v-model="symbol"
       :taken="taken"
-      :locale="locale"
       :t="t"
       :button-label="t('people.symbolLabel', { name: displayName })"
     />

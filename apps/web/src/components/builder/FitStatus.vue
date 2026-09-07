@@ -1,22 +1,21 @@
 <script setup lang="ts">
 import type { Layout, LayoutIssue } from '@fridgeweek/core';
 import { computed } from 'vue';
-import type { MessageKey } from '../../i18n/index.js';
+import { t } from '../../i18n/index.js';
 
 const props = defineProps<{
   layout: Layout;
   fit: 'comfortable' | 'tight' | 'impossible';
-  t: (key: MessageKey, params?: Record<string, string | number>) => string;
 }>();
 
 const headline = computed(() => {
-  if (props.fit === 'impossible') return props.t('status.doesNotFit');
-  if (props.fit === 'tight') return props.t('status.tight');
-  return props.t('status.comfortable');
+  if (props.fit === 'impossible') return t('status.doesNotFit');
+  if (props.fit === 'tight') return t('status.tight');
+  return t('status.comfortable');
 });
 
 const metrics = computed(() =>
-  props.t('status.metrics', {
+  t('status.metrics', {
     line: props.layout.metrics.lineHeight,
     mark: props.layout.metrics.markSize,
     day: props.layout.metrics.dayHeight,
@@ -24,7 +23,7 @@ const metrics = computed(() =>
 );
 
 const paper = computed(() =>
-  props.t('status.paperSummary', {
+  t('status.paperSummary', {
     paper: props.layout.paper.name,
     width: props.layout.paper.width,
     height: props.layout.paper.height,

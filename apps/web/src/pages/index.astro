@@ -1,10 +1,9 @@
 ---
+import { SHEET_LOCALES } from '@fridgeweek/core';
 import SheetSample from '../components/landing/SheetSample.astro';
 import StepCard from '../components/landing/StepCard.astro';
-import { t, UI_LOCALES } from '../i18n/index.js';
+import { t } from '../i18n/index.js';
 import BaseLayout from '../layouts/BaseLayout.astro';
-
-const en = (key: Parameters<typeof t>[1]) => t('en', key);
 
 /** What the builder can set, listed as the sheet's own vocabulary. */
 const choices = [
@@ -16,7 +15,7 @@ const choices = [
   { label: 'Week starting', value: 'blank, or a date' },
   { label: 'Weekends', value: 'outline or plain' },
   { label: 'Paper', value: 'A4 or Letter · 5 to 20 mm' },
-  { label: 'Language', value: `${UI_LOCALES.length}, in your own` },
+  { label: 'Language', value: `${SHEET_LOCALES.length}, in your own` },
 ];
 
 const family = [
@@ -27,39 +26,37 @@ const family = [
 ];
 ---
 
-<BaseLayout title="Fridgeweek" description={en('site.tagline')}>
+<BaseLayout title="Fridgeweek" description={t('site.tagline')}>
   <section class="hero">
     <p class="eyebrow">Paper · a pen · seven rows</p>
-    <h1>{en('landing.heroTitle')}</h1>
-    <p class="lede">{en('landing.heroBody')}</p>
+    <h1>{t('landing.heroTitle')}</h1>
+    <p class="lede">{t('landing.heroBody')}</p>
     <div class="hero-actions">
-      <a class="cta" href="/sheet">{en('landing.heroCta')}</a>
-      <a class="cta-quiet" href="#samples">{en('landing.heroSecondary')}</a>
+      <a class="cta" href="/sheet">{t('landing.heroCta')}</a>
+      <a class="cta-quiet" href="#samples">{t('landing.heroSecondary')}</a>
     </div>
     <p class="mono facts">
-      Free · MIT · A4 and Letter · {UI_LOCALES.length} languages · no account
+      Free · MIT · A4 and Letter · {SHEET_LOCALES.length} languages · no account
     </p>
   </section>
 
   <section class="band" id="how">
     <div class="band-inner">
-      <p class="eyebrow">{en('landing.howEyebrow')}</p>
-      <h2>{en('landing.howTitle')}</h2>
+      <p class="eyebrow">{t('landing.howEyebrow')}</p>
+      <h2>{t('landing.howTitle')}</h2>
       <div class="steps">
-        <StepCard number="01" title={en('landing.step1Title')}>
-          {en('landing.step1Body')}
+        <StepCard number="01" title={t('landing.step1Title')}>
+          {t('landing.step1Body')}
         </StepCard>
         <StepCard
           number="02"
-          title={en('landing.step2Title')}
+          title={t('landing.step2Title')}
           tags={['A4', 'Letter', '1–20 copies', 'Mono']}
         >
-          {en('landing.step2Body')}
+          {t('landing.step2Body')}
         </StepCard>
-        <StepCard number="03" title={en('landing.step3Title')}>
-          Every writing line starts with the whole household's marks. Circle one and the line
-          belongs to that person; circle the house and it belongs to everyone. Any line can be
-          anyone's, so a busy Thursday does not overflow a fixed box.
+        <StepCard number="03" title={t('landing.step3Title')}>
+          {t('landing.step3Body')}
         </StepCard>
       </div>
     </div>
@@ -106,9 +103,9 @@ const family = [
   </section>
 
   <section class="section closing">
-    <h2>{en('landing.ctaTitle')}</h2>
-    <p class="lede">{en('landing.ctaBody')}</p>
-    <a class="cta" href="/sheet">{en('landing.heroCta')}</a>
+    <h2>{t('landing.ctaTitle')}</h2>
+    <p class="lede">{t('landing.ctaBody')}</p>
+    <a class="cta" href="/sheet">{t('landing.heroCta')}</a>
   </section>
 </BaseLayout>
 
