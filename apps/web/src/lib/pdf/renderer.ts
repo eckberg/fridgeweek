@@ -11,6 +11,9 @@
  * instead, which is a complete answer rather than an error.
  */
 
+import { createCloudflareRenderer } from './cloudflare.js';
+import type { RuntimeEnv } from './runtime.js';
+
 export interface PdfPage {
   /** Paper width in millimetres. */
   widthMm: number;
@@ -36,19 +39,33 @@ export class RendererUnavailableError extends Error {
   }
 }
 
-let cached: PdfRenderer | null | undefined;
+let cachedLocal: PdfRenderer | null | undefined;
+let override: PdfRenderer | null | undefined;
 
 /**
- * Finds a renderer for this deployment, once per process.
+ * Finds a renderer for this request.
+ *
+ * The Worker environment has to be passed in rather than looked up, because a
+ * binding belongs to the request it arrived with. So the hosted renderer is
+ * built fresh every time and nothing about it is kept in module state.
  *
  * Local development uses the Chromium that Playwright installs, which needs no
- * account, no key and no network. A hosted deployment would add its own
- * implementation here; see `cloudflare.ts` for the shape that would take.
+ * account, no key and no network. That one *is* cached: launching Chromium
+ * costs about a second, and the process it lives in outlives the request.
  */
-export async function resolveRenderer(): Promise<PdfRenderer | null> {
-  if (cached !== undefined) return cached;
-  cached = await loadLocalRenderer();
-  return cached;
+export async function resolveRenderer(env?: RuntimeEnv | null): Promise<PdfRenderer | null> {
+  if (override !== undefined) return override;
+
+  const browser = env?.BROWSER;
+  if (browser) return createCloudflareRenderer(browser);
+
+  // Playwright cannot run in a Worker and must not be bundled into one. The
+  // constant is replaced at build time, so this whole branch — and with it the
+  // import of `playwright-core` — is dropped from a Cloudflare build.
+  if (__DEPLOY_TARGET__ === 'cloudflare') return null;
+
+  if (cachedLocal === undefined) cachedLocal = await loadLocalRenderer();
+  return cachedLocal;
 }
 
 async function loadLocalRenderer(): Promise<PdfRenderer | null> {
@@ -62,7 +79,12 @@ async function loadLocalRenderer(): Promise<PdfRenderer | null> {
   }
 }
 
-/** Test seam: lets a test install a fake renderer or clear the cache. */
+/**
+ * Test seam: forces the renderer every caller gets, or clears the forcing with
+ * `undefined`. `null` means "this deployment has no renderer", which is what
+ * the 501 answer is made of.
+ */
 export function setRenderer(renderer: PdfRenderer | null | undefined): void {
-  cached = renderer;
+  override = renderer;
+  if (renderer === undefined) cachedLocal = undefined;
 }

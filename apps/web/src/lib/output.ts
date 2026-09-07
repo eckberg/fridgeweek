@@ -36,7 +36,7 @@ export function downloadHtml(html: string, filename: string): void {
 export interface PdfResult {
   ok: boolean;
   /** Set when the endpoint is absent or refused; the caller shows it. */
-  reason?: 'unavailable' | 'failed';
+  reason?: 'unavailable' | 'limited' | 'failed';
 }
 
 /** Asks the server to render a PDF. Returns rather than throws, so the UI can explain. */
@@ -59,6 +59,9 @@ export async function downloadPdf(
   if (response.status === 404 || response.status === 501) {
     return { ok: false, reason: 'unavailable' };
   }
+  // A hosted renderer costs its owner money and rate-limits accordingly. That
+  // is a "wait a moment", not a failure, and printing is unaffected.
+  if (response.status === 429) return { ok: false, reason: 'limited' };
   if (!response.ok) return { ok: false, reason: 'failed' };
 
   const blob = await response.blob();

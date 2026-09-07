@@ -65,7 +65,7 @@ describe('resolveConfig', () => {
     [{ linesPerDay: 0 }, 'linesPerDay'],
     [{ linesPerDay: 5 }, 'linesPerDay'],
     [{ linesPerDay: 2.5 }, 'linesPerDay'],
-    [{ copies: 21 }, 'copies'],
+    [{ copies: 26 }, 'copies'],
     [{ weekStart: 'friday' }, 'weekStart'],
     [{ markStyle: 'colour' }, 'markStyle'],
     [{ weekendStyle: 'bold' }, 'weekendStyle'],
