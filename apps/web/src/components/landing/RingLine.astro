@@ -1,0 +1,47 @@
+---
+/**
+ * A circled mark beside a handwritten-looking entry: the gesture the whole
+ * sheet is built around. Used to show what a filled-in line looks like.
+ */
+interface Props {
+  text: string;
+  /** Draws the writing rule under the text, as on the sheet itself. */
+  ruled?: boolean;
+}
+
+const { text, ruled = false } = Astro.props;
+---
+
+<div class="line">
+  <span class="ring" aria-hidden="true"></span>
+  <span class:list={['written', { ruled }]}>{text}</span>
+</div>
+
+<style>
+  .line {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .ring {
+    flex: none;
+    width: 26px;
+    height: 26px;
+    padding: 4px;
+    border: 1.6px solid var(--accent);
+    border-radius: var(--radius-pill);
+  }
+
+  .written {
+    font-size: 16px;
+    color: var(--ink);
+  }
+
+  .ruled {
+    flex: 1;
+    padding-bottom: 2px;
+    border-bottom: 1px solid var(--rule);
+    font-size: 23px;
+  }
+</style>

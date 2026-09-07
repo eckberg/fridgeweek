@@ -60,17 +60,21 @@ const notable = computed<LayoutIssue[]>(() => [
 </template>
 
 <style scoped>
+/* A bar across the top of the preview: the verdict on the sheet below it. */
 .status {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-4) var(--space-5);
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-4);
+  padding: 14px var(--space-5);
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
 }
 
 .line {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 9px;
   font-size: 15px;
 }
 
@@ -101,11 +105,10 @@ const notable = computed<LayoutIssue[]>(() => [
 }
 
 .issue {
-  margin-top: var(--space-2);
-  padding: var(--space-3);
-  border-left: 2px solid var(--accent-soft);
+  flex-basis: 100%;
+  padding: 10px 14px;
   background: var(--paper-tint);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  border-radius: var(--radius-md);
 }
 
 .message {

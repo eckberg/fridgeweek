@@ -9,24 +9,22 @@ const model = defineModel<SymbolId>({ required: true });
 const props = defineProps<{
   /** Symbols already taken by someone else, shown but not selectable. */
   taken: SymbolId[];
+  /** Owned by the parent, so only one grid is open across the whole list. */
+  open: boolean;
   buttonLabel: string;
 }>();
 
-const open = ref(false);
+const emit = defineEmits<{ toggle: [] }>();
+
 const query = ref('');
 const searchInput = ref<HTMLInputElement | null>(null);
-const dialog = ref<HTMLElement | null>(null);
-const panelId = useId();
-
-function labelFor(id: SymbolId): string {
-  return symbolLabel(id);
-}
+const gridId = useId();
 
 const matches = computed(() => {
   const needle = query.value.trim().toLowerCase();
   if (!needle) return SYMBOL_IDS;
   return SYMBOL_IDS.filter(
-    (id) => id.includes(needle) || labelFor(id).toLowerCase().includes(needle),
+    (id) => id.includes(needle) || symbolLabel(id).toLowerCase().includes(needle),
   );
 });
 
@@ -37,89 +35,83 @@ function isTaken(id: SymbolId): boolean {
 function choose(id: SymbolId): void {
   if (isTaken(id)) return;
   model.value = id;
-  close();
+  emit('toggle');
 }
 
-function close(): void {
-  open.value = false;
-  query.value = '';
-}
-
-watch(open, async (isOpen) => {
-  if (!isOpen) return;
-  await nextTick();
-  searchInput.value?.focus();
-});
-
-function onKeydown(event: KeyboardEvent): void {
-  if (event.key === 'Escape') {
-    event.stopPropagation();
-    close();
-  }
-}
-
-/** Closing on an outside click keeps the panel out of the way without a modal overlay. */
-function onFocusOut(event: FocusEvent): void {
-  const next = event.relatedTarget;
-  if (next instanceof Node && dialog.value?.contains(next)) return;
-  close();
-}
+watch(
+  () => props.open,
+  async (isOpen) => {
+    if (!isOpen) {
+      query.value = '';
+      return;
+    }
+    await nextTick();
+    searchInput.value?.focus();
+  },
+);
 </script>
 
 <template>
-  <div ref="dialog" class="picker" @keydown="onKeydown" @focusout="onFocusOut">
-    <button
-      type="button"
-      class="trigger"
-      :aria-label="buttonLabel"
-      :aria-expanded="open"
-      :aria-controls="panelId"
-      @click="open = !open"
-    >
-      <SymbolMark :id="model" :size="20" />
-    </button>
+  <button
+    type="button"
+    class="trigger"
+    :aria-label="buttonLabel"
+    :aria-expanded="open"
+    :aria-controls="gridId"
+    @click="emit('toggle')"
+  >
+    <SymbolMark :id="model" :size="20" />
+  </button>
 
-    <div v-if="open" :id="panelId" class="panel" role="dialog" :aria-label="t('people.symbolPickerTitle')">
-      <input
-        ref="searchInput"
-        v-model="query"
-        type="search"
-        class="search"
-        :placeholder="t('people.symbolSearch')"
-        :aria-label="t('people.symbolSearch')"
-      />
-      <div v-if="matches.length === 0" class="empty">{{ t('people.symbolNoResults') }}</div>
-      <ul v-else class="grid">
-        <li v-for="id in matches" :key="id">
-          <button
-            type="button"
-            class="option"
-            :class="{ selected: id === model, taken: isTaken(id) }"
-            :aria-pressed="id === model"
-            :disabled="isTaken(id)"
-            :title="labelFor(id)"
-            @click="choose(id)"
-          >
-            <SymbolMark :id="id" :size="22" :title="labelFor(id)" />
-          </button>
-        </li>
-      </ul>
-    </div>
+  <!--
+    The grid opens inside the person's own row rather than floating over the
+    panel, so the symbol being changed and the person it belongs to stay
+    together and nothing is hidden behind a popover.
+  -->
+  <div
+    v-if="open"
+    :id="gridId"
+    class="grid-panel"
+    role="group"
+    :aria-label="t('people.symbolPickerTitle')"
+    @keydown.esc.stop="emit('toggle')"
+  >
+    <input
+      ref="searchInput"
+      v-model="query"
+      type="search"
+      class="search"
+      :placeholder="t('people.symbolSearch')"
+      :aria-label="t('people.symbolSearch')"
+    />
+    <p v-if="matches.length === 0" class="empty">{{ t('people.symbolNoResults') }}</p>
+    <ul v-else class="grid">
+      <li v-for="id in matches" :key="id">
+        <button
+          type="button"
+          class="option"
+          :class="{ selected: id === model, taken: isTaken(id) }"
+          :aria-pressed="id === model"
+          :disabled="isTaken(id)"
+          :title="symbolLabel(id)"
+          @click="choose(id)"
+        >
+          <SymbolMark :id="id" :size="20" :title="symbolLabel(id)" />
+        </button>
+      </li>
+    </ul>
   </div>
 </template>
 
 <style scoped>
-.picker {
-  position: relative;
-}
-
 .trigger {
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
+  flex: none;
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   background: var(--white);
   color: var(--ink);
   cursor: pointer;
@@ -131,35 +123,33 @@ function onFocusOut(event: FocusEvent): void {
   color: var(--accent);
 }
 
-.panel {
-  position: absolute;
-  z-index: 20;
-  top: calc(100% + 6px);
-  left: 0;
-  width: 296px;
-  max-height: 320px;
-  overflow-y: auto;
-  padding: var(--space-3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--white);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+.grid-panel {
+  order: 99;
+  width: 100%;
+  margin-top: 10px;
 }
 
 .search {
   width: 100%;
-  margin-bottom: var(--space-3);
-  padding: var(--space-2) var(--space-3);
+  height: 32px;
+  margin-bottom: var(--space-2);
+  padding: 0 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font: inherit;
   font-size: 14px;
 }
 
+.search:focus {
+  border-color: var(--accent-mid);
+}
+
 .grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  grid-template-columns: repeat(auto-fill, minmax(32px, 1fr));
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
   list-style: none;
 }
 
@@ -192,7 +182,7 @@ function onFocusOut(event: FocusEvent): void {
 }
 
 .empty {
-  padding: var(--space-4) var(--space-2);
+  padding: var(--space-3) var(--space-1);
   font-size: 14px;
   color: var(--ink-faint);
 }

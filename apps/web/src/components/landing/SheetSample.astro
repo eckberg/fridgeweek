@@ -7,18 +7,18 @@ import { renderSvg, resolveConfig, type SheetConfigInput } from '@fridgeweek/cor
  */
 interface Props {
   config: SheetConfigInput;
-  caption: string;
-  /** Rendered smaller and without a shadow when used as a thumbnail. */
-  compact?: boolean;
+  caption?: string;
+  /** Distinguishes the inline `<symbol>` ids when several sheets share a page. */
+  id: string;
 }
 
-const { config, caption, compact = false } = Astro.props;
-const svg = renderSvg(resolveConfig(config), { idPrefix: `s${caption.length}` });
+const { config, caption, id } = Astro.props;
+const svg = renderSvg(resolveConfig(config), { idPrefix: id });
 ---
 
-<figure class:list={['sample', { compact }]}>
+<figure class="sample">
   <div class="paper" set:html={svg} />
-  <figcaption class="mono">{caption}</figcaption>
+  {caption && <figcaption class="mono">{caption}</figcaption>}
 </figure>
 
 <style>
@@ -31,12 +31,7 @@ const svg = renderSvg(resolveConfig(config), { idPrefix: `s${caption.length}` })
 
   .paper {
     background: var(--white);
-    border: 1px solid var(--border);
     box-shadow: var(--shadow-sheet);
-  }
-
-  .compact .paper {
-    box-shadow: none;
   }
 
   .paper :global(svg) {

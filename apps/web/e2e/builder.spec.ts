@@ -106,7 +106,7 @@ test('a broken link falls back to the defaults rather than an empty page', async
 
 test('the symbol picker refuses a symbol another person already has', async ({ page }) => {
   await page.getByRole('button', { name: 'Symbol for Alex' }).click();
-  const picker = page.getByRole('dialog', { name: 'Choose a symbol' });
+  const picker = page.getByRole('group', { name: 'Choose a symbol' });
   await expect(picker).toBeVisible();
 
   await expect(picker.getByRole('button', { name: 'Rocket' })).toBeDisabled();
@@ -115,15 +115,35 @@ test('the symbol picker refuses a symbol another person already has', async ({ p
   await expect(page.locator('.paper svg use').first()).toHaveAttribute('href', /-dog$/);
 });
 
+test('only one person opens their symbols at a time', async ({ page }) => {
+  await page.getByRole('button', { name: 'Symbol for Alex' }).click();
+  await expect(page.getByRole('group', { name: 'Choose a symbol' })).toHaveCount(1);
+
+  await page.getByRole('button', { name: 'Symbol for Sam' }).click();
+  const open = page.getByRole('group', { name: 'Choose a symbol' });
+  await expect(open).toHaveCount(1);
+  // The grid moved to Sam's row, so Alex's trigger is closed again.
+  await expect(page.getByRole('button', { name: 'Symbol for Alex' })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+});
+
 test('the picker filters by search and closes on Escape', async ({ page }) => {
   await page.getByRole('button', { name: 'Symbol for Alex' }).click();
-  const picker = page.getByRole('dialog', { name: 'Choose a symbol' });
+  const picker = page.getByRole('group', { name: 'Choose a symbol' });
   await picker.getByRole('searchbox').fill('unicorn');
   await expect(picker.getByRole('button', { name: 'Unicorn' })).toBeVisible();
   await expect(picker.locator('.option')).toHaveCount(1);
 
   await page.keyboard.press('Escape');
   await expect(picker).toBeHidden();
+});
+
+test('the print and download actions sit in the page header', async ({ page }) => {
+  const header = page.locator('header.site-header');
+  await expect(header.getByRole('button', { name: 'Print' })).toBeVisible();
+  await expect(header.getByRole('button', { name: 'Download PDF' })).toBeVisible();
 });
 
 test('a change the engine refuses is explained rather than silently dropped', async ({ page }) => {

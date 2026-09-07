@@ -17,7 +17,8 @@
   /* Ink. --ink, --rule, --ghost and --separator mirror packages/core/src/render.ts */
   --ink: #111111;
   --ink-soft: #444444;
-  --ink-faint: #6b6b6b;
+  /* Darkened from the sketches' #6b6b6b, which is only 4.31:1 on --desk. */
+  --ink-faint: #646464;
   --rule: #c8c8c8;
   --ghost: #8f8f8f;
   --separator: #d4d4d4;
