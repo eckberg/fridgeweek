@@ -8,7 +8,13 @@ import {
 } from '@fridgeweek/core';
 import { computed, onMounted, onUnmounted, ref, useId } from 'vue';
 import { t } from '../../i18n/index.js';
-import { downloadHtml, downloadPdf, printDocument, sheetFilename } from '../../lib/output.js';
+import {
+  downloadHtml,
+  downloadPdf,
+  type PdfResult,
+  printDocument,
+  sheetFilename,
+} from '../../lib/output.js';
 import ControlGroup from './ControlGroup.vue';
 import FieldRow from './FieldRow.vue';
 import FitStatus from './FitStatus.vue';
@@ -146,13 +152,20 @@ async function onPrint(): Promise<void> {
   }
 }
 
+/** A refusal the endpoint explained, in the words the interface uses. */
+function pdfMessage(reason: PdfResult['reason']): string {
+  if (reason === 'unavailable') return t('pdf.unavailable');
+  if (reason === 'limited') return t('pdf.limited');
+  return t('pdf.failed');
+}
+
 async function onPdf(): Promise<void> {
   busy.value = true;
   announce(t('pdf.preparing'));
   const result = await downloadPdf(config.value, sheetFilename('pdf', config.value.weekStarting));
   busy.value = false;
   if (!result.ok) {
-    announce(result.reason === 'unavailable' ? t('pdf.unavailable') : t('pdf.failed'));
+    announce(pdfMessage(result.reason));
   } else {
     notice.value = '';
   }

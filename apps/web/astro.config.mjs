@@ -7,22 +7,47 @@ import { defineConfig } from 'astro/config';
  * host. The one exception is `/api/pdf`, which opts out of prerendering.
  *
  * The Node adapter is what makes that route runnable locally with no account
- * and no hosting platform. A deployment that only wants the static site can
+ * and no hosting platform, and it is what `dev`, `build`, `preview` and the
+ * end-to-end tests all use. A deployment that only wants the static site can
  * delete the route and the adapter; printing from the browser is unaffected,
  * and that is the path most people take.
+ *
+ * `DEPLOY_TARGET=cloudflare` swaps in the Cloudflare adapter, for a deployment
+ * that renders PDFs with Browser Rendering instead of a local Chromium. Both
+ * adapters are installed; exactly one is active per build, and the default is
+ * unchanged by the existence of the other. See `docs/DEPLOYING.md`.
  */
+const target = process.env.DEPLOY_TARGET === 'cloudflare' ? 'cloudflare' : 'node';
+
+const cloudflare = target === 'cloudflare' ? (await import('@astrojs/cloudflare')).default : null;
+
 export default defineConfig({
   output: 'static',
-  adapter: node({ mode: 'standalone' }),
+  adapter: cloudflare
+    ? // `passthrough` keeps the Cloudflare Images binding out of the deployment.
+      // The site has no raster images to optimise, and Browser Rendering is
+      // meant to be the only billable thing here.
+      cloudflare({ imageService: 'passthrough' })
+    : node({ mode: 'standalone' }),
+  // Astro's Cloudflare adapter provisions a KV namespace for sessions unless
+  // told not to. This site has no sessions and no server-side state of any
+  // kind, and the point of the Cloudflare path is that it needs no storage
+  // product at all.
+  ...(cloudflare ? { session: false } : {}),
   integrations: [vue()],
   server: { port: 4321 },
   devToolbar: { enabled: false },
   build: { inlineStylesheets: 'auto' },
   vite: {
     build: { target: 'es2022' },
+    // Replaced with a literal so that dead branches are dropped rather than
+    // bundled: the Worker must not carry Playwright, and the Node build must
+    // not carry an import of `cloudflare:workers`.
+    define: { __DEPLOY_TARGET__: JSON.stringify(target) },
     // The PDF renderer imports Playwright at request time, on Node. It must stay
     // a runtime import so that a deployment without it simply has no renderer
-    // rather than failing to build.
-    ssr: { external: ['playwright-core'] },
+    // rather than failing to build. `cloudflare:workers` is a workerd built-in
+    // and is never something a bundler should try to resolve.
+    ssr: { external: ['playwright-core', 'cloudflare:workers'] },
   },
 });

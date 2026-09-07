@@ -20,7 +20,9 @@
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
+    "@astrojs/cloudflare": "^14.3.0",
     "@axe-core/playwright": "^4.13.0",
+    "@cloudflare/workers-types": "^5.20260907.1",
     "@playwright/test": "1.56.0",
     "@types/node": "^26.4.1",
     "@vitejs/plugin-vue": "^6.0.8",
@@ -30,6 +32,7 @@
     "playwright-core": "1.56.0",
     "typescript": "^6.0.3",
     "vitest": "^5.0.0",
-    "vue-tsc": "3.1.4"
+    "vue-tsc": "3.1.4",
+    "wrangler": "^4.129.0"
   }
 }
