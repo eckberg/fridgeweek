@@ -1,51 +1,45 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
 
-  // The Worker's name. It is also the subdomain on workers.dev, so change it if
-  // you deploy your own copy.
+  // Change this and the route below if you deploy your own copy.
   "name": "fridgeweek",
 
-  // Browser Rendering quick actions need a compatibility date of 2026-03-24 or
-  // later. Nothing in this Worker needs anything newer, so this is the date:
-  // moving it forward is a deliberate act, not something that drifts.
+  // The Worker is the whole origin — the pages come from the asset binding and
+  // `/api/pdf` from the Worker — so the hostname is a custom domain rather than
+  // a route. Cloudflare writes the DNS record and the certificate on deploy.
+  "routes": [
+    {
+      "pattern": "fridgeweek.com",
+      "custom_domain": true
+    }
+  ],
+
+  // One site, one hostname. Set to true to reach a deploy before DNS resolves.
+  "workers_dev": false,
+
+  // The earliest date that supports Browser Rendering quick actions. Moving it
+  // forward is a deliberate act, not something that drifts.
   // https://developers.cloudflare.com/browser-rendering/quick-actions/
   "compatibility_date": "2026-03-24",
 
-  // Astro's Cloudflare adapter asks for this; it is what lets the framework use
-  // the Node built-ins it expects (node:buffer, node:crypto and friends). The
-  // adapter adds `nodejs_als` on top of whatever is listed here.
-  // https://docs.astro.build/en/guides/integrations-guide/cloudflare/
+  // What Astro's Cloudflare adapter asks for; it adds `nodejs_als` itself.
   "compatibility_flags": ["nodejs_compat"],
 
-  // `main` and the static-asset binding are filled in by @astrojs/cloudflare at
-  // build time, so they are deliberately absent here.
+  // `main` and the asset binding are filled in by @astrojs/cloudflare at build
+  // time, so they are deliberately absent here.
 
-  // Headless Chromium, used by `src/lib/pdf/cloudflare.ts` to turn one sheet
-  // document into one PDF. This is the only part of Fridgeweek that costs
-  // money; see docs/DEPLOYING.md.
-  //
-  // `wrangler dev` stubs this binding locally and its stub does not implement
-  // quick actions, so a local render answers 502. Add `"remote": true` here to
-  // point local development at the real service (and be billed for it).
+  // Headless Chromium, used by src/lib/pdf/cloudflare.ts. The only part of
+  // Fridgeweek that costs money; see docs/DEPLOYING.md.
   // https://developers.cloudflare.com/browser-rendering/workers-bindings/
   "browser": {
     "binding": "BROWSER"
   },
 
-  // Per-IP rate limiting, and the only thing standing between the browser above
-  // and a script with a loop in it. No KV, no D1, no Durable Object: the
-  // counter lives in the edge location handling the request.
-  //
-  // - `namespace_id` is a number of your choosing, unique within this Worker.
-  //   It is not an account identifier and is safe to commit.
-  // - `period` may only be 10 or 60 seconds.
-  // - `limit` is requests per period per key, and the key is the client IP
-  //   (see `rateLimitKey` in src/lib/pdf/limits.ts).
-  //
-  // Five a minute: enough for someone tweaking a sheet and downloading it again
-  // a few times, and about twenty seconds of browser time per minute for an
-  // address that is not. Keep `period` equal to RATE_LIMIT_PERIOD_SECONDS in
-  // src/lib/pdf/limits.ts, which is what the Retry-After header promises.
+  // Five PDF requests a minute per client IP, which is what bounds the spend
+  // above. `namespace_id` is any number unique within this Worker, not an
+  // account identifier. `period` may only be 10 or 60, and must match
+  // RATE_LIMIT_PERIOD_SECONDS in src/lib/pdf/limits.ts, which is what the
+  // Retry-After header promises.
   // https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/
   "ratelimits": [
     {
@@ -57,7 +51,4 @@
       }
     }
   ]
-
-  // Nothing here is account-specific: no account_id, no zone id, no token.
-  // `wrangler deploy` picks the account up from your login.
 }
