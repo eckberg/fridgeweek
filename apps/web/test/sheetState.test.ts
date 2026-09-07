@@ -30,8 +30,8 @@ const throwingStorage = {
 const family = resolveConfig({
   locale: 'sv-SE',
   people: [
-    { name: 'Ava', symbol: 'unicorn' },
-    { name: 'Karl', symbol: 'rocket' },
+    { name: 'Iris', symbol: 'unicorn' },
+    { name: 'Milo', symbol: 'rocket' },
   ],
   linesPerDay: 2,
 });

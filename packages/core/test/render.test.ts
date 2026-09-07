@@ -3,10 +3,10 @@ import { resolveConfig } from '../src/config.js';
 import { renderSheet, renderSheetFromInput, renderSvg } from '../src/render.js';
 
 const family = [
-  { name: 'Ava', symbol: 'unicorn' },
-  { name: 'Harry', symbol: 'dinosaur' },
-  { name: 'Sara', symbol: 'flower' },
-  { name: 'Karl', symbol: 'rocket' },
+  { name: 'Iris', symbol: 'unicorn' },
+  { name: 'Otto', symbol: 'dinosaur' },
+  { name: 'Vera', symbol: 'flower' },
+  { name: 'Milo', symbol: 'rocket' },
 ];
 
 describe('renderSvg', () => {
@@ -20,7 +20,7 @@ describe('renderSvg', () => {
     expect(svg).toContain('>SÖNDAG<');
     expect(svg).toContain('>VECKA<');
     expect(svg).toContain('>Alla<');
-    expect(svg).toContain('>Ava<');
+    expect(svg).toContain('>Iris<');
   });
 
   it('references one symbol definition per distinct symbol and uses them per line', () => {
