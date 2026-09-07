@@ -14,8 +14,6 @@ export {
   ConfigError,
   DEFAULT_CONFIG,
   DEFAULT_PEOPLE,
-  decodeConfig,
-  encodeConfig,
   LIMITS,
   MARK_STYLES,
   PAPER_SIZES,
@@ -26,6 +24,7 @@ export {
   WEEKEND_STYLES,
 } from './config.js';
 export * from './dates.js';
+export { decodeConfig, encodeConfig } from './encoding.js';
 export * from './fonts/index.js';
 export * from './i18n/index.js';
 export type {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readLucideBodies } from '../scripts/lib/extract-lucide.js';
+import { MAX_SYMBOL_CODES, SYMBOL_CODES, symbolCode } from '../src/symbols/codes.js';
 import { LUCIDE_IDS } from '../src/symbols/curated.js';
 import { CUSTOM_IDS, CUSTOM_SYMBOLS } from '../src/symbols/custom.js';
 import {
@@ -236,5 +237,21 @@ describe('the printed symbol id union', () => {
   it('accepts a literal id at compile time', () => {
     const id: SymbolId = 'unicorn';
     expect(getSymbol(id).source).toBe('fridgeweek');
+  });
+});
+
+describe('the symbol code table', () => {
+  it('gives every symbol a number', () => {
+    const missing = SYMBOL_IDS.filter((id) => symbolCode(id) === undefined);
+    expect(missing, 'append these to SYMBOL_CODES in src/symbols/codes.ts').toEqual([]);
+  });
+
+  it('numbers nothing that is not a symbol, and nothing twice', () => {
+    expect(SYMBOL_CODES.filter((id) => !isSymbolId(id))).toEqual([]);
+    expect(new Set(SYMBOL_CODES).size).toBe(SYMBOL_CODES.length);
+  });
+
+  it('still fits in the one byte the URL spends on a mark', () => {
+    expect(SYMBOL_CODES.length).toBeLessThanOrEqual(MAX_SYMBOL_CODES);
   });
 });
