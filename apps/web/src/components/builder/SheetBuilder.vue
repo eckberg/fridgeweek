@@ -37,7 +37,7 @@ const weekStartingId = useId();
 /** Announces the result of an action to assistive technology and to everyone else. */
 const notice = ref('');
 const busy = ref(false);
-/** Index of the person whose symbol grid is open, or null. */
+/** Index of the person whose mark panel is open, or null. */
 const openPerson = ref<number | null>(null);
 
 function togglePerson(index: number): void {
@@ -66,7 +66,6 @@ const paper = field('paper');
 const marginMm = field('marginMm');
 const copies = field('copies');
 const linesPerDay = field('linesPerDay');
-const markStyle = field('markStyle');
 const weekendStyle = field('weekendStyle');
 const familyMark = field('familyMark');
 const showDateRange = field('showDateRange');
@@ -77,7 +76,7 @@ const showLegend = field('showLegend');
 const showWeekNumber = computed({
   get: () =>
     config.value.showWeekNumber === 'auto'
-      ? layout.value.header?.weekBox !== undefined
+      ? layout.value.header?.weekLabel !== undefined
       : config.value.showWeekNumber,
   set: (value: boolean) => sheet.update({ showWeekNumber: value }),
 });
@@ -243,13 +242,13 @@ const languageSummary = computed(() => {
         :title="t('language.group')"
         :meta="t('language.available', { count: SHEET_LOCALES.length })"
       >
-        <FieldRow :label="t('language.label')" :control-id="languageId" stacked>
-          <select :id="languageId" v-model="locale" class="select">
-            <option v-for="option in SHEET_LOCALES" :key="option.code" :value="option.code">
-              {{ option.endonym }}
-            </option>
-          </select>
-        </FieldRow>
+        <!-- The group heading already says what this is, so the select carries
+             its name for assistive technology only. -->
+        <select :id="languageId" v-model="locale" class="select" :aria-label="t('language.label')">
+          <option v-for="option in SHEET_LOCALES" :key="option.code" :value="option.code">
+            {{ option.endonym }}
+          </option>
+        </select>
         <p class="mono summary">{{ languageSummary }}</p>
       </ControlGroup>
 
@@ -278,17 +277,6 @@ const languageSummary = computed(() => {
 
         <FieldRow :label="t('people.familyMark')" :help="t('people.familyMarkHelp')">
           <ToggleSwitch v-model="familyMark" :label="t('people.familyMark')" />
-        </FieldRow>
-
-        <FieldRow :label="t('people.markStyle')" stacked>
-          <SegmentedControl
-            v-model="markStyle"
-            :label="t('people.markStyle')"
-            :options="[
-              { value: 'symbol', label: t('people.markStyle.symbol') },
-              { value: 'initial', label: t('people.markStyle.initial') },
-            ]"
-          />
         </FieldRow>
       </ControlGroup>
 
@@ -582,10 +570,13 @@ const languageSummary = computed(() => {
     overflow: visible;
   }
 
+  /* The page scrolls as one, so the stage is as tall as the sheet in it
+     rather than a second scrolling area inside a scrolling page. */
   .stage {
     grid-column: 1;
     grid-row: 3;
     min-height: 70vh;
+    overflow: visible;
   }
 }
 </style>

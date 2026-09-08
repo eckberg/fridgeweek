@@ -43,6 +43,10 @@ const FORMAT_JSON = 0x7b;
 
 // Byte 1: everything that is one bit, because it is a choice between two.
 const PAPER_LETTER = 0x01;
+/**
+ * Read but never written: the sheet-wide mark style, from before a mark became
+ * a property of each person. `config.ts` says what it means now.
+ */
 const MARK_INITIAL = 0x02;
 const WEEKEND_PLAIN = 0x04;
 const NO_DATE_RANGE = 0x08;
@@ -77,7 +81,10 @@ const MAX_DATE_OFFSET = 0xffff;
 const MARGIN_SCALE = 10;
 const MARGIN_BASE = LIMITS.marginMm.min * MARGIN_SCALE;
 
-/** A name's length byte carries the flag for a following initial in its top bit. */
+/**
+ * A name's length byte carries the flag for a following initial in its top bit.
+ * That bit is also what says this person is drawn as their initials.
+ */
 const HAS_INITIAL = 0x80;
 const MAX_TEXT_BYTES = 0x7f;
 
@@ -138,7 +145,6 @@ function packConfig(config: SheetConfig): Uint8Array | undefined {
 
   let flags = 0;
   if (config.paper === 'Letter') flags |= PAPER_LETTER;
-  if (config.markStyle === 'initial') flags |= MARK_INITIAL;
   if (config.weekendStyle === 'plain') flags |= WEEKEND_PLAIN;
   if (!config.showDateRange) flags |= NO_DATE_RANGE;
   if (!config.showDayDates) flags |= NO_DAY_DATES;
@@ -298,7 +304,6 @@ const DIFF_KEYS = [
   'showDayDates',
   'showLegend',
   'weekStarting',
-  'markStyle',
   'familyMark',
   'linesPerDay',
   'weekendStyle',

@@ -32,13 +32,30 @@ describe('renderSvg', () => {
     expect(svg.match(/<use href="#fw-s-/g)).toHaveLength(7 * 2 * 5 + 5);
   });
 
-  it('draws initials as text when markStyle is initial, and still uses a house for the family', () => {
+  it('draws a person with an initial as text, and still uses a house for the family', () => {
     const svg = renderSvg(
-      resolveConfig({ people: [{ name: 'Åsa', symbol: 'cat' }], markStyle: 'initial' }),
+      resolveConfig({ people: [{ name: 'Åsa', symbol: 'cat', initial: 'Å' }] }),
     );
     expect(svg.match(/>Å<\/text>/g)?.length).toBe(7 * 3 + 1);
     expect(svg).not.toContain('fw-s-cat"');
     expect(svg).toContain('<symbol id="fw-s-house"');
+  });
+
+  it('draws symbols and initials side by side on one sheet', () => {
+    const svg = renderSvg(
+      resolveConfig({
+        familyMark: false,
+        people: [
+          { name: 'Iris', symbol: 'unicorn' },
+          { name: 'Otto', symbol: 'dinosaur', initial: 'O' },
+        ],
+      }),
+    );
+    // Iris keeps her unicorn on every line and in the legend; Otto is a letter
+    // in the same places, and the symbol he is not drawn as is not defined.
+    expect(svg.match(/<use href="#fw-s-unicorn"/g)).toHaveLength(7 * 3 + 1);
+    expect(svg.match(/>O<\/text>/g)).toHaveLength(7 * 3 + 1);
+    expect(svg).not.toContain('fw-s-dinosaur');
   });
 
   it('outlines weekend names by default and not when plain', () => {
@@ -51,7 +68,9 @@ describe('renderSvg', () => {
 
   it('prints dates when a week is chosen', () => {
     const svg = renderSvg(resolveConfig({ locale: 'sv-SE', weekStarting: '2026-09-07' }));
-    expect(svg).toContain('>37<');
+    // The number is part of the label, at the label's own size.
+    expect(svg).toContain('>VECKA 37<');
+    expect(svg).not.toContain('<rect x="10" y="11.5"');
     expect(svg).toContain('>7/9<');
     expect(svg).toContain('>13/9<');
     const us = renderSvg(
@@ -117,11 +136,12 @@ describe('snapshots', () => {
       'a4-de-initials-no-header',
       {
         locale: 'de-DE',
-        markStyle: 'initial',
         showLegend: false,
         showDateRange: false,
         showWeekNumber: false,
-        people: family.slice(0, 3),
+        people: family
+          .slice(0, 3)
+          .map((person) => ({ ...person, initial: person.name.slice(0, 1) })),
       },
     ],
   ] as const)('%s', (_name, input) => {

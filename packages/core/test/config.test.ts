@@ -33,7 +33,6 @@ describe('resolveConfig', () => {
       showLegend: true,
       weekStarting: '2026-09-07',
       people,
-      markStyle: 'initial',
       familyMark: false,
       linesPerDay: 4,
       weekendStyle: 'plain',
@@ -111,12 +110,26 @@ describe('resolveConfig', () => {
     }
   });
 
-  it('allows the same first letter when a distinct initial is given, and in symbol mode', () => {
-    const people = [
-      { name: 'Vera', symbol: 'cat' },
-      { name: 'Viktor', symbol: 'dog', initial: 'Vk' },
-    ];
-    expect(validateConfig({ markStyle: 'initial', people }).ok).toBe(true);
+  it('only asks for distinct initials from the people drawn as initials', () => {
+    // Both are letters, told apart explicitly.
+    expect(
+      validateConfig({
+        people: [
+          { name: 'Vera', symbol: 'cat', initial: 'V' },
+          { name: 'Viktor', symbol: 'dog', initial: 'Vk' },
+        ],
+      }).ok,
+    ).toBe(true);
+    // Only one is a letter, so the other's first letter is never on the sheet.
+    expect(
+      validateConfig({
+        people: [
+          { name: 'Vera', symbol: 'cat', initial: 'V' },
+          { name: 'Viktor', symbol: 'dog' },
+        ],
+      }).ok,
+    ).toBe(true);
+    // Neither is.
     expect(
       validateConfig({
         people: [
@@ -125,6 +138,17 @@ describe('resolveConfig', () => {
         ],
       }).ok,
     ).toBe(true);
+  });
+
+  it('keeps symbols distinct even for people drawn as initials', () => {
+    const result = validateConfig({
+      people: [
+        { name: 'Vera', symbol: 'cat', initial: 'V' },
+        { name: 'Otto', symbol: 'cat' },
+      ],
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.issues.map((i) => i.path)).toContain('people[1].symbol');
   });
 
   it('reports every issue at once', () => {
@@ -146,6 +170,26 @@ describe('resolveConfig', () => {
     expect(validateConfig(null).ok).toBe(false);
     expect(validateConfig([]).ok).toBe(false);
     expect(validateConfig('x').ok).toBe(false);
+  });
+});
+
+describe('the sheet-wide markStyle of older configs', () => {
+  it('gives everyone without an initial the one it used to draw', () => {
+    const config = resolveConfig({
+      markStyle: 'initial',
+      people: [
+        { name: 'Iris', symbol: 'unicorn' },
+        { name: 'Milo', symbol: 'rocket', initial: 'ML' },
+      ],
+    });
+    expect(config.people.map((p) => p.initial)).toEqual(['I', 'ML']);
+    // It is read, not kept: a mark now belongs to the person.
+    expect(config).not.toHaveProperty('markStyle');
+  });
+
+  it("leaves everyone's symbol alone", () => {
+    const config = resolveConfig({ markStyle: 'symbol', people });
+    expect(config.people.map((p) => p.initial)).toEqual([undefined, undefined, undefined, 'M']);
   });
 });
 

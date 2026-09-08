@@ -92,16 +92,30 @@ describe('computeLayout: geometry', () => {
   });
 
   it('shows the week number for ISO locales by default and not for the US', () => {
-    expect(layoutOf({ locale: 'sv-SE' }).header?.weekBox).toBeDefined();
-    expect(layoutOf({ locale: 'de-DE' }).header?.weekBox).toBeDefined();
-    expect(layoutOf({ locale: 'en-US' }).header?.weekBox).toBeUndefined();
-    expect(layoutOf({ locale: 'en-US', showWeekNumber: true }).header?.weekBox).toBeDefined();
-    expect(layoutOf({ locale: 'sv-SE', showWeekNumber: false }).header?.weekBox).toBeUndefined();
+    expect(layoutOf({ locale: 'sv-SE' }).header?.weekLabel).toBeDefined();
+    expect(layoutOf({ locale: 'de-DE' }).header?.weekLabel).toBeDefined();
+    expect(layoutOf({ locale: 'en-US' }).header?.weekLabel).toBeUndefined();
+    expect(layoutOf({ locale: 'en-US', showWeekNumber: true }).header?.weekLabel).toBeDefined();
+    expect(layoutOf({ locale: 'sv-SE', showWeekNumber: false }).header?.weekLabel).toBeUndefined();
+  });
+
+  it('sets the week number in the label rather than in a box of its own', () => {
+    const dated = layoutOf({ locale: 'sv-SE', weekStarting: '2026-09-09' });
+    expect(dated.header?.weekLabel?.text).toBe('VECKA 37');
+    // Printed, there is nothing left to write on.
+    expect(dated.header?.weekNumberField).toBeUndefined();
+
+    const blank = layoutOf({ locale: 'sv-SE' });
+    expect(blank.header?.weekLabel?.text).toBe('VECKA');
+    expect(blank.header?.weekNumberField).toBeDefined();
+    // The rule takes the width the number would have, so choosing a date does
+    // not move the rest of the header.
+    expect(blank.header?.dateRange?.x).toBe(dated.header?.dateRange?.x);
   });
 
   it('prints dates when a week start is given', () => {
     const l = layoutOf({ locale: 'sv-SE', weekStarting: '2026-09-09' });
-    expect(l.header?.weekBox?.text).toBe('37');
+    expect(l.header?.weekLabel?.text).toBe('VECKA 37');
     expect(l.days.map((d) => d.dateField?.text)).toEqual([
       '2026-09-07',
       '2026-09-08',
@@ -112,7 +126,7 @@ describe('computeLayout: geometry', () => {
       '2026-09-13',
     ]);
     const blank = layoutOf({ locale: 'sv-SE' });
-    expect(blank.header?.weekBox?.text).toBeUndefined();
+    expect(blank.header?.weekLabel?.text).toBe('VECKA');
     expect(blank.days[0]?.dateField?.text).toBeUndefined();
   });
 
@@ -323,7 +337,7 @@ describe('computeLayout: header', () => {
 
   it('gives the legend the whole width when the week fields are hidden', () => {
     const l = layoutOf({ showWeekNumber: false, showDateRange: false, people: peopleOf(6) });
-    expect(l.header?.weekBox).toBeUndefined();
+    expect(l.header?.weekLabel).toBeUndefined();
     expect(l.header?.dateRange).toBeUndefined();
     expect(l.header?.legend?.maxWidth).toBe(l.content.w);
   });

@@ -21,7 +21,7 @@ export const HEADER_H = 15;
 export const HEADER_GAP = 4;
 /** Space above the weekday name, inside the day block. */
 export const DAY_PAD_TOP = 1.8;
-/** Space below the last writing line, above the separator. */
+/** Space below the last writing line, at the foot of the day block. */
 export const DAY_PAD_BOTTOM = 1.4;
 /** Height of the weekday name band as a fraction of the day height. */
 export const HEAD_RATIO = 0.26;
@@ -52,7 +52,16 @@ export const LEGEND_ITEM_GAP = 4.6;
 export const LEGEND_ROW_H = 6.5;
 export const LEGEND_MAX_ROWS = 3;
 export const WEEK_LABEL_FONT = 7;
-export const WEEK_BOX = { w: 18, h: 11 };
+/** Baseline of the header's week line, below the top of the content box. */
+export const WEEK_BASELINE = 10.3;
+/** The space between the word and the number, at the week label's size. */
+export const WEEK_NUMBER_GAP = 2;
+/** Width kept for the week number: two digits, printed or a rule to write on. */
+export const WEEK_NUMBER_W = 10.5;
+/** A blank header field's rule sits this far below the baseline beside it. */
+export const HEADER_FIELD_DROP = 0.6;
+/** Gutter between the header's fields. */
+export const HEADER_ITEM_GAP = 6;
 export const DATE_RANGE_W = 44;
 export const DATE_FONT = 3.6;
 
@@ -128,8 +137,6 @@ export interface DayLayout {
     | { x: number; y: number; w: number; text: string | undefined; fontSize: number }
     | undefined;
   lines: LineLayout[];
-  /** Separator drawn at the bottom of this day, absent for the last day. */
-  separator: Rule | undefined;
 }
 
 export interface LegendItem {
@@ -141,8 +148,10 @@ export interface LegendItem {
 
 export interface HeaderLayout {
   rect: Rect;
+  /** The word, and the week number after it when the sheet is dated. */
   weekLabel: (TextAnchor & { text: string }) | undefined;
-  weekBox: (Rect & { text: string | undefined }) | undefined;
+  /** Rule to write the week number on, when the sheet is not dated. */
+  weekNumberField: Rule | undefined;
   dateRange:
     | { x: number; y: number; w: number; text: string | undefined; fontSize: number }
     | undefined;
@@ -319,9 +328,6 @@ export function layoutResolved(sheet: ResolvedSheet): Layout {
       });
     }
 
-    const separator: Rule | undefined =
-      position < 6 ? { x1: content.x, x2: content.x + content.w, y: top + dayHeight } : undefined;
-
     return {
       position,
       rect,
@@ -329,7 +335,6 @@ export function layoutResolved(sheet: ResolvedSheet): Layout {
       name: { x: nameX, baseline, fontSize, text, letterSpacing, estimatedWidth: width },
       dateField,
       lines,
-      separator,
     };
   });
 
@@ -391,38 +396,45 @@ function layoutHeader(
   const rect: Rect = { x: content.x, y: content.y, w: content.w, h: HEADER_H };
   let cursor = content.x;
 
+  const baseline = content.y + WEEK_BASELINE;
+
   let weekLabel: HeaderLayout['weekLabel'];
-  let weekBox: HeaderLayout['weekBox'];
+  let weekNumberField: HeaderLayout['weekNumberField'];
   if (sheet.showWeekNumber) {
-    const text = sheet.text.week.toLocaleUpperCase(config.locale);
-    const width = estimateTextWidth(text, WEEK_LABEL_FONT, 'upperBold', 0.04);
+    // The number reads as part of the phrase, so it is the same run of text at
+    // the same size rather than a figure in a box of its own. Undated, the
+    // space it would take is a rule to write it on, like every other blank
+    // field on the sheet. Either way it takes the same width, so the header
+    // does not shift when a date is chosen.
+    const word = sheet.text.week.toLocaleUpperCase(config.locale);
+    const number = sheet.dates === undefined ? undefined : String(sheet.dates.week);
     weekLabel = {
-      text,
+      text: number === undefined ? word : `${word} ${number}`,
       x: cursor,
-      baseline: content.y + 1.5 + WEEK_BOX.h - 2.2,
+      baseline,
       fontSize: WEEK_LABEL_FONT,
     };
-    cursor += width + 3;
-    weekBox = {
-      x: cursor,
-      y: content.y + 1.5,
-      w: WEEK_BOX.w,
-      h: WEEK_BOX.h,
-      text: sheet.dates ? String(sheet.dates.week) : undefined,
-    };
-    cursor += WEEK_BOX.w + 6;
+    cursor += estimateTextWidth(word, WEEK_LABEL_FONT, 'upperBold', 0.04) + WEEK_NUMBER_GAP;
+    if (number === undefined) {
+      weekNumberField = {
+        x1: cursor,
+        x2: cursor + WEEK_NUMBER_W,
+        y: baseline + HEADER_FIELD_DROP,
+      };
+    }
+    cursor += WEEK_NUMBER_W + HEADER_ITEM_GAP;
   }
 
   let dateRange: HeaderLayout['dateRange'];
   if (config.showDateRange) {
     dateRange = {
       x: cursor,
-      y: content.y + 1.5 + WEEK_BOX.h - 1.6,
+      y: baseline + HEADER_FIELD_DROP,
       w: DATE_RANGE_W,
       text: undefined,
       fontSize: DATE_FONT,
     };
-    cursor += DATE_RANGE_W + 6;
+    cursor += DATE_RANGE_W + HEADER_ITEM_GAP;
   }
 
   let legend: HeaderLayout['legend'];
@@ -431,7 +443,7 @@ function layoutHeader(
     legend = layoutLegend(sheet, content, maxWidth, markSize, issues);
   }
 
-  return { rect, weekLabel, weekBox, dateRange, legend };
+  return { rect, weekLabel, weekNumberField, dateRange, legend };
 }
 
 function layoutLegend(

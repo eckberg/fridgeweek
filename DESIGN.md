@@ -36,10 +36,10 @@ Each decision below was made deliberately during the initial design session. The
 | 3 | Weekend names drawn as **outline text** (toggle) | Separates weekend from weekdays in mono print and can be coloured in. |
 | 4 | Each day has **N free writing lines** (1 to 4, default 3) | Real weeks are sparse. A fixed box per person leaves most boxes empty and overflows on busy days. |
 | 5 | Every line starts with a **marker strip**: one small mark per person plus a family mark | Circle the mark and the line belongs to that person. Any line can be anyone's. |
-| 6 | A mark is either a **symbol** (curated Lucide icons plus a few custom ones) or the person's **initial** | Symbols work for pre-readers and are fun ("I am the unicorn"). Initials are compact and unambiguous for adults. One setting for the whole sheet. |
+| 6 | A mark is either a **symbol** (curated Lucide icons plus a few custom ones) or the person's **initials**, chosen **per person** | Symbols work for pre-readers and are fun ("I am the unicorn"). Initials are compact and unambiguous for adults. A household is usually both: the four-year-old is the unicorn and the parents are letters. It was one setting for the whole sheet until the choice moved into the mark picker, where it is the same choice as which symbol. |
 | 7 | The **family mark** (a house) is the first mark in every strip (toggle, default on) | Household entries ("preschool closed", "grandparents visiting") need an explicit home; an uncircled line is ambiguous. It leads the strip so that the mark any line can take is the one the eye reaches first, and so that its position does not move as people are added or removed. |
 | 8 | **Mono only** in v1 | Cheap laser printers. Coloured paper still works. Symbols carry identity so colour is decoration; it can be added later without touching layout. |
-| 9 | Header with optional **week number**, **date range** and a **legend** (symbol + name per person) | Week numbers are common in the Nordics and Germany and nearly unknown elsewhere, so the default follows the locale and every element has its own toggle. |
+| 9 | Header with optional **week number**, **date range** and a **legend** (mark + name per person) | Week numbers are common in the Nordics and Germany and nearly unknown elsewhere, so the default follows the locale and every element has its own toggle. The number is set inline after the word, at the same size, rather than boxed: it is a word and a number, and the sheet has no other boxes. Undated it is a rule to write on, like every other blank field. |
 | 10 | **Dates are blank by default**. An optional "week starting" date prints the week number, the range and each day's date | Blank suits printing 20 at a time. Dated suits printing one every Sunday. Same layout either way. |
 | 11 | A small **date field** after each weekday name | Makes the sheet unambiguous when it hangs a day too long. |
 | 12 | **1 to 6 people** | Six marks plus the family mark fit on a line and cover nearly every household. The UI should warn above four. |
@@ -54,13 +54,12 @@ The whole product is a pure function of this object. It is what gets encoded in 
 
 ```ts
 type PaperSize = 'A4' | 'Letter';
-type MarkStyle = 'symbol' | 'initial';
 type WeekStart = 'auto' | 'monday' | 'sunday' | 'saturday';
 
 interface Person {
   name: string;       // 1..24 chars, shown in the legend
   symbol: SymbolId;   // id from the curated symbol set
-  initial?: string;   // 1..2 chars; defaults to the first character of `name`
+  initial?: string;   // 1..2 chars. Set = this person is drawn as letters.
 }
 
 interface SheetConfig {
@@ -75,7 +74,6 @@ interface SheetConfig {
   showLegend: boolean;        // default true
   weekStarting?: string;      // 'YYYY-MM-DD'. When set, dates are printed.
   people: Person[];           // 1..6
-  markStyle: MarkStyle;       // default 'symbol'
   familyMark: boolean;        // default true
   linesPerDay: number;        // 1..4, default 3
   weekendStyle: 'outline' | 'plain'; // default 'outline'
@@ -87,8 +85,18 @@ Rules:
 
 - `resolveConfig(input)` applies defaults and validates. It never guesses: an invalid
   value is an error with a path and a message, not a silent fallback.
-- Two people cannot share a symbol. In `initial` mode two people cannot share an initial
-  either; set an explicit `initial` to disambiguate.
+- A person's mark is their symbol unless `initial` is set, and then it is those letters,
+  on every strip and in the legend. There is one place to change it and one thing stored:
+  giving somebody letters is setting `initial`, and taking them away is clearing it. The
+  symbol is kept either way, so letters can be undone without picking a picture again.
+- Two people cannot share a symbol, whichever of the two each is currently drawn as, so
+  that clearing an initial can never land on somebody else's mark. Initials only have to
+  be distinct among the people actually drawn as initials; set an explicit `initial` to
+  disambiguate.
+- `markStyle: 'symbol' | 'initial'` was one setting for the whole sheet. `resolveConfig`
+  still reads it, because links and stored configurations carry it: `'initial'` gives
+  every person without one the first character of their name, which is what it drew. It
+  is never written again, and it is not part of `SheetConfig`.
 - `weekStarting` that is not on the locale's first weekday is snapped back to the previous
   first weekday. The UI should show the snapped date.
 - Config is carried in the URL hash, plus in `localStorage` for convenience. There is no
@@ -104,9 +112,12 @@ it. The hash is packed rather than pretty.
 `showWeekNumber` and `weekStart` are two bits each, `linesPerDay`, `copies` and the number
 of people are small integers sharing bytes, a margin is tenths of a millimetre, a date is
 a day offset from 2000-01-01 in two bytes, and a symbol is one byte: its number in
-`SYMBOL_CODES`. Only names are text, because only names are unpredictable. The defaults
-come to 20 characters and a two-person sheet with a date and a language to about 30, down
-from about 240.
+`SYMBOL_CODES`. Only names are text, because only names are unpredictable. A person's
+name length byte carries one spare bit that says an initial follows, which is also what
+says that person is drawn as letters, so moving the mark style onto the person cost the
+format nothing. The bit that used to hold the sheet-wide `markStyle` is still read and
+never written. The defaults come to 20 characters and a two-person sheet with a date and
+a language to about 30, down from about 240.
 
 `SYMBOL_CODES` in `packages/core/src/symbols/codes.ts` is therefore append-only.
 `SYMBOL_IDS` stays sorted for the picker; renumbering it would change what every link
@@ -136,6 +147,8 @@ All numbers are millimetres. Constants live in `packages/core/src/layout.ts`.
 paper          A4 210 x 297, Letter 215.9 x 279.4
 usable         paper - 2 * margin
 header         HEADER_H 15 + HEADER_GAP 4, present if weekNumber || dateRange || legend
+weekLabel      the word, plus ' ' + the number when dated, one run at WEEK_LABEL_FONT 7;
+               undated, WEEK_NUMBER_W 10.5 of rule to write on. Reserved either way.
 dayH           (usableH - header) / 7                     (A4, m=10: 36.86)
 headH          clamp(dayH * HEAD_RATIO .26, 6, 9.5),      capped so the lines keep
                their comfort height before the band keeps its own
@@ -148,11 +161,14 @@ ruleY          bottom of the line band - RULE_LIFT 1.2
 
 Placement rules that are not just numbers:
 
-- Marks are **centred** in their line band, so every line has the same rhythm.
+- Marks are **centred** in their line band, so every line has the same rhythm. Days are
+  separated by their own height and the rhythm of the strips, not by a rule.
 - The day date is **right-aligned at the content edge**, forming one column down
   the sheet rather than following each weekday name's width. The name shrinks to fit
   what is left.
-- The legend symbol is **the same size as a strip mark**, so a sheet has one icon size.
+- The legend mark is **the same size as a strip mark**, so a sheet has one icon size, and
+  it is drawn the same way: a symbol for a person with a symbol, letters for a person with
+  letters.
 
 Thresholds:
 
