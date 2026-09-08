@@ -101,6 +101,24 @@ const ogImage = new URL('/og.png', Astro.site);
     overflow: hidden;
   }
 
+  /*
+   * Only where there is room to put panes side by side. Stacked on a narrow
+   * screen the builder is one long page, and a body clamped to the viewport
+   * with its overflow hidden is a page that cannot be scrolled at all.
+   *
+   * This override lives here rather than with the rest of the builder's
+   * responsive CSS because it has to come after the rule above in the
+   * cascade, and the two selectors are equally specific: a page's own
+   * `is:global` styles are inlined into the head, above the stylesheet this
+   * block ends up in, so from there it would lose.
+   */
+  @media (max-width: 900px) {
+    body.full-height {
+      height: auto;
+      overflow: visible;
+    }
+  }
+
   main {
     flex: 1;
     min-height: 0;

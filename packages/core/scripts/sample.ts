@@ -25,10 +25,20 @@ const family = [
   { name: 'Milo', symbol: 'rocket' },
 ];
 
+/** The same people drawn as letters rather than as pictures. */
+function asInitials(people: typeof family): typeof family {
+  return people.map((person) => ({ ...person, initial: person.name.slice(0, 1) }));
+}
+
 const samples: Record<string, SheetConfigInput> = {
   'a4-sv-family': { locale: 'sv-SE', people: family },
   'a4-sv-family-dated': { locale: 'sv-SE', people: family, weekStarting: '2026-09-07' },
-  'a4-en-gb-initials': { locale: 'en-GB', people: family, markStyle: 'initial' },
+  'a4-en-gb-initials': { locale: 'en-GB', people: asInitials(family) },
+  // A mark belongs to the person, so a sheet can carry both kinds at once.
+  'a4-sv-mixed-marks': {
+    locale: 'sv-SE',
+    people: [...family.slice(0, 2), ...asInitials(family.slice(2))],
+  },
   'letter-en-us-two': { locale: 'en-US', paper: 'Letter', people: family.slice(0, 2) },
   'a4-de-four-lines': { locale: 'de-DE', people: family.slice(0, 3), linesPerDay: 4 },
   'a4-fi-six-people': {

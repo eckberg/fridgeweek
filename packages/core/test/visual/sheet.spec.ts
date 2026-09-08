@@ -10,6 +10,11 @@ const family = [
   { name: 'Milo', symbol: 'rocket' },
 ];
 
+/** The same people drawn as letters rather than as pictures. */
+function asInitials(people: typeof family): typeof family {
+  return people.map((person) => ({ ...person, initial: person.name.slice(0, 1) }));
+}
+
 /**
  * A4 at 96 dpi is 794 x 1123 CSS pixels; Letter is 816 x 1056. Screen CSS in
  * the sheet adds a shadow and margin, so the page is emulated as print media
@@ -18,7 +23,12 @@ const family = [
 const cases: Record<string, SheetConfigInput> = {
   'a4-sv-family': { locale: 'sv-SE', people: family },
   'a4-sv-dated': { locale: 'sv-SE', people: family, weekStarting: '2026-09-07' },
-  'a4-de-initials': { locale: 'de-DE', people: family, markStyle: 'initial' },
+  'a4-de-initials': { locale: 'de-DE', people: asInitials(family) },
+  // A mark belongs to the person, so both kinds can appear on one sheet.
+  'a4-sv-mixed-marks': {
+    locale: 'sv-SE',
+    people: [...family.slice(0, 2), ...asInitials(family.slice(2))],
+  },
   'a4-fi-six-people-four-lines': {
     locale: 'fi-FI',
     linesPerDay: 4,

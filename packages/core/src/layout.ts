@@ -21,7 +21,7 @@ export const HEADER_H = 15;
 export const HEADER_GAP = 4;
 /** Space above the weekday name, inside the day block. */
 export const DAY_PAD_TOP = 1.8;
-/** Space below the last writing line, above the separator. */
+/** Space below the last writing line, at the foot of the day block. */
 export const DAY_PAD_BOTTOM = 1.4;
 /** Height of the weekday name band as a fraction of the day height. */
 export const HEAD_RATIO = 0.26;
@@ -44,6 +44,10 @@ export const DATE_FIELD_W = 14;
 export const NAME_DATE_GUTTER = 4;
 export const NAME_FONT_MAX = 8;
 export const NAME_FONT_MIN = 4.5;
+/** Extra space above the weekday name's capitals, inside the day's top padding. */
+export const NAME_TOP_GAP = 0.4;
+/** How far text drops below its baseline, as a fraction of font size. */
+export const DESCENDER = 0.22;
 /** Ceiling for the legend symbol; it otherwise matches the strip mark size. */
 export const LEGEND_SYMBOL_MAX = MARK_MAX;
 export const LEGEND_FONT = 3.4;
@@ -52,7 +56,16 @@ export const LEGEND_ITEM_GAP = 4.6;
 export const LEGEND_ROW_H = 6.5;
 export const LEGEND_MAX_ROWS = 3;
 export const WEEK_LABEL_FONT = 7;
-export const WEEK_BOX = { w: 18, h: 11 };
+/** Baseline of the header's week line, below the top of the content box. */
+export const WEEK_BASELINE = 10.3;
+/** The space between the word and the number, at the week label's size. */
+export const WEEK_NUMBER_GAP = 2;
+/** Width kept for the week number: two digits, printed or a rule to write on. */
+export const WEEK_NUMBER_W = 10.5;
+/** A blank header field's rule sits this far below the baseline beside it. */
+export const HEADER_FIELD_DROP = 0.6;
+/** Gutter between the header's fields. */
+export const HEADER_ITEM_GAP = 6;
 export const DATE_RANGE_W = 44;
 export const DATE_FONT = 3.6;
 
@@ -128,8 +141,6 @@ export interface DayLayout {
     | { x: number; y: number; w: number; text: string | undefined; fontSize: number }
     | undefined;
   lines: LineLayout[];
-  /** Separator drawn at the bottom of this day, absent for the last day. */
-  separator: Rule | undefined;
 }
 
 export interface LegendItem {
@@ -141,8 +152,12 @@ export interface LegendItem {
 
 export interface HeaderLayout {
   rect: Rect;
+  /** The lowest the header actually reaches, which is well above `rect`'s foot. */
+  inkBottom: number;
+  /** The word, and the week number after it when the sheet is dated. */
   weekLabel: (TextAnchor & { text: string }) | undefined;
-  weekBox: (Rect & { text: string | undefined }) | undefined;
+  /** Rule to write the week number on, when the sheet is not dated. */
+  weekNumberField: Rule | undefined;
   dateRange:
     | { x: number; y: number; w: number; text: string | undefined; fontSize: number }
     | undefined;
@@ -154,7 +169,7 @@ export interface Layout {
   margin: number;
   content: Rect;
   header: HeaderLayout | undefined;
-  /** Rule at the top of the day block. */
+  /** Rule dividing the header from the days, or the top of the day block. */
   topRule: Rule;
   days: DayLayout[];
   metrics: {
@@ -224,7 +239,6 @@ export function layoutResolved(sheet: ResolvedSheet): Layout {
 
   const headerTotal = sheet.hasHeader ? HEADER_H + HEADER_GAP : 0;
   const daysTop = content.y + headerTotal;
-  const topRule: Rule = { x1: content.x, x2: content.x + content.w, y: daysTop };
 
   const dayHeight = (content.h - headerTotal) / 7;
   const headHeight = headBandHeight(dayHeight, config.linesPerDay);
@@ -239,6 +253,22 @@ export function layoutResolved(sheet: ResolvedSheet): Layout {
   // The legend shares the mark size with the strips, so the header needs the
   // metrics; the metrics only need to know whether a header exists.
   const header = sheet.hasHeader ? layoutHeader(sheet, content, markSize, issues) : undefined;
+
+  /*
+   * The rule divides the header from the days, so it belongs between them
+   * rather than on the day block's own edge. `HEADER_H` is a generous band and
+   * the header's ink stops well short of it, so a rule at `daysTop` sat about
+   * 8 mm below the header and 2 mm above the weekday names: it read as
+   * Monday's underline rather than as a divider. It is now halfway between the
+   * lowest ink in the header and the top of the first name's capitals. The day
+   * block itself does not move, so every day keeps its height.
+   */
+  const firstNameTop = daysTop + DAY_PAD_TOP + NAME_TOP_GAP;
+  const topRule: Rule = {
+    x1: content.x,
+    x2: content.x + content.w,
+    y: header ? (header.inkBottom + firstNameTop) / 2 : daysTop,
+  };
 
   const remedies = lineRemedies(sheet);
   if (lineHeight < MIN_LINE_H) {
@@ -284,7 +314,7 @@ export function layoutResolved(sheet: ResolvedSheet): Layout {
       width = estimateTextWidth(text, fontSize, 'upperBold', letterSpacing);
       nameShrunk = true;
     }
-    const baseline = top + DAY_PAD_TOP + 0.4 + CAP_H * fontSize;
+    const baseline = top + DAY_PAD_TOP + NAME_TOP_GAP + CAP_H * fontSize;
 
     const dateField: DayLayout['dateField'] = config.showDayDates
       ? {
@@ -319,9 +349,6 @@ export function layoutResolved(sheet: ResolvedSheet): Layout {
       });
     }
 
-    const separator: Rule | undefined =
-      position < 6 ? { x1: content.x, x2: content.x + content.w, y: top + dayHeight } : undefined;
-
     return {
       position,
       rect,
@@ -329,7 +356,6 @@ export function layoutResolved(sheet: ResolvedSheet): Layout {
       name: { x: nameX, baseline, fontSize, text, letterSpacing, estimatedWidth: width },
       dateField,
       lines,
-      separator,
     };
   });
 
@@ -391,38 +417,45 @@ function layoutHeader(
   const rect: Rect = { x: content.x, y: content.y, w: content.w, h: HEADER_H };
   let cursor = content.x;
 
+  const baseline = content.y + WEEK_BASELINE;
+
   let weekLabel: HeaderLayout['weekLabel'];
-  let weekBox: HeaderLayout['weekBox'];
+  let weekNumberField: HeaderLayout['weekNumberField'];
   if (sheet.showWeekNumber) {
-    const text = sheet.text.week.toLocaleUpperCase(config.locale);
-    const width = estimateTextWidth(text, WEEK_LABEL_FONT, 'upperBold', 0.04);
+    // The number reads as part of the phrase, so it is the same run of text at
+    // the same size rather than a figure in a box of its own. Undated, the
+    // space it would take is a rule to write it on, like every other blank
+    // field on the sheet. Either way it takes the same width, so the header
+    // does not shift when a date is chosen.
+    const word = sheet.text.week.toLocaleUpperCase(config.locale);
+    const number = sheet.dates === undefined ? undefined : String(sheet.dates.week);
     weekLabel = {
-      text,
+      text: number === undefined ? word : `${word} ${number}`,
       x: cursor,
-      baseline: content.y + 1.5 + WEEK_BOX.h - 2.2,
+      baseline,
       fontSize: WEEK_LABEL_FONT,
     };
-    cursor += width + 3;
-    weekBox = {
-      x: cursor,
-      y: content.y + 1.5,
-      w: WEEK_BOX.w,
-      h: WEEK_BOX.h,
-      text: sheet.dates ? String(sheet.dates.week) : undefined,
-    };
-    cursor += WEEK_BOX.w + 6;
+    cursor += estimateTextWidth(word, WEEK_LABEL_FONT, 'upperBold', 0.04) + WEEK_NUMBER_GAP;
+    if (number === undefined) {
+      weekNumberField = {
+        x1: cursor,
+        x2: cursor + WEEK_NUMBER_W,
+        y: baseline + HEADER_FIELD_DROP,
+      };
+    }
+    cursor += WEEK_NUMBER_W + HEADER_ITEM_GAP;
   }
 
   let dateRange: HeaderLayout['dateRange'];
   if (config.showDateRange) {
     dateRange = {
       x: cursor,
-      y: content.y + 1.5 + WEEK_BOX.h - 1.6,
+      y: baseline + HEADER_FIELD_DROP,
       w: DATE_RANGE_W,
       text: undefined,
       fontSize: DATE_FONT,
     };
-    cursor += DATE_RANGE_W + 6;
+    cursor += DATE_RANGE_W + HEADER_ITEM_GAP;
   }
 
   let legend: HeaderLayout['legend'];
@@ -431,7 +464,36 @@ function layoutHeader(
     legend = layoutLegend(sheet, content, maxWidth, markSize, issues);
   }
 
-  return { rect, weekLabel, weekBox, dateRange, legend };
+  const header: HeaderLayout = {
+    rect,
+    inkBottom: content.y,
+    weekLabel,
+    weekNumberField,
+    dateRange,
+    legend,
+  };
+  return { ...header, inkBottom: headerInkBottom(header) };
+}
+
+/**
+ * The lowest the header reaches. Measured from what each field reserves rather
+ * than from what it happens to draw, so that choosing a date — which turns a
+ * blank rule into printed text — does not move anything.
+ */
+function headerInkBottom(header: HeaderLayout): number {
+  let bottom = header.rect.y;
+  if (header.weekLabel) {
+    bottom = Math.max(bottom, header.weekLabel.baseline + HEADER_FIELD_DROP);
+  }
+  if (header.dateRange) bottom = Math.max(bottom, header.dateRange.y);
+  for (const item of header.legend?.items ?? []) {
+    bottom = Math.max(
+      bottom,
+      item.symbol.y + item.symbol.h,
+      item.text.baseline + item.text.fontSize * DESCENDER,
+    );
+  }
+  return bottom;
 }
 
 function layoutLegend(

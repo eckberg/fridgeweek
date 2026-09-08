@@ -2,14 +2,14 @@
 import { type Person, personInitial, type SymbolId } from '@fridgeweek/core';
 import { computed, useId } from 'vue';
 import { t } from '../../i18n/index.js';
-import SymbolPicker from './SymbolPicker.vue';
+import MarkPicker from './MarkPicker.vue';
 
 const props = defineProps<{
   person: Person;
   position: number;
   taken: SymbolId[];
   canRemove: boolean;
-  /** Only one person's symbol grid is open at a time, so the panel stays short. */
+  /** Only one person's mark panel is open at a time, so the list stays short. */
   open: boolean;
 }>();
 
@@ -20,36 +20,29 @@ const emit = defineEmits<{
 }>();
 
 const nameId = useId();
-const initialId = useId();
 
 /** Falls back to the position when the name is still empty, so labels are never blank. */
 const displayName = computed(
   () => props.person.name.trim() || t('people.nameLabel', { position: props.position }),
 );
 
-const symbol = computed({
-  get: () => props.person.symbol,
-  set: (value: SymbolId) => emit('update', { symbol: value }),
-});
-
 function onName(event: Event): void {
   emit('update', { name: (event.target as HTMLInputElement).value });
-}
-
-function onInitial(event: Event): void {
-  const value = (event.target as HTMLInputElement).value.trim();
-  emit('update', value ? { initial: value } : { initial: undefined });
 }
 </script>
 
 <template>
   <li class="person" :class="{ open }">
     <div class="row">
-      <SymbolPicker
-        v-model="symbol"
+      <MarkPicker
+        :symbol="person.symbol"
+        :initial="person.initial"
+        :suggested-initial="personInitial(person)"
         :taken="taken"
         :open="open"
-        :button-label="t('people.symbolLabel', { name: displayName })"
+        :button-label="t('people.markLabel', { name: displayName })"
+        :initials-label="t('people.initialsLabel', { name: displayName })"
+        @update="(change) => emit('update', change)"
         @toggle="emit('toggle')"
       />
 
@@ -62,16 +55,6 @@ function onInitial(event: Event): void {
         :placeholder="t('people.namePlaceholder')"
         :aria-label="t('people.nameLabel', { position })"
         @input="onName"
-      />
-
-      <input
-        :id="initialId"
-        class="initial"
-        type="text"
-        :value="personInitial(person)"
-        maxlength="2"
-        :aria-label="t('people.initialLabel', { name: displayName })"
-        @input="onInitial"
       />
 
       <button
@@ -90,8 +73,8 @@ function onInitial(event: Event): void {
 
 <style scoped>
 /*
- * A person is a bordered row. Opening the symbol grid turns the row into a
- * card in the accent colour, so it is obvious which person is being changed.
+ * A person is a bordered row. Opening the mark panel turns the row into a card
+ * in the accent colour, so it is obvious which person is being changed.
  */
 .person {
   list-style: none;
@@ -136,13 +119,6 @@ input:focus {
 
 .name {
   flex: 1;
-}
-
-.initial {
-  width: 42px;
-  flex: none;
-  text-align: center;
-  font: 500 15px/1 var(--font-mono);
 }
 
 .remove,

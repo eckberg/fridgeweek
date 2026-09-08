@@ -69,6 +69,7 @@ defineProps<{
   .stage-scroll {
     padding: var(--space-4);
     place-items: start center;
+    overflow: visible;
   }
 
   .sheet {

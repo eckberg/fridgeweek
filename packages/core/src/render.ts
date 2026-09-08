@@ -28,7 +28,6 @@ export interface RenderOptions {
 export const INK = '#111111';
 export const RULE = '#c8c8c8';
 export const GHOST = '#8f8f8f';
-export const SEPARATOR = '#d4d4d4';
 
 /** Renders one sheet as a standalone SVG whose user unit is the millimetre. */
 export function renderSvg(config: SheetConfig, options: RenderOptions = {}): string {
@@ -95,7 +94,7 @@ function renderSvgResolved(sheet: ResolvedSheet, layout: Layout, options: Render
 
   const symbolIds = new Set<SymbolId>();
   for (const mark of sheet.marks) {
-    if (sheet.config.markStyle === 'symbol' || mark.kind === 'family') symbolIds.add(mark.symbol);
+    if (mark.style === 'symbol') symbolIds.add(mark.symbol);
   }
   const defs = Array.from(symbolIds)
     .sort()
@@ -135,20 +134,8 @@ function renderHeader(sheet: ResolvedSheet, header: HeaderLayout, prefix: string
       }),
     );
   }
-  if (header.weekBox) {
-    const b = header.weekBox;
-    out.push(
-      `<rect x="${fmt(b.x)}" y="${fmt(b.y)}" width="${fmt(b.w)}" height="${fmt(b.h)}" rx="1.5" fill="none" stroke="${INK}" stroke-width="0.5"/>`,
-    );
-    if (b.text !== undefined) {
-      out.push(
-        text(b.text, b.x + b.w / 2, b.y + b.h / 2 + 0.35 * 7, {
-          fontSize: 7,
-          weight: 800,
-          anchor: 'middle',
-        }),
-      );
-    }
+  if (header.weekNumberField) {
+    out.push(rule(header.weekNumberField, RULE, 0.3));
   }
   if (header.dateRange) {
     const d = header.dateRange;
@@ -166,9 +153,7 @@ function renderHeader(sheet: ResolvedSheet, header: HeaderLayout, prefix: string
   if (header.legend) {
     out.push('<g class="legend">');
     for (const item of header.legend.items) {
-      out.push(
-        renderMark(item.mark, item.symbol.x, item.symbol.y, item.symbol.w, sheet, prefix, INK),
-      );
+      out.push(renderMark(item.mark, item.symbol.x, item.symbol.y, item.symbol.w, prefix, INK));
       out.push(
         text(item.text.text, item.text.x, item.text.baseline, {
           fontSize: item.text.fontSize,
@@ -214,17 +199,16 @@ function renderDay(sheet: ResolvedSheet, day: DayLayout, prefix: string): string
     }
   }
 
-  for (const line of day.lines) out.push(renderLine(sheet, line, prefix));
+  for (const line of day.lines) out.push(renderLine(line, prefix));
 
-  if (day.separator) out.push(rule(day.separator, SEPARATOR, 0.25));
   out.push('</g>');
   return out.join('');
 }
 
-function renderLine(sheet: ResolvedSheet, line: LineLayout, prefix: string): string {
+function renderLine(line: LineLayout, prefix: string): string {
   const out: string[] = [`<g class="line" data-index="${line.index}">`];
   for (const slot of line.marks) {
-    out.push(renderMark(slot.mark, slot.x, slot.y, slot.size, sheet, prefix, GHOST));
+    out.push(renderMark(slot.mark, slot.x, slot.y, slot.size, prefix, GHOST));
   }
   out.push(rule(line.rule, RULE, 0.3));
   out.push('</g>');
@@ -236,12 +220,10 @@ function renderMark(
   x: number,
   y: number,
   size: number,
-  sheet: ResolvedSheet,
   prefix: string,
   color: string,
 ): string {
-  const useSymbol = sheet.config.markStyle === 'symbol' || mark.kind === 'family';
-  if (useSymbol) {
+  if (mark.style === 'symbol') {
     return `<use href="#${prefix}-s-${mark.symbol}" x="${fmt(x)}" y="${fmt(y)}" width="${fmt(size)}" height="${fmt(size)}" color="${color}"/>`;
   }
   const fontSize = size * 0.92;

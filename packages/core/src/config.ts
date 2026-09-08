@@ -9,9 +9,13 @@ export type WeekendStyle = 'outline' | 'plain';
 export interface Person {
   /** Shown in the legend. 1 to 24 characters. */
   name: string;
-  /** Symbol used as this person's mark when `markStyle` is `'symbol'`. */
+  /** This person's mark, unless `initial` is set. */
   symbol: SymbolId;
-  /** 1 to 2 characters used when `markStyle` is `'initial'`. Defaults to the first character of `name`. */
+  /**
+   * 1 to 2 characters drawn instead of the symbol. Setting it is what makes
+   * this person's mark their initials; the symbol is kept and comes back when
+   * it is cleared.
+   */
   initial?: string;
 }
 
@@ -32,7 +36,6 @@ export interface SheetConfig {
   weekStarting?: string;
   /** 1 to 6 people. */
   people: Person[];
-  markStyle: MarkStyle;
   /** Adds a household mark (a house) at the end of every marker strip. */
   familyMark: boolean;
   /** Writing lines per day, 1 to 4. */
@@ -54,6 +57,11 @@ export type SheetConfigInput = {
 } & {
   version?: 1;
   people?: PersonInput[];
+  /**
+   * Read, never written: links and stored configurations from before the mark
+   * style became a property of each person. See {@link validateConfig}.
+   */
+  markStyle?: MarkStyle;
 };
 
 export const LIMITS = {
@@ -66,6 +74,7 @@ export const LIMITS = {
 } as const;
 
 export const PAPER_SIZES: readonly PaperSize[] = ['A4', 'Letter'];
+/** Only the legacy sheet-wide `markStyle` is validated against these. */
 export const MARK_STYLES: readonly MarkStyle[] = ['symbol', 'initial'];
 export const WEEK_STARTS: readonly WeekStart[] = ['auto', 'monday', 'sunday', 'saturday'];
 export const WEEKEND_STYLES: readonly WeekendStyle[] = ['outline', 'plain'];
@@ -86,7 +95,6 @@ export const DEFAULT_CONFIG: SheetConfig = Object.freeze({
   showDayDates: true,
   showLegend: true,
   people: DEFAULT_PEOPLE.map((p) => ({ ...p })),
-  markStyle: 'symbol',
   familyMark: true,
   linesPerDay: 3,
   weekendStyle: 'outline',
@@ -112,7 +120,7 @@ export class ConfigError extends Error {
   }
 }
 
-const KNOWN_KEYS = new Set<string>(Object.keys(DEFAULT_CONFIG).concat('weekStarting'));
+const KNOWN_KEYS = new Set<string>(Object.keys(DEFAULT_CONFIG).concat('weekStarting', 'markStyle'));
 
 /** Exported for the decoder in `encoding.ts`, which validates the same shapes. */
 export function isRecord(x: unknown): x is Record<string, unknown> {
@@ -129,6 +137,12 @@ function charCount(s: string): number {
 
 /**
  * Applies defaults and validates. Never guesses: every problem is reported with a path.
+ *
+ * `markStyle` is accepted but not stored. It was one setting for the whole
+ * sheet before a mark became a property of each person, so links and saved
+ * configurations still carry it: `'initial'` gives every person who has no
+ * initial of their own the first character of their name, which is exactly
+ * what it used to draw.
  */
 export function validateConfig(input: unknown): ValidationResult {
   const issues: ConfigIssue[] = [];
@@ -167,8 +181,9 @@ export function validateConfig(input: unknown): ValidationResult {
   checkEnum(input, 'weekStart', WEEK_STARTS, issues, (v) => {
     out.weekStart = v;
   });
+  let legacyMarkStyle: MarkStyle | undefined;
   checkEnum(input, 'markStyle', MARK_STYLES, issues, (v) => {
-    out.markStyle = v;
+    legacyMarkStyle = v;
   });
   checkEnum(input, 'weekendStyle', WEEKEND_STYLES, issues, (v) => {
     out.weekendStyle = v;
@@ -229,6 +244,11 @@ export function validateConfig(input: unknown): ValidationResult {
       const person = validatePerson(raw, `people[${i}]`, issues);
       if (person) out.people.push(person);
     });
+    if (legacyMarkStyle === 'initial') {
+      for (const person of out.people) {
+        if (person.initial === undefined) person.initial = personInitial(person);
+      }
+    }
     checkDuplicates(out, issues);
   }
 
@@ -236,7 +256,12 @@ export function validateConfig(input: unknown): ValidationResult {
   return { ok: true, config: out };
 }
 
-/** Two people with the same mark cannot be told apart on paper. */
+/**
+ * Two people with the same mark cannot be told apart on paper. Symbols are kept
+ * distinct whatever each person is currently drawn as, so that turning an
+ * initial off can never land on somebody else's symbol; initials only have to
+ * be distinct among the people actually drawn as initials.
+ */
 function checkDuplicates(config: SheetConfig, issues: ConfigIssue[]): void {
   const seenSymbols = new Map<string, number>();
   const seenInitials = new Map<string, number>();
@@ -250,17 +275,16 @@ function checkDuplicates(config: SheetConfig, issues: ConfigIssue[]): void {
     } else {
       seenSymbols.set(person.symbol, i);
     }
-    if (config.markStyle === 'initial') {
-      const initial = personInitial(person).toLocaleUpperCase(config.locale);
-      const initialOwner = seenInitials.get(initial);
-      if (initialOwner !== undefined) {
-        issues.push({
-          path: `people[${i}].initial`,
-          message: `same initial as people[${initialOwner}]; set a distinct initial`,
-        });
-      } else {
-        seenInitials.set(initial, i);
-      }
+    if (person.initial === undefined) return;
+    const initial = person.initial.toLocaleUpperCase(config.locale);
+    const initialOwner = seenInitials.get(initial);
+    if (initialOwner !== undefined) {
+      issues.push({
+        path: `people[${i}].initial`,
+        message: `same initial as people[${initialOwner}]; set a distinct initial`,
+      });
+    } else {
+      seenInitials.set(initial, i);
     }
   });
 }
@@ -361,7 +385,11 @@ export function resolveConfig(input: unknown = {}): SheetConfig {
   return result.config;
 }
 
-/** The initial shown for a person: explicit `initial`, else the first character of the name. */
+/**
+ * The initial for a person: their explicit `initial`, else the first character
+ * of their name. What a person is drawn as is decided by whether `initial` is
+ * set; this is what to fall back to when one has to be chosen for them.
+ */
 export function personInitial(person: Person): string {
   if (person.initial !== undefined) return person.initial;
   const first = Array.from(person.name.trim())[0];

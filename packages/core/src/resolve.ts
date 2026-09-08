@@ -1,4 +1,4 @@
-import { type Person, personInitial, type SheetConfig } from './config.js';
+import { type MarkStyle, type Person, personInitial, type SheetConfig } from './config.js';
 import {
   describeWeek,
   getWeekInfo,
@@ -16,9 +16,12 @@ export interface PersonMark {
   kind: 'person';
   personIndex: number;
   person: Person;
+  /** Drawn when `style` is `'symbol'`. */
   symbol: SymbolId;
-  /** Text drawn when `markStyle` is `'initial'`. */
+  /** Drawn when `style` is `'initial'`. */
   initial: string;
+  /** Which of the two this person is drawn as, everywhere on the sheet. */
+  style: MarkStyle;
   /** Text shown in the legend. */
   label: string;
 }
@@ -28,6 +31,8 @@ export interface FamilyMark {
   personIndex: -1;
   symbol: SymbolId;
   initial: string;
+  /** The household is always the house, whatever the people around it are. */
+  style: 'symbol';
   label: string;
 }
 
@@ -89,6 +94,7 @@ export function resolveSheet(config: SheetConfig): ResolvedSheet {
     person,
     symbol: person.symbol,
     initial: personInitial(person),
+    style: person.initial === undefined ? 'symbol' : 'initial',
     label: person.name,
   }));
   const familyLabel = t(locale, 'sheet.family');
@@ -100,6 +106,7 @@ export function resolveSheet(config: SheetConfig): ResolvedSheet {
       personIndex: -1,
       symbol: FAMILY_SYMBOL,
       initial: Array.from(familyLabel)[0] ?? '*',
+      style: 'symbol',
       label: familyLabel,
     });
   }

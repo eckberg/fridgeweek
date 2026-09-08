@@ -29,8 +29,8 @@ you notice first:
 - **A marker strip on every writing line.** One small mark per person, up to six, plus a
   house for the whole household. Circle a mark and the line belongs to that person, so any
   line can be anyone's and nobody gets a box that stays empty.
-- **A mark is a symbol or an initial.** Symbols suit pre-readers, initials suit adults; the
-  choice is made once for the whole sheet.
+- **A mark is a symbol or initials, per person.** Symbols suit pre-readers, initials suit
+  adults, and most households want both on the same sheet.
 - **Weekend names as outline text.** They separate the weekend from the week in mono print,
   and a child can colour them in.
 - **Mono only.** Colour is decoration, never information, so a cheap laser printer and

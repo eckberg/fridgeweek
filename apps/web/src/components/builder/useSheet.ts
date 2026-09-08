@@ -56,9 +56,22 @@ export function useSheet() {
 
   function updatePerson(index: number, change: Partial<Person>): void {
     const people = config.value.people.map((person, i) =>
-      i === index ? { ...person, ...change } : person,
+      i === index ? renamed({ ...person, ...change }, person) : person,
     );
     update({ people });
+  }
+
+  /**
+   * A person drawn as letters keeps them when their name changes, unless the
+   * letters are the ones the name gave them: renaming Alex to Bea should not
+   * leave a B-for-Bea sheet drawing an A, and should not throw away initials
+   * that were typed on purpose.
+   */
+  function renamed(next: Person, before: Person): Person {
+    if (next.name === before.name || next.initial === undefined) return next;
+    if (before.initial !== firstCharacter(before.name)) return next;
+    const derived = firstCharacter(next.name);
+    return derived === '' ? next : { ...next, initial: derived };
   }
 
   function addPerson(person: Person): void {
@@ -137,6 +150,10 @@ export function useSheet() {
     link,
     adoptHash,
   };
+}
+
+function firstCharacter(name: string): string {
+  return Array.from(name.trim())[0] ?? '';
 }
 
 export type SheetController = ReturnType<typeof useSheet>;

@@ -12,18 +12,21 @@ const FORMAT_1_LINK =
   'b3dXZWVrTnVtYmVyIjp0cnVlLCJzaG93RGF5RGF0ZXMiOmZhbHNlLCJ3ZWVrU3RhcnRpbmciOiIyMDI2LTA5LTA3' +
   'IiwibWFya1N0eWxlIjoiaW5pdGlhbCIsImxpbmVzUGVyRGF5IjoyLCJjb3BpZXMiOjV9';
 
-/** What that link says. */
+/**
+ * What that link says, written the way it is written today. Its sheet-wide
+ * `markStyle: 'initial'` is now a property of each person, so Sam gets the
+ * initial that flag used to draw for him.
+ */
 const shared = resolveConfig({
   locale: 'sv',
   showWeekNumber: true,
   showDayDates: false,
   weekStarting: '2026-09-07',
-  markStyle: 'initial',
   linesPerDay: 2,
   copies: 5,
   people: [
     { name: 'Alex', symbol: 'cat', initial: 'K' },
-    { name: 'Sam', symbol: 'rocket' },
+    { name: 'Sam', symbol: 'rocket', initial: 'S' },
   ],
 });
 
@@ -42,7 +45,7 @@ describe('encodeConfig', () => {
     expect(encoded).toBe(encodeConfig(shared));
     // Pinned so that a change to the byte layout or to a symbol's number is
     // visible in review: both would break links people have already shared.
-    expect(encoded).toBe('ApJRJCYSAnN2CYRBbGV4AUsqA1NhbQ');
+    expect(encoded).toBe('ApBRJCYSAnN2CYRBbGV4AUsqg1NhbQFT');
   });
 
   it('is a fraction of the length of the format 1 link for the same sheet', () => {
@@ -76,13 +79,12 @@ describe('encodeConfig / decodeConfig', () => {
       showDayDates: false,
       showLegend: false,
       weekStarting: '2026-09-07',
-      markStyle: 'initial',
       familyMark: false,
       linesPerDay: 4,
       weekendStyle: 'plain',
       copies: 25,
       people: [
-        { name: 'Åsa Öberg', symbol: 'unicorn' },
+        { name: 'Åsa Öberg', symbol: 'unicorn', initial: 'Ås' },
         { name: '李小龙', symbol: 'dinosaur', initial: '李' },
         { name: '👧 Iris', symbol: 'zap', initial: '👧' },
         { name: 'Milo', symbol: 'rocket' },
@@ -136,6 +138,15 @@ describe('encodeConfig / decodeConfig', () => {
 describe('decodeConfig', () => {
   it('still reads a link written in format 1', () => {
     expect(decodeConfig(FORMAT_1_LINK)).toEqual(shared);
+  });
+
+  it('still reads the packed flag for a sheet-wide mark style', () => {
+    const bytes = bytesOf(encodeConfig(DEFAULT_CONFIG));
+    bytes[1] = (bytes[1] as number) | 0x02;
+    const config = decodeConfig(linkOf(bytes));
+    expect(config.people.map((p) => p.initial)).toEqual(['A', 'S']);
+    // Written again, the same sheet says it person by person.
+    expect(bytesOf(encodeConfig(config))[1]).toBe(0);
   });
 
   it('shortens that link when the sheet is saved again', () => {
