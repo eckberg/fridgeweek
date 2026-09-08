@@ -31,6 +31,10 @@ the layout maths and the module contracts. Keep it in sync with the code.
   Neither covers the other, and `pnpm typecheck` runs both.
 - `packages/core` imports its label JSON with `with { type: 'json' }`. Without the attribute the
   published `dist` cannot be loaded by plain Node; `pnpm build` runs `check:dist` to prove it can.
+- Playwright must stay at 1.60 or newer. Its bundled zip extractor never settles on Node 26, so
+  every earlier version hangs forever unpacking the browser instead of failing, and the CI job
+  ran to the six-hour ceiling. The three pins move together: `@playwright/test` in both packages
+  and `playwright-core` in `apps/web`.
 - `playwright-core` must stay external to the SSR bundle, or the PDF route cannot be built
   without it.
 - `apps/web` builds for Node unless `DEPLOY_TARGET=cloudflare` is set, which swaps the adapter

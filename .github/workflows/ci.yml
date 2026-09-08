@@ -16,6 +16,7 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
@@ -34,9 +35,14 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
+  # A browser that fails to install used to hang rather than fail: Playwright
+  # waits on its download child with no timeout, so the job ran to the six-hour
+  # ceiling. These caps make that a failure in minutes. The whole job is well
+  # under a minute when it is healthy.
   browser:
     needs: check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
@@ -48,6 +54,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Install Chromium
+        timeout-minutes: 5
         run: pnpm --filter @fridgeweek/core exec playwright install --with-deps chromium
 
       - name: Sheet snapshots
