@@ -2,6 +2,13 @@
   "name": "@fridgeweek/core",
   "version": "0.1.0",
   "description": "Layout solver and SVG/HTML renderer for Fridgeweek sheets. Zero runtime dependencies.",
+  "homepage": "https://fridgeweek.com",
+  "bugs": "https://github.com/eckberg/fridgeweek/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eckberg/fridgeweek.git",
+    "directory": "packages/core"
+  },
   "license": "MIT",
   "type": "module",
   "main": "./src/index.ts",
@@ -14,7 +21,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "assets/fonts/OFL.txt"
   ],
   "sideEffects": false,
   "scripts": {
