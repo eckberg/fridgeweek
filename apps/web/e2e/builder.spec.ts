@@ -112,7 +112,9 @@ test('the symbol picker refuses a symbol another person already has', async ({ p
   await expect(picker.getByRole('button', { name: 'Rocket' })).toBeDisabled();
   await picker.getByRole('button', { name: 'Dog' }).click();
   await expect(picker).toBeHidden();
-  await expect(page.locator('.paper svg use').first()).toHaveAttribute('href', /-dog$/);
+  // Asserted by symbol rather than by position: the family mark leads every
+  // strip (DESIGN.md decision 7), so Alex's mark is not the first `use`.
+  await expect(page.locator('.paper svg use[href$="-dog"]').first()).toBeVisible();
 });
 
 test('only one person opens their symbols at a time', async ({ page }) => {
