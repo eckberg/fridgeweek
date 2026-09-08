@@ -45,15 +45,58 @@ Rendering binding, a per-IP rate limit on `/api/pdf`, and the hostname. No KV, n
 Durable Object, no secrets, and no account id in the repository.
 
 ```sh
+pnpm deploy:cloudflare          # build for Cloudflare, then deploy
+pnpm deploy:dry-run             # the same build, checked but not published
+```
+
+Both are one script each, from the repository root. They expand to:
+
+```sh
 DEPLOY_TARGET=cloudflare pnpm --filter @fridgeweek/web build
 cd apps/web && pnpm exec wrangler deploy --config dist/server/wrangler.json
 ```
 
+Not `pnpm deploy`: that is a built-in pnpm command and would shadow a script of that name,
+which is why these two say what they deploy to.
+
 `DEPLOY_TARGET=cloudflare` is the only switch. Without it the build uses the Node adapter, so
 every other command in this repository is unaffected by the existence of this path. The build
 writes a merged `dist/server/wrangler.json` — the committed config plus the entry point and
-asset binding the adapter adds — and that is the file to deploy. Adding `--dry-run` checks it
-without an account.
+asset binding the adapter adds — and that is the file to deploy. `deploy:dry-run` stops after
+checking that file, and needs no account.
+
+`wrangler` reads `CLOUDFLARE_API_TOKEN` from the environment, or opens a browser to log in the
+first time. The account id is not in the repository: pass it as `CLOUDFLARE_ACCOUNT_ID` if your
+token can see more than one account.
+
+### From GitHub
+
+`.github/workflows/deploy.yml` runs the same script. It is **Actions → Deploy → Run workflow**
+and nothing else — no push, no merge and no schedule starts it, so `main` moving is never by
+itself a publish.
+
+It needs two repository secrets, and they belong to the `production` environment rather than to
+the repository at large, so nothing outside this workflow can read them:
+
+| Secret | What it is |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | A token with *Workers Scripts: Edit*. Cloudflare's **Edit Cloudflare Workers** template covers it. |
+| `CLOUDFLARE_ACCOUNT_ID` | From the Workers & Pages overview. Kept out of the repository on purpose. |
+
+Who can press the button:
+
+- **`workflow_dispatch` already requires write access.** Nobody who cannot push to this
+  repository can start it, and a pull request from a fork can neither run it nor read the
+  secrets. That is the guard you get for free.
+- **Settings → Environments → `production`** is where to tighten it. *Required reviewers* turns
+  a deploy into something a named person approves while the job waits; *deployment branch rule*
+  `main` refuses any other ref. Both are free on a public repository. The workflow refuses a
+  ref other than `main` on its own too, so that rule holds even before the environment exists.
+- The environment also gives you the deployment history, so every publish is on the record with
+  who ran it.
+
+A deploy does not re-run the test suite. Merging is what tests changes, and CI runs on every
+push to `main`; the button publishes what is already there.
 
 `wrangler dev` stubs the Browser Rendering binding and its stub has no quick actions, so a
 local render answers 502. The rate limiter is real locally. Adding `"remote": true` to the

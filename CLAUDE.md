@@ -16,6 +16,9 @@ the layout maths and the module contracts. Keep it in sync with the code.
 - `pnpm test:visual` runs Playwright sheet screenshots (Linux snapshots are committed)
 - `pnpm test:e2e` drives the built site in a browser
 - Set `CHROMIUM_PATH` if Playwright cannot find a browser
+- `pnpm deploy:cloudflare` builds for Cloudflare and deploys; `pnpm deploy:dry-run` stops short
+  of publishing. Not `pnpm deploy`: that name is a built-in pnpm command and shadows a script.
+  The same script runs in `.github/workflows/deploy.yml`, which is a manual button only.
 
 ## Gotchas
 - `apps/web` pins TypeScript 6 because `astro check` does not yet support the 7.x compiler API.
