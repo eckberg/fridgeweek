@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "build:cloudflare": "DEPLOY_TARGET=cloudflare astro build",
+    "deploy:cloudflare": "pnpm run build:cloudflare && wrangler deploy --config dist/server/wrangler.json",
+    "deploy:dry-run": "pnpm run build:cloudflare && wrangler deploy --config dist/server/wrangler.json --dry-run",
     "preview": "astro preview",
     "typecheck": "astro check --minimum-severity error && vue-tsc --noEmit -p tsconfig.vue.json",
     "test": "vitest run",

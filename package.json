@@ -18,6 +18,8 @@
   "scripts": {
     "dev": "pnpm --filter @fridgeweek/web dev",
     "build": "pnpm -r build",
+    "deploy:cloudflare": "pnpm --filter @fridgeweek/web run deploy:cloudflare",
+    "deploy:dry-run": "pnpm --filter @fridgeweek/web run deploy:dry-run",
     "test": "pnpm -r test",
     "test:visual": "pnpm -r test:visual",
     "lint": "biome check .",
