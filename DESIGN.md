@@ -163,6 +163,11 @@ Placement rules that are not just numbers:
 
 - Marks are **centred** in their line band, so every line has the same rhythm. Days are
   separated by their own height and the rhythm of the strips, not by a rule.
+- The one rule left, the divider under the header, is **centred between the two things it
+  divides**: halfway between the lowest ink in the header and the top of the first weekday
+  name's capitals. `HEADER_H` is a generous band that the header's ink stops well short of,
+  so drawing the divider at the day block's edge put it 8 mm below the header and 2 mm above
+  the names, where it read as Monday's underline. The day block does not move for it.
 - The day date is **right-aligned at the content edge**, forming one column down
   the sheet rather than following each weekday name's width. The name shrinks to fit
   what is left.

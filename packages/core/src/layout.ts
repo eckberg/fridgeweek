@@ -44,6 +44,10 @@ export const DATE_FIELD_W = 14;
 export const NAME_DATE_GUTTER = 4;
 export const NAME_FONT_MAX = 8;
 export const NAME_FONT_MIN = 4.5;
+/** Extra space above the weekday name's capitals, inside the day's top padding. */
+export const NAME_TOP_GAP = 0.4;
+/** How far text drops below its baseline, as a fraction of font size. */
+export const DESCENDER = 0.22;
 /** Ceiling for the legend symbol; it otherwise matches the strip mark size. */
 export const LEGEND_SYMBOL_MAX = MARK_MAX;
 export const LEGEND_FONT = 3.4;
@@ -148,6 +152,8 @@ export interface LegendItem {
 
 export interface HeaderLayout {
   rect: Rect;
+  /** The lowest the header actually reaches, which is well above `rect`'s foot. */
+  inkBottom: number;
   /** The word, and the week number after it when the sheet is dated. */
   weekLabel: (TextAnchor & { text: string }) | undefined;
   /** Rule to write the week number on, when the sheet is not dated. */
@@ -163,7 +169,7 @@ export interface Layout {
   margin: number;
   content: Rect;
   header: HeaderLayout | undefined;
-  /** Rule at the top of the day block. */
+  /** Rule dividing the header from the days, or the top of the day block. */
   topRule: Rule;
   days: DayLayout[];
   metrics: {
@@ -233,7 +239,6 @@ export function layoutResolved(sheet: ResolvedSheet): Layout {
 
   const headerTotal = sheet.hasHeader ? HEADER_H + HEADER_GAP : 0;
   const daysTop = content.y + headerTotal;
-  const topRule: Rule = { x1: content.x, x2: content.x + content.w, y: daysTop };
 
   const dayHeight = (content.h - headerTotal) / 7;
   const headHeight = headBandHeight(dayHeight, config.linesPerDay);
@@ -248,6 +253,22 @@ export function layoutResolved(sheet: ResolvedSheet): Layout {
   // The legend shares the mark size with the strips, so the header needs the
   // metrics; the metrics only need to know whether a header exists.
   const header = sheet.hasHeader ? layoutHeader(sheet, content, markSize, issues) : undefined;
+
+  /*
+   * The rule divides the header from the days, so it belongs between them
+   * rather than on the day block's own edge. `HEADER_H` is a generous band and
+   * the header's ink stops well short of it, so a rule at `daysTop` sat about
+   * 8 mm below the header and 2 mm above the weekday names: it read as
+   * Monday's underline rather than as a divider. It is now halfway between the
+   * lowest ink in the header and the top of the first name's capitals. The day
+   * block itself does not move, so every day keeps its height.
+   */
+  const firstNameTop = daysTop + DAY_PAD_TOP + NAME_TOP_GAP;
+  const topRule: Rule = {
+    x1: content.x,
+    x2: content.x + content.w,
+    y: header ? (header.inkBottom + firstNameTop) / 2 : daysTop,
+  };
 
   const remedies = lineRemedies(sheet);
   if (lineHeight < MIN_LINE_H) {
@@ -293,7 +314,7 @@ export function layoutResolved(sheet: ResolvedSheet): Layout {
       width = estimateTextWidth(text, fontSize, 'upperBold', letterSpacing);
       nameShrunk = true;
     }
-    const baseline = top + DAY_PAD_TOP + 0.4 + CAP_H * fontSize;
+    const baseline = top + DAY_PAD_TOP + NAME_TOP_GAP + CAP_H * fontSize;
 
     const dateField: DayLayout['dateField'] = config.showDayDates
       ? {
@@ -443,7 +464,36 @@ function layoutHeader(
     legend = layoutLegend(sheet, content, maxWidth, markSize, issues);
   }
 
-  return { rect, weekLabel, weekNumberField, dateRange, legend };
+  const header: HeaderLayout = {
+    rect,
+    inkBottom: content.y,
+    weekLabel,
+    weekNumberField,
+    dateRange,
+    legend,
+  };
+  return { ...header, inkBottom: headerInkBottom(header) };
+}
+
+/**
+ * The lowest the header reaches. Measured from what each field reserves rather
+ * than from what it happens to draw, so that choosing a date — which turns a
+ * blank rule into printed text — does not move anything.
+ */
+function headerInkBottom(header: HeaderLayout): number {
+  let bottom = header.rect.y;
+  if (header.weekLabel) {
+    bottom = Math.max(bottom, header.weekLabel.baseline + HEADER_FIELD_DROP);
+  }
+  if (header.dateRange) bottom = Math.max(bottom, header.dateRange.y);
+  for (const item of header.legend?.items ?? []) {
+    bottom = Math.max(
+      bottom,
+      item.symbol.y + item.symbol.h,
+      item.text.baseline + item.text.fontSize * DESCENDER,
+    );
+  }
+  return bottom;
 }
 
 function layoutLegend(

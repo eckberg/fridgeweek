@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { resolveConfig, type SheetConfigInput } from '../src/config.js';
 import {
+  CAP_H,
   COMFORT_LINE_H,
   computeLayout,
   HEADER_GAP,
@@ -32,7 +33,7 @@ describe('computeLayout: geometry', () => {
     expect(l.paper).toEqual({ name: 'A4', width: 210, height: 297 });
     expect(l.content).toEqual({ x: 10, y: 10, w: 190, h: 277 });
     expect(l.header?.rect.h).toBe(HEADER_H);
-    expect(l.topRule.y).toBe(10 + HEADER_H + HEADER_GAP);
+    expect(l.days[0]?.rect.y).toBe(10 + HEADER_H + HEADER_GAP);
     expect(l.days).toHaveLength(7);
     const heights = new Set(l.days.map((d) => d.rect.h));
     expect(heights.size).toBe(1);
@@ -40,6 +41,38 @@ describe('computeLayout: geometry', () => {
     expect(last).toBeDefined();
     if (last) expect(last.rect.y + last.rect.h).toBeCloseTo(287, 2);
     expect(l.metrics.dayHeight).toBeCloseTo((277 - (HEADER_H + HEADER_GAP)) / 7, 2);
+  });
+
+  it('sets the divider midway between the header and the first weekday name', () => {
+    const l = layoutOf({ locale: 'sv-SE' });
+    const first = l.days[0];
+    expect(first).toBeDefined();
+    expect(l.header).toBeDefined();
+    if (!first || !l.header) return;
+
+    const nameTop = first.name.baseline - CAP_H * first.name.fontSize;
+    expect(l.topRule.y - l.header.inkBottom).toBeCloseTo(nameTop - l.topRule.y, 3);
+    // Between the two, not on the day block's own edge.
+    expect(l.topRule.y).toBeGreaterThan(l.header.inkBottom);
+    expect(l.topRule.y).toBeLessThan(first.rect.y);
+  });
+
+  it('keeps the divider still when a date is chosen', () => {
+    const dated = layoutOf({ locale: 'sv-SE', weekStarting: '2026-09-07' });
+    const blank = layoutOf({ locale: 'sv-SE' });
+    expect(dated.topRule.y).toBe(blank.topRule.y);
+    expect(dated.header?.inkBottom).toBe(blank.header?.inkBottom);
+  });
+
+  it('stays centred when the legend wraps and the header reaches lower', () => {
+    const l = layoutOf({ locale: 'fi-FI', people: peopleOf(6) });
+    const first = l.days[0];
+    expect(first).toBeDefined();
+    expect(l.header).toBeDefined();
+    if (!first || !l.header) return;
+
+    const nameTop = first.name.baseline - CAP_H * first.name.fontSize;
+    expect(l.topRule.y - l.header.inkBottom).toBeCloseTo(nameTop - l.topRule.y, 3);
   });
 
   it('drops the header when nothing needs it', () => {
