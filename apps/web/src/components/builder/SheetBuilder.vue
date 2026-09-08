@@ -141,10 +141,21 @@ const snapNotice = computed(() => {
 
 // --- Output ---------------------------------------------------------------
 
+/**
+ * Count a sheet that actually left the builder. Both events are anonymous
+ * counters with no properties: what was printed is never sent, only that
+ * something was. Optional on purpose, because the script is absent in
+ * development and for anyone blocking it or sending Do Not Track.
+ */
+function track(event: string): void {
+  window.fathom?.trackEvent(event);
+}
+
 async function onPrint(): Promise<void> {
   busy.value = true;
   try {
     await printDocument(sheet.printableHtml());
+    track('Print sheet');
   } catch {
     announce(t('pdf.failed'));
   } finally {
@@ -168,6 +179,7 @@ async function onPdf(): Promise<void> {
     announce(pdfMessage(result.reason));
   } else {
     notice.value = '';
+    track('Download PDF');
   }
 }
 
@@ -231,12 +243,7 @@ const languageSummary = computed(() => {
         :title="t('language.group')"
         :meta="t('language.available', { count: SHEET_LOCALES.length })"
       >
-        <FieldRow
-          :label="t('language.label')"
-          :help="t('language.help')"
-          :control-id="languageId"
-          stacked
-        >
+        <FieldRow :label="t('language.label')" :control-id="languageId" stacked>
           <select :id="languageId" v-model="locale" class="select">
             <option v-for="option in SHEET_LOCALES" :key="option.code" :value="option.code">
               {{ option.endonym }}
@@ -403,11 +410,18 @@ const languageSummary = computed(() => {
 .builder {
   display: grid;
   grid-template-columns: 340px minmax(0, 1fr);
+  /* Row 1 belongs to the live region and collapses to nothing while it is
+     hidden; row 2 takes the rest, so the preview keeps its full height either
+     way. Every child is placed explicitly, because the live region leaves the
+     flow when empty and auto-placement would then shuffle the other two. */
+  grid-template-rows: auto minmax(0, 1fr);
   height: 100%;
   min-height: 0;
 }
 
 .panel {
+  grid-column: 1;
+  grid-row: 2;
   /* A grid item defaults to the size of its content in both axes, which lets a
      stepper widen the column and a long panel push past the viewport. */
   min-width: 0;
@@ -419,6 +433,8 @@ const languageSummary = computed(() => {
 
 /* The sheet, its verdict and its footnote read as one column. */
 .stage {
+  grid-column: 2;
+  grid-row: 2;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -458,7 +474,15 @@ const languageSummary = computed(() => {
   color: var(--ink-soft);
 }
 
+/*
+ * A grid item like any other, so the moment it stops being visually hidden it
+ * would claim the first cell and push the panel and the preview out of their
+ * columns. A full-width row of its own keeps the two columns put whether it is
+ * showing or not.
+ */
 .notice {
+  grid-column: 1 / -1;
+  grid-row: 1;
   margin: 0;
   padding: var(--space-3) var(--space-5);
   background: var(--paper-tint);
@@ -541,17 +565,26 @@ const languageSummary = computed(() => {
 @media (max-width: 900px) {
   .builder {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
+    /* Stacked, the same three children need three rows of their own. */
+    grid-template-rows: auto auto 1fr;
     height: auto;
   }
 
+  .notice {
+    grid-column: 1;
+  }
+
   .panel {
+    grid-column: 1;
+    grid-row: 2;
     border-right: none;
     border-bottom: 1px solid var(--border);
     overflow: visible;
   }
 
   .stage {
+    grid-column: 1;
+    grid-row: 3;
     min-height: 70vh;
   }
 }

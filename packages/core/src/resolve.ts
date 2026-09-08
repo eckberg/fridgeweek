@@ -93,7 +93,9 @@ export function resolveSheet(config: SheetConfig): ResolvedSheet {
   }));
   const familyLabel = t(locale, 'sheet.family');
   if (config.familyMark) {
-    marks.push({
+    // First in every strip, so the mark that can carry any line is the one the
+    // eye reaches first and its position never moves as people are added.
+    marks.unshift({
       kind: 'family',
       personIndex: -1,
       symbol: FAMILY_SYMBOL,

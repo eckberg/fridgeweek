@@ -26,6 +26,15 @@
 
   /* Accent: folded paper, from the origami mark */
   --accent: #a8471b;
+  /*
+   * One step darker than --accent, for hover on a filled button. The brand
+   * ramp hovers a primary button by darkening it a step (#ce6234 -> #a8471b);
+   * because --accent already sits at that darker step for contrast, the hover
+   * needs the step below it, which the ramp does not name. Continuing its own
+   * progression in oklch, .62 -> .52 -> .42 lightness at falling chroma, gives
+   * oklch(.42 .12 42) = #803009.
+   */
+  --accent-deep: #803009;
   --accent-mid: #ce6234;
   --accent-soft: #e08256;
   --accent-pale: #f5c5ab;
@@ -33,6 +42,8 @@
   /* Type */
   --font-sans: "Atkinson Hyperlegible Next", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* One line on the landing page, to show a human fills the sheet in. */
+  --font-hand: "Caveat", ui-rounded, cursive;
 
   /* Radii and elevation */
   --radius-sm: 6px;

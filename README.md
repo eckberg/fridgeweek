@@ -14,12 +14,12 @@ sync and no account. You print it and write on it with a pen.
 It is built for households with pre-school and early-school children who already draw this
 sheet by hand every week and want to stop redrawing the skeleton.
 
+Build one at **[fridgeweek.com](https://fridgeweek.com)**: set the options, print the page.
+
 ## The sheet
 
-<img alt="An A4 sheet: week 37, Swedish, four people and a house, one week from Monday to Sunday" src="docs/sheet.png" width="620">
-
-Every decision on that page is in [DESIGN.md](DESIGN.md), with the reason next to it. The
-ones you can see:
+Every decision on the page is in [DESIGN.md](DESIGN.md), with the reason next to it. The ones
+you notice first:
 
 - **Seven days, equal height.** Sunday gets the same space as Wednesday. A child who cannot
   read finds today by counting rows, so a busy Thursday must not be allowed to grow.
@@ -35,8 +35,6 @@ ones you can see:
   and a child can colour them in.
 - **Mono only.** Colour is decoration, never information, so a cheap laser printer and
   whatever paper is in the tray is enough. A4 and Letter, portrait.
-
-<img alt="The top of a sheet: the week-number box, the date range, the legend, and Monday with three ruled lines each opening with a strip of five marks" src="docs/detail.png" width="820">
 
 The header is optional and each part has its own toggle: week number, date range, and a
 legend pairing every symbol with a name. Dates are blank by default, which suits printing
@@ -65,26 +63,34 @@ are closed with a link, which is a scope boundary and not a judgement of the ide
 
 ## The builder
 
-<img alt="The Fridgeweek builder: settings on the left, a live sheet preview on the right, and a fit report reading fits comfortably" src="docs/builder.png" width="900">
+**[fridgeweek.com/sheet](https://fridgeweek.com/sheet)** is the builder: settings on the
+left, a live sheet preview on the right, and a fit report above it.
 
 The website is an Astro site with one Vue island. The config lives in the URL hash, so the
 link is the sheet, and in `localStorage` for convenience. The bar above the preview is the
 layout engine's own report: whether it fits, and the millimetres it arrived at.
 
-There is no hosted instance yet. Everything below runs on your own machine.
+The site is the quickest way to see all of this for real. Everything below runs it on your
+own machine instead.
 
 ## Development
 
-You need Node 24 and pnpm 12. Enable pnpm with corepack:
+You need Node 26 and pnpm 12. Node 26 no longer bundles corepack, so install pnpm directly:
 
 ```sh
-corepack enable
+npm install -g pnpm@12
 ```
+
+`packageManager` in the root `package.json` pins the exact version and pnpm 12 keeps itself in
+step with it. Install pnpm 12 rather than an older release, which cannot bootstrap a pnpm 12
+one, and if npm reports that pnpm's install scripts were blocked, re-run it with
+`--allow-scripts=pnpm`.
 
 Then, from the repository root:
 
 ```sh
 pnpm install       # install workspace dependencies
+pnpm dev           # run the site at http://localhost:4321
 pnpm test          # unit and snapshot tests
 pnpm typecheck     # TypeScript, Astro and Vue diagnostics
 pnpm lint          # Biome
@@ -99,17 +105,21 @@ what the PDF route renders.
 To run the website:
 
 ```sh
-pnpm --filter @fridgeweek/web dev      # http://localhost:4321
+pnpm dev                               # http://localhost:4321
 pnpm --filter @fridgeweek/web build    # then `preview` to serve the built site
 ```
 
 The browser tests use Playwright. Install the browser once, then run them:
 
 ```sh
-pnpm exec playwright install chromium
+pnpm --filter @fridgeweek/web exec playwright install chromium
 pnpm test:visual   # sheet screenshots, from packages/core
 pnpm test:e2e      # drives the built website
 ```
+
+Playwright is a dependency of the two workspace packages rather than the root, so the install
+needs `--filter`; from the root, `pnpm exec playwright` reports that the command is not found.
+One install covers both suites, because they pin the same Playwright and share its browsers.
 
 That same Chromium is what renders PDFs locally, so installing it also turns on the
 **Download PDF** button. `POST /api/pdf` validates the config with the same function the
@@ -129,8 +139,8 @@ No account, key or hosting platform is needed to run or develop this project.
 | Path | What it is |
 |---|---|
 | `packages/core` | The `@fridgeweek/core` package: config validation and encoding, the layout solver, the SVG and HTML renderers, symbols, embedded fonts, date and week-number helpers, and the sheet's own words. Strict TypeScript, no runtime dependencies, no DOM access, so it runs the same in Node, in a browser and in a Worker. |
-| `apps/web` | The website. Astro, static except for the PDF route, with one Vue island for the builder. Self-hosted fonts, no third-party requests, no analytics, no cookies. |
-| `docs` | Pictures for this file. The banner is drawn in `banner.svg` and both PNG variants are rendered from it, `preview.svg` is regenerated by `pnpm sample`, and the rest are screenshots kept from the design boards. |
+| `apps/web` | The website. Astro, static except for the PDF route, with one Vue island for the builder. Self-hosted fonts and icons, so the only third-party request on the page is cookieless, aggregate analytics. No cookies and no consent banner. |
+| `docs` | The banner, drawn in `banner.svg` with both PNG variants rendered from it; `preview.svg`, regenerated by `pnpm sample`; `DEPLOYING.md`; and screenshots kept from the design boards. |
 | `examples/out` | Sample sheets. Generated, not committed. |
 
 `packages/core` resolves to its TypeScript source inside the workspace, so nothing needs

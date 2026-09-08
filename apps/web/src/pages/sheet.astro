@@ -20,7 +20,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <p class="mono">{t('footer.legal')}</p>
     <nav aria-label={t('nav.secondaryLabel')}>
       <a href="/about">{t('footer.about')}</a>
-      <a href="/about#changelog">{t('footer.changelog')}</a>
+      <a href="https://github.com/eckberg/fridgeweek/releases" rel="noopener">
+        {t('footer.changelog')}
+      </a>
       <a href="/">{t('nav.how')}</a>
       <a href="https://github.com/eckberg/fridgeweek" rel="noopener" class="with-mark">
         <GithubMark size={15} />{t('nav.source')}
