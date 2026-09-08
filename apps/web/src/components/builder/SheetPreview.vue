@@ -42,9 +42,16 @@ defineProps<{
   min-height: 0;
 }
 
+/*
+ * A block, so it is as wide as the figure allows. The sheet inside it is not:
+ * when the space is wider than it is tall, the sheet is sized by the height it
+ * has to fit into and comes out narrower than this wrapper. So the white and
+ * the shadow belong to the SVG, which is the actual paper, and this only has to
+ * centre it. Painting them here made the white extend past the sheet.
+ */
 .paper {
-  background: var(--white);
-  box-shadow: var(--shadow-sheet);
+  display: flex;
+  justify-content: center;
   min-height: 0;
 }
 
@@ -54,6 +61,8 @@ defineProps<{
   height: auto;
   max-width: 100%;
   max-height: 100%;
+  background: var(--white);
+  box-shadow: var(--shadow-sheet);
 }
 
 @media (max-width: 900px) {

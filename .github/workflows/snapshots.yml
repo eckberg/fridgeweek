@@ -1,0 +1,62 @@
+name: Sheet snapshots
+
+# The sheet screenshots are pixels, so they belong to the platform that drew
+# them: CI compares on Linux, and a set regenerated on a contributor's Mac fails
+# there on font rasterisation alone. This is the supported way to update them —
+# run it on the branch whose change moved the sheet, and it commits the new PNGs
+# back to that branch.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: snapshots-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Same provisioning as ci.yml: pnpm from `packageManager`, Node from
+      # `devEngines.runtime`. The comparison is only meaningful if the browser
+      # and the runtime match the ones that do the checking.
+      - uses: pnpm/setup@v2
+        with:
+          cache: true
+          install: false
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm --filter @fridgeweek/core exec playwright install --with-deps chromium
+
+      # Playwright reports a run that rewrote an expectation as a failure, which
+      # is the right default and the wrong one here: rewriting them is the whole
+      # job. The diff below is what decides whether anything actually changed.
+      - name: Rewrite the snapshots
+        continue-on-error: true
+        run: pnpm --filter @fridgeweek/core exec playwright test -c test/visual/playwright.config.ts --update-snapshots
+
+      - name: Commit them if they moved
+        run: |
+          set -euo pipefail
+          snapshots=packages/core/test/visual/__screenshots__
+          if git diff --quiet -- "$snapshots"; then
+            echo "The snapshots already match this branch. Nothing to commit."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$snapshots"
+          git commit -m "Update the sheet snapshots"
+          git push
+          echo "Pushed updated snapshots to ${GITHUB_REF_NAME}."
+
+      # Having rewritten them, prove they now pass a normal comparison. Without
+      # this the job is green whether or not the suite is.
+      - name: Check them the way CI does
+        run: pnpm test:visual

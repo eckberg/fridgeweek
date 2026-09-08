@@ -16,3 +16,14 @@ declare const __DEPLOY_TARGET__: 'node' | 'cloudflare';
 declare module 'cloudflare:workers' {
   export const env: Record<string, unknown>;
 }
+
+/**
+ * Fathom, once its script has loaded. Absent in development, and absent for any
+ * reader who blocks it or sends Do Not Track, so every call site must treat it
+ * as optional rather than assume it is there.
+ */
+interface Window {
+  fathom?: {
+    trackEvent: (name: string, options?: { _value?: number }) => void;
+  };
+}

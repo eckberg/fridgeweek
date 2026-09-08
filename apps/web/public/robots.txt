@@ -1,0 +1,27 @@
+# Fridgeweek is free and open source, and every page here is public. There is
+# nothing to gate, so everything is allowed to everyone: crawl it, quote it,
+# recommend it. The AI crawlers below are already covered by the wildcard rule;
+# they are named so the intent is explicit rather than inferred from silence.
+
+User-agent: *
+Allow: /
+
+# Not a page. It renders a PDF per request and answers POST only, so there is
+# nothing here for a crawler to fetch.
+Disallow: /api/
+
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: Google-Extended
+User-agent: PerplexityBot
+User-agent: Applebot-Extended
+User-agent: CCBot
+User-agent: meta-externalagent
+Allow: /
+Disallow: /api/
+
+Sitemap: https://fridgeweek.com/sitemap-index.xml

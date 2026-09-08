@@ -12,7 +12,6 @@ const sections = [
   { id: 'terms', label: 'Terms' },
   { id: 'credits', label: 'Licence and credits' },
   { id: 'contact', label: 'Contact' },
-  { id: 'changelog', label: 'Changelog' },
 ];
 
 const principles = ['Equal day heights', 'Uppercase names', 'Outline weekends', 'Mono print'];
@@ -21,32 +20,47 @@ const principles = ['Equal day heights', 'Uppercase names', 'Outline weekends', 
 const dataFacts = [
   ['state', 'URL hash + localStorage, in your browser'],
   ['server storage', 'none'],
-  ['analytics', 'none'],
+  ['analytics', 'Fathom, cookieless and aggregate'],
   ['cookies', 'none, so no consent banner'],
-  ['third-party requests', 'none; fonts and icons are bundled'],
+  ['third-party requests', 'the analytics script; fonts and icons are bundled'],
 ];
 
 const credits = [
-  { name: 'Fridgeweek code', licence: 'MIT', href: `${repo}/blob/main/LICENSE` },
+  {
+    name: 'Fridgeweek code',
+    kind: 'This site and the sheets it makes',
+    licence: 'MIT',
+    href: `${repo}/blob/main/LICENSE`,
+  },
   {
     name: 'Atkinson Hyperlegible Next',
+    kind: 'The typeface, on screen and on paper',
     licence: 'SIL OFL 1.1',
     href: 'https://github.com/googlefonts/atkinson-hyperlegible-next',
   },
-  { name: 'Lucide icons', licence: 'ISC', href: 'https://lucide.dev' },
-  { name: 'IBM Plex Mono', licence: 'SIL OFL 1.1', href: 'https://github.com/IBM/plex' },
-];
-
-const releases = [
   {
-    version: 'v0.2',
-    state: 'current',
-    body: 'The web page: the sheet builder with a live preview, state in the address bar and in local storage, printing from the browser, a PDF endpoint, and the landing and about pages.',
+    name: 'IBM Plex Mono',
+    kind: 'The typeface for measurements and codes',
+    licence: 'SIL OFL 1.1',
+    href: 'https://github.com/IBM/plex',
   },
   {
-    version: 'v0.1',
-    state: 'done',
-    body: 'The engine: configuration and validation, the layout solver in millimetres, the SVG and HTML renderers, symbols, embedded fonts, dates and week numbers. No interface yet.',
+    name: 'Caveat',
+    kind: 'One handwritten line, on the front page',
+    licence: 'SIL OFL 1.1',
+    href: 'https://github.com/googlefonts/caveat',
+  },
+  {
+    name: 'Lucide icons',
+    kind: 'The symbols on the sheet',
+    licence: 'ISC',
+    href: 'https://lucide.dev',
+  },
+  {
+    name: 'Fathom Analytics',
+    kind: 'Visitor numbers',
+    licence: 'Hosted service',
+    href: 'https://usefathom.com',
   },
 ];
 ---
@@ -60,38 +74,31 @@ const releases = [
 
     <article class="body">
       <header class="intro">
-        <p class="eyebrow">Everything else, on one page</p>
         <h1>About Fridgeweek</h1>
         <p class="lede">
-          What this is, who made it, what happens to your data &mdash; which is close to nothing
-          &mdash; and what changed. Short on purpose: a project this small does not need seven
-          legal pages.
+          Fridgeweek turns a handful of parameters into a print-ready weekly sheet for the whole
+          family: one week, seven days top to bottom, filled in by hand and stuck on the fridge
+          where everyone can see it &mdash; including the children who cannot read yet.
         </p>
       </header>
 
       <section id="about">
         <h2>About</h2>
         <p>
-          Fridgeweek is a web page where you set a handful of parameters and get a print-ready
-          sheet: one week, seven days top to bottom, filled in by hand and stuck on the fridge. It
-          was written for households with pre-school and early-school children who were already
+          It was written for households with pre-school and early-school children who were already
           drawing this sheet by hand every week and wanted to stop redrawing the skeleton.
         </p>
         <p>
           It is a small open-source project, not a company and not a product with a plan. Every
-          line of it, and a design document that records every decision and the reason behind it,
-          is public. Features that contradict that document get closed with a link rather than an
-          argument.
+          line of it is public, along with a{' '}
+          <a href={`${repo}/blob/main/DESIGN.md`} rel="noopener">design document</a> recording
+          every decision and the reason behind it &mdash; including the things Fridgeweek will
+          deliberately never do, which is what keeps it this small.
         </p>
         <div class="button-row">
           <a class="button dark" href={repo} rel="noopener">
             <GithubMark size={16} />eckberg/fridgeweek
           </a>
-          <a class="button outline" href={`${repo}/blob/main/DESIGN.md`} rel="noopener">DESIGN.md</a>
-          <a class="button outline" href={`${repo}/blob/main/CONTRIBUTING.md`} rel="noopener">
-            CONTRIBUTING.md
-          </a>
-          <a class="button outline" href={`${repo}/blob/main/LICENSE`} rel="noopener">MIT licence</a>
         </div>
       </section>
 
@@ -113,24 +120,24 @@ const releases = [
       <section id="privacy">
         <h2>Privacy</h2>
         <p>
-          There are no accounts and no cookies. The names and symbols you type stay in your
-          browser: they are encoded in the page's own address so you can bookmark or share a
-          configuration, and kept in local storage so the page remembers it next time. Clearing
-          your browser data deletes them.
+          When you use this site to make a sheet, everything you type stays in your browser. There
+          are no accounts and no cookies. The names and symbols are encoded in the page's own
+          address, so you can bookmark or share a configuration, and kept in local storage so the
+          page remembers it next time. Clearing your browser data deletes them.
         </p>
         <p>
           One exception, and only if you ask for it: choosing <strong>Download PDF</strong> sends
-          your configuration to a rendering endpoint that draws the same sheet in headless
-          Chromium and returns the file. Nothing is stored there and nothing is kept after the
-          file is sent. Printing from your browser instead sends nothing anywhere and works
-          offline.
+          your configuration to a server that draws the same sheet and sends the file back.
+          Nothing is stored there and nothing is kept after the file is sent. Printing from your
+          browser instead sends nothing anywhere and works offline.
         </p>
 
         <h3>Visitor numbers</h3>
         <p>
-          There are none. This deployment runs no analytics of any kind, so there is nothing to
-          consent to and no script to block. If that ever changes, it will be a cookieless,
-          aggregate service and this page will say which one before it is switched on.
+          Counted with Fathom Analytics: page views, plus two counters for sheets printed and
+          PDFs downloaded. It is cookieless and aggregate &mdash; no profiles, nothing that
+          follows you between sites, Do Not Track respected, and nothing you type is ever
+          included.
         </p>
 
         <dl class="facts">
@@ -164,19 +171,20 @@ const releases = [
           {
             credits.map((credit) => (
               <div class="credit">
-                <a href={credit.href} rel="noopener">
-                  {credit.name}
-                </a>
+                <div class="what">
+                  <a href={credit.href} rel="noopener">
+                    {credit.name}
+                  </a>
+                  <span class="mono kind">{credit.kind}</span>
+                </div>
                 <span class="mono">{credit.licence}</span>
               </div>
             ))
           }
         </div>
         <p>
-          The typeface was designed for maximum letter distinction, which is exactly what a child
-          learning letters needs; it is embedded in the sheet so preview, print and PDF are
-          identical everywhere. Neither the font licence nor the icon licence puts any attribution
-          requirement on a sheet you print. Full notices are in{' '}
+          Neither the font licence nor the icon licence puts any attribution requirement on a
+          sheet you print. Full notices are in{' '}
           <a href={`${repo}/blob/main/THIRD_PARTY_NOTICES.md`} rel="noopener">
             THIRD_PARTY_NOTICES.md
           </a>.
@@ -211,27 +219,6 @@ const releases = [
         </div>
       </section>
 
-      <section id="changelog">
-        <h2>Changelog</h2>
-        <div class="releases">
-          {
-            releases.map((release) => (
-              <div class="release">
-                <div class="version">
-                  <span class="mono tag">{release.version}</span>
-                  <span class="mono state">{release.state}</span>
-                </div>
-                <p>{release.body}</p>
-              </div>
-            ))
-          }
-        </div>
-        <p>
-          Next: a hosted PDF renderer with rate limiting, then pictures in the README and the first
-          published release. Every release is tagged on{' '}
-          <a href={`${repo}/releases`} rel="noopener">GitHub</a>.
-        </p>
-      </section>
     </article>
   </div>
 </BaseLayout>
@@ -420,6 +407,12 @@ const releases = [
     border-bottom: 1px solid var(--border);
   }
 
+  .what {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
   .credit a {
     font-size: 16px;
     font-weight: 700;
@@ -430,44 +423,12 @@ const releases = [
     color: var(--ink-faint);
   }
 
-  .releases {
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-    max-width: 66ch;
-  }
-
-  .release {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 24px;
-  }
-
-  .version {
-    display: flex;
-    align-items: baseline;
-    gap: var(--space-2);
-    min-width: 9rem;
-  }
-
-  .tag {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--ink);
-  }
-
-  .state {
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-
-  .release p {
-    flex: 1 1 22ch;
-    font-size: 16px;
-  }
-
+  
+  
+  
+  
+  
+  
   @media (max-width: 860px) {
     .page {
       grid-template-columns: minmax(0, 1fr);

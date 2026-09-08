@@ -4,7 +4,7 @@ Thanks for looking. The two contributions we want most are a new language and a 
 
 ## Setup
 
-You need Node 24 and pnpm 12 (`corepack enable`). See the [README](README.md#development) for the full command list. The short version:
+You need Node 26 and pnpm 12 (`npm install -g pnpm@12`). See the [README](README.md#development) for the full command list. The short version:
 
 ```sh
 pnpm install
@@ -17,9 +17,12 @@ pnpm lint
 To work on the website:
 
 ```sh
-pnpm --filter @fridgeweek/web dev     # http://localhost:4321
-pnpm exec playwright install chromium # once; also turns on the local PDF button
-pnpm test:e2e                         # drives the built site in a browser
+pnpm dev             # http://localhost:4321
+pnpm test:e2e        # drives the built site in a browser
+
+# Once, for the browser tests and the local PDF button. Playwright belongs to the
+# workspace packages, not the root, so this needs --filter to resolve.
+pnpm --filter @fridgeweek/web exec playwright install chromium
 ```
 
 Everything runs on your own machine. No account, key or hosting platform is needed for any part of this project, and a change that would make one necessary needs discussing first.

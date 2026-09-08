@@ -1,0 +1,81 @@
+---
+import { t } from '../i18n/index.js';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title={t('meta.notFoundTitle')} description={t('meta.notFoundDescription')} noindex>
+  <section class="missing">
+    <p class="eyebrow">404</p>
+    <h1>That page is not on the fridge</h1>
+    <p class="lede">
+      The link is wrong, or it pointed at something that has since moved. Nothing you made is
+      lost: a sheet lives in its own address, so if you have that link, it still works.
+    </p>
+    <div class="actions">
+      <a class="button primary" href="/sheet">{t('nav.builder')}</a>
+      <a class="button quiet" href="/">{t('notFound.home')}</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .missing {
+    max-width: 62ch;
+    margin: 0 auto;
+    padding: 96px var(--space-6) 120px;
+  }
+
+  h1 {
+    margin-top: var(--space-3);
+    font-size: clamp(30px, 4.2vw, 44px);
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+  }
+
+  .lede {
+    margin-top: var(--space-4);
+    font-size: 19px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-7);
+  }
+
+  /* The landing page's buttons are scoped to it, so the two here are their own. */
+  .button {
+    display: inline-flex;
+    align-items: center;
+    height: 48px;
+    padding: 0 24px;
+    border-radius: var(--radius-md);
+    font-size: 16px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background var(--transition), border-color var(--transition), color var(--transition);
+  }
+
+  .primary {
+    background: var(--accent);
+    color: var(--paper);
+  }
+
+  .primary:hover {
+    background: var(--accent-deep);
+  }
+
+  .quiet {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+  }
+
+  .quiet:hover {
+    border-color: var(--accent-mid);
+    color: var(--accent);
+  }
+</style>

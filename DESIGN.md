@@ -37,7 +37,7 @@ Each decision below was made deliberately during the initial design session. The
 | 4 | Each day has **N free writing lines** (1 to 4, default 3) | Real weeks are sparse. A fixed box per person leaves most boxes empty and overflows on busy days. |
 | 5 | Every line starts with a **marker strip**: one small mark per person plus a family mark | Circle the mark and the line belongs to that person. Any line can be anyone's. |
 | 6 | A mark is either a **symbol** (curated Lucide icons plus a few custom ones) or the person's **initial** | Symbols work for pre-readers and are fun ("I am the unicorn"). Initials are compact and unambiguous for adults. One setting for the whole sheet. |
-| 7 | The **family mark** (a house) is the last mark in every strip (toggle, default on) | Household entries ("preschool closed", "grandparents visiting") need an explicit home; an uncircled line is ambiguous. |
+| 7 | The **family mark** (a house) is the first mark in every strip (toggle, default on) | Household entries ("preschool closed", "grandparents visiting") need an explicit home; an uncircled line is ambiguous. It leads the strip so that the mark any line can take is the one the eye reaches first, and so that its position does not move as people are added or removed. |
 | 8 | **Mono only** in v1 | Cheap laser printers. Coloured paper still works. Symbols carry identity so colour is decoration; it can be added later without touching layout. |
 | 9 | Header with optional **week number**, **date range** and a **legend** (symbol + name per person) | Week numbers are common in the Nordics and Germany and nearly unknown elsewhere, so the default follows the locale and every element has its own toggle. |
 | 10 | **Dates are blank by default**. An optional "week starting" date prints the week number, the range and each day's date | Blank suits printing 20 at a time. Dated suits printing one every Sunday. Same layout either way. |
@@ -278,7 +278,8 @@ that can cost real money:
   with no limiter binding refuses nothing, which is how the endpoint has always behaved.
 
 Deliberately not done: no challenge in front of the button, and no account of any kind. A
-challenge is a third-party script on a page that otherwise makes no third-party requests, and
+challenge is a third-party script on a page whose only other one is a cookieless analytics
+snippet, and
 the rate limit plus the page cap bound the spend well enough to try without one.
 
 See [docs/DEPLOYING.md](docs/DEPLOYING.md) for what each deployment needs and what it costs.

@@ -9,10 +9,20 @@ interface Props {
   current?: 'about' | null;
   /** The builder fills the viewport, manages its own scrolling and has its own chrome. */
   fullHeight?: boolean;
+  /** Keeps a page out of search results and out of the sitemap. */
+  noindex?: boolean;
 }
 
-const { title, description, current = null, fullHeight = false } = Astro.props;
+const { title, description, current = null, fullHeight = false, noindex = false } = Astro.props;
 const fullTitle = title === 'Fridgeweek' ? title : `${title} · Fridgeweek`;
+
+/**
+ * Absolute URLs, which is what canonical links and social cards require.
+ * `Astro.site` is the origin configured in `astro.config.mjs`; the trailing
+ * slash is dropped so a page's own path is the only thing that varies.
+ */
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL('/og.png', Astro.site);
 ---
 
 <!doctype html>
@@ -23,10 +33,41 @@ const fullTitle = title === 'Fridgeweek' ? title : `${title} · Fridgeweek`;
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <meta name="color-scheme" content="light" />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <link rel="canonical" href={canonical} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="Fridgeweek" />
+    <meta property="og:locale" content="en" />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Fridgeweek: a printable weekly sheet for the fridge, filled in by hand."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    {
+      /*
+       * The one third-party request the site makes. Cookieless and aggregate,
+       * so there is nothing to consent to; `honor-dnt` means a reader who asks
+       * not to be counted is not counted. Left out of development builds so
+       * local work never lands in the numbers.
+       */
+      import.meta.env.PROD && (
+        <script
+          is:inline
+          defer
+          src="https://cdn.usefathom.com/script.js"
+          data-site="MZJYVYIW"
+          data-honor-dnt="true"
+        />
+      )
+    }
     <link
       rel="preload"
       href="/fonts/atkinson-hyperlegible-next-latin.woff2"

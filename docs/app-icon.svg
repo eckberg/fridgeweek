@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180" role="img" aria-label="Fridgeweek">
+  <title>Fridgeweek</title>
+  <!--
+    Source for apps/web/public/apple-touch-icon.png. Full bleed and opaque on
+    purpose: iOS applies its own rounded mask, and a transparent icon composites
+    to black there. The site favicon is the transparent one.
+  -->
+  <rect width="180" height="180" fill="#feeadd"/>
+  <g transform="translate(26 26) scale(2.0)">
+    <polygon points="8,48 32,12 32,48" fill="#f5c5ab"/>
+    <polygon points="32,12 52,48 32,48" fill="#e08256"/>
+    <polygon points="32,12 60,17 37,27" fill="#a8471b"/>
+    <polygon points="8,48 16,58 30,48" fill="#ce6234"/>
+    <line x1="32" y1="12" x2="32" y2="48" stroke="#feeadd" stroke-width="1.1"/>
+  </g>
+</svg>

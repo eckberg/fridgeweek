@@ -1,0 +1,27 @@
+# Fridgeweek
+
+> A free printable weekly planner for family life: one week, seven equal days,
+> filled in by hand and stuck on the fridge. No app, no account, no sync.
+
+Fridgeweek turns a handful of parameters into a print-ready sheet. It is built
+for households with pre-school and early-school children: every day gets the
+same height so a child who cannot read yet finds today by counting rows, and
+every writing line opens with a strip of marks — one per person, plus a house
+for the whole household — so circling a mark says whose line it is.
+
+The sheet is generated in the browser and printed. Nothing is stored on a
+server, there are no accounts, and the configuration lives in the page's own
+address so a link is the sheet. It is MIT licensed and prints in 15 languages,
+on A4 or Letter.
+
+## Pages
+
+- [Home](https://fridgeweek.com/): what the sheet is, how a family uses it, and samples.
+- [Make a sheet](https://fridgeweek.com/sheet): the builder — set people, marks, lines per day, header, paper and language, then print or download a PDF.
+- [About](https://fridgeweek.com/about): what it is, privacy, terms, licences and credits.
+
+## Project
+
+- [Source on GitHub](https://github.com/eckberg/fridgeweek): the whole project, MIT licensed.
+- [DESIGN.md](https://github.com/eckberg/fridgeweek/blob/main/DESIGN.md): every product decision and the reason for it, including what Fridgeweek deliberately will not do.
+- [CONTRIBUTING.md](https://github.com/eckberg/fridgeweek/blob/main/CONTRIBUTING.md): how to add a language or a symbol.
