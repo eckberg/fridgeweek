@@ -52,7 +52,7 @@ afterEach(() => {
 
 describe('the page cap', () => {
   it('is the same number the configuration schema enforces', () => {
-    expect(MAX_PDF_PAGES).toBe(LIMITS.copies.max);
+    expect(MAX_PDF_PAGES).toBe(LIMITS.weeks.max);
     expect(MAX_PDF_PAGES).toBe(25);
   });
 
@@ -61,7 +61,7 @@ describe('the page cap', () => {
     setRenderer(renderer);
 
     const response = await handlePdfRequest(
-      postConfig({ ...DEFAULT_CONFIG, copies: MAX_PDF_PAGES }),
+      postConfig({ ...DEFAULT_CONFIG, weekStarting: '2026-09-07', weeks: MAX_PDF_PAGES }),
       null,
     );
 
@@ -75,13 +75,13 @@ describe('the page cap', () => {
     setRenderer(renderer);
 
     const response = await handlePdfRequest(
-      postConfig({ ...DEFAULT_CONFIG, copies: MAX_PDF_PAGES + 1 }),
+      postConfig({ ...DEFAULT_CONFIG, weekStarting: '2026-09-07', weeks: MAX_PDF_PAGES + 1 }),
       null,
     );
 
     expect(response.status).toBe(422);
     const body = await response.json();
-    expect(body.issues?.[0]?.path).toBe('copies');
+    expect(body.issues?.[0]?.path).toBe('weeks');
     expect(renderer.calls).toBe(0);
   });
 
@@ -93,10 +93,10 @@ describe('the page cap', () => {
     const core = await import('@fridgeweek/core');
     vi.spyOn(core, 'validateConfig').mockReturnValue({
       ok: true,
-      config: { ...DEFAULT_CONFIG, copies: 500 },
+      config: { ...DEFAULT_CONFIG, weekStarting: '2026-09-07', weeks: 500 },
     });
 
-    const response = await handlePdfRequest(postConfig({ copies: 500 }), null);
+    const response = await handlePdfRequest(postConfig({ weeks: 500 }), null);
 
     expect(response.status).toBe(422);
     expect(renderer.calls).toBe(0);

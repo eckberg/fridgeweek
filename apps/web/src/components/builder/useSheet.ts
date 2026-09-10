@@ -83,16 +83,22 @@ export function useSheet() {
     update({ people: config.value.people.filter((_, i) => i !== index) });
   }
 
+  /**
+   * Undated, there is no week for a second page to follow, so the run comes
+   * back to one page as the date goes. Leaving it where it was would put the
+   * configuration into a state the engine refuses and the date would not
+   * clear at all.
+   */
   function clearWeekStarting(): void {
     const { weekStarting: _drop, ...rest } = config.value;
-    const result = applyChange(rest as SheetConfig, {});
+    const result = applyChange(rest as SheetConfig, { weeks: 1 });
     rejected.value = result.issues;
     config.value = result.config;
   }
 
   /** The complete printable document, built only when it is actually needed. */
-  function printableHtml(copies = config.value.copies): string {
-    return renderSheet({ ...config.value, copies }, { title: 'Fridgeweek' });
+  function printableHtml(): string {
+    return renderSheet(config.value, { title: 'Fridgeweek' });
   }
 
   function link(): string {

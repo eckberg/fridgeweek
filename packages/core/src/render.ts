@@ -10,7 +10,7 @@ import {
   PAPER,
   type Rule,
 } from './layout.js';
-import { type Mark, type ResolvedSheet, resolveSheet } from './resolve.js';
+import { type Mark, type ResolvedSheet, resolveSheet, resolveWeeks } from './resolve.js';
 import { type SymbolId, symbolToSvgSymbol } from './symbols/index.js';
 
 export interface RenderOptions {
@@ -36,23 +36,24 @@ export function renderSvg(config: SheetConfig, options: RenderOptions = {}): str
 }
 
 /**
- * Renders a complete, self-contained HTML document with `copies` pages,
+ * Renders a complete, self-contained HTML document with one page per week,
  * embedded fonts and print CSS. This is what gets previewed, printed and
  * turned into a PDF.
+ *
+ * Every page has the same geometry — the header reserves the same width for a
+ * week number whatever its digits, and a day's date field is a fixed column —
+ * so the pages differ only in the dates printed on them.
  */
 export function renderSheet(config: SheetConfig, options: RenderOptions = {}): string {
-  const sheet = resolveSheet(config);
-  const layout = layoutResolved(sheet);
   const paper = PAPER[config.paper];
-  const pages: string[] = [];
-  for (let i = 0; i < config.copies; i++) {
-    const svg = renderSvgResolved(sheet, layout, {
+  const pages = resolveWeeks(config).map((sheet, i) => {
+    const svg = renderSvgResolved(sheet, layoutResolved(sheet), {
       ...options,
       idPrefix: `p${i + 1}`,
       embedFonts: false,
     });
-    pages.push(`<div class="page">${svg}</div>`);
-  }
+    return `<div class="page">${svg}</div>`;
+  });
   const title = escapeXml(options.title ?? 'Fridgeweek');
   const size = `${fmt(paper.width)}mm ${fmt(paper.height)}mm`;
   return [

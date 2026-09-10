@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import {
+  formatDateRange,
   LIMITS,
+  parseIsoDate,
+  resolveWeeks,
   SHEET_LOCALES,
   type SheetConfig,
   SYMBOL_IDS,
@@ -30,7 +33,7 @@ const sheet = useSheet();
 const { config, layout, previewSvg, fit, rejected, linkWasBroken } = sheet;
 
 const marginId = useId();
-const copiesId = useId();
+const weeksId = useId();
 const languageId = useId();
 const weekStartingId = useId();
 
@@ -64,7 +67,7 @@ function field<K extends keyof SheetConfig>(key: K) {
 const locale = field('locale');
 const paper = field('paper');
 const marginMm = field('marginMm');
-const copies = field('copies');
+const weeks = field('weeks');
 const linesPerDay = field('linesPerDay');
 const weekendStyle = field('weekendStyle');
 const familyMark = field('familyMark');
@@ -136,6 +139,18 @@ const snapNotice = computed(() => {
     weekday: weekday.charAt(0) + weekday.slice(1).toLocaleLowerCase(config.value.locale),
     language: sheetLocaleMeta(config.value.locale).endonym,
   });
+});
+
+/**
+ * What a run of weeks covers on paper, from the same function that dates the
+ * pages themselves rather than from arithmetic of its own.
+ */
+const weeksSummary = computed(() => {
+  const pages = resolveWeeks(config.value);
+  const first = pages[0]?.dates;
+  const last = pages[pages.length - 1]?.dates;
+  if (!first || !last) return undefined;
+  return formatDateRange(config.value.locale, parseIsoDate(first.start), parseIsoDate(last.end));
 });
 
 // --- Output ---------------------------------------------------------------
@@ -320,6 +335,26 @@ const languageSummary = computed(() => {
           <input :id="weekStartingId" v-model="weekStarting" type="date" class="date" />
         </FieldRow>
 
+        <!-- Only a dated sheet has a next week to print, so with no date there
+             is nothing here to set. -->
+        <FieldRow
+          v-if="config.weekStarting"
+          :label="t('header.weeks')"
+          :help="t('header.weeksHelp')"
+          :value="weeksSummary"
+          :control-id="weeksId"
+        >
+          <StepperInput
+            :id="weeksId"
+            v-model="weeks"
+            :min="LIMITS.weeks.min"
+            :max="LIMITS.weeks.max"
+            :label="t('header.weeks')"
+            :decrease-label="t('header.decrease')"
+            :increase-label="t('header.increase')"
+          />
+        </FieldRow>
+
         <FieldRow :label="t('header.weekNumber')">
           <ToggleSwitch v-model="showWeekNumber" :label="t('header.weekNumber')" />
         </FieldRow>
@@ -358,18 +393,6 @@ const languageSummary = computed(() => {
             :min="LIMITS.marginMm.min"
             :max="LIMITS.marginMm.max"
             :label="t('paper.margin')"
-          />
-        </FieldRow>
-
-        <FieldRow :label="t('paper.copies')" :help="t('paper.copiesHelp')" :control-id="copiesId">
-          <StepperInput
-            :id="copiesId"
-            v-model="copies"
-            :min="LIMITS.copies.min"
-            :max="LIMITS.copies.max"
-            :label="t('paper.copies')"
-            :decrease-label="t('paper.decrease')"
-            :increase-label="t('paper.increase')"
           />
         </FieldRow>
       </ControlGroup>

@@ -51,5 +51,5 @@ export {
 export type { RenderOptions } from './render.js';
 export { renderSheet, renderSheetFromInput, renderSvg } from './render.js';
 export type { FamilyMark, Mark, PersonMark, ResolvedDates, ResolvedSheet } from './resolve.js';
-export { resolveSheet } from './resolve.js';
+export { resolveSheet, resolveWeeks } from './resolve.js';
 export * from './symbols/index.js';

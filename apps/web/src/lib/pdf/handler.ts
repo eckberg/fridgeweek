@@ -64,12 +64,12 @@ export async function handlePdfRequest(
   }
   const config = result.config;
 
-  // The configuration schema caps `copies` at the same number, but this
+  // The configuration schema caps `weeks` at the same number, but this
   // endpoint takes input from strangers and pays for every page rendered, so it
   // enforces the ceiling itself rather than trusting the schema to keep it.
-  if (config.copies > MAX_PDF_PAGES) {
+  if (config.weeks > MAX_PDF_PAGES) {
     return problem(422, `A PDF can have at most ${MAX_PDF_PAGES} pages.`, [
-      { path: 'copies', message: `must be at most ${MAX_PDF_PAGES}` },
+      { path: 'weeks', message: `must be at most ${MAX_PDF_PAGES}` },
     ]);
   }
 

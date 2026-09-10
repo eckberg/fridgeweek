@@ -36,9 +36,10 @@ describe('resolveConfig', () => {
       familyMark: false,
       linesPerDay: 4,
       weekendStyle: 'plain',
-      copies: 5,
+      weeks: 5,
     });
     expect(config.locale).toBe('sv-SE');
+    expect(config.weeks).toBe(5);
     expect(config.people).toHaveLength(4);
     expect(config.people[3]?.initial).toBe('M');
     expect(config.weekStarting).toBe('2026-09-07');
@@ -62,6 +63,7 @@ describe('resolveConfig', () => {
     [{ linesPerDay: 0 }, 'linesPerDay'],
     [{ linesPerDay: 5 }, 'linesPerDay'],
     [{ linesPerDay: 2.5 }, 'linesPerDay'],
+    [{ weeks: 26 }, 'weeks'],
     [{ copies: 26 }, 'copies'],
     [{ weekStart: 'friday' }, 'weekStart'],
     [{ markStyle: 'colour' }, 'markStyle'],
@@ -152,7 +154,7 @@ describe('resolveConfig', () => {
   });
 
   it('reports every issue at once', () => {
-    const result = validateConfig({ paper: 'A5', copies: 0, people: [{ name: '', symbol: 'x' }] });
+    const result = validateConfig({ paper: 'A5', weeks: 0, people: [{ name: '', symbol: 'x' }] });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.issues.length).toBeGreaterThanOrEqual(4);
   });
@@ -170,6 +172,40 @@ describe('resolveConfig', () => {
     expect(validateConfig(null).ok).toBe(false);
     expect(validateConfig([]).ok).toBe(false);
     expect(validateConfig('x').ok).toBe(false);
+  });
+});
+
+describe('weeks', () => {
+  it('prints one page per week from the start date', () => {
+    expect(resolveConfig({ weekStarting: '2026-09-07', weeks: 4 }).weeks).toBe(4);
+  });
+
+  it('defaults to a single page', () => {
+    expect(resolveConfig({ weekStarting: '2026-09-07' }).weeks).toBe(1);
+    expect(resolveConfig({}).weeks).toBe(1);
+  });
+
+  it('refuses a second week with no date to count from', () => {
+    const result = validateConfig({ weeks: 2 });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.issues.map((i) => i.path)).toEqual(['weeks']);
+  });
+});
+
+describe('the copy count of older configs', () => {
+  it('is read as the number of weeks on a dated sheet', () => {
+    const config = resolveConfig({ weekStarting: '2026-09-07', copies: 5 });
+    expect(config.weeks).toBe(5);
+    // It is read, not kept: what is stored is the number of weeks.
+    expect(config).not.toHaveProperty('copies');
+  });
+
+  it('is dropped on an undated sheet, which has no second week', () => {
+    expect(resolveConfig({ copies: 5 }).weeks).toBe(1);
+  });
+
+  it('gives way to an explicit number of weeks', () => {
+    expect(resolveConfig({ weekStarting: '2026-09-07', copies: 5, weeks: 2 }).weeks).toBe(2);
   });
 });
 
