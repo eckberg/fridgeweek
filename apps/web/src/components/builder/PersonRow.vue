@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Person, personInitial, type SymbolId } from '@fridgeweek/core';
+import { type Person, personInitial } from '@fridgeweek/core';
 import { computed, useId } from 'vue';
 import { t } from '../../i18n/index.js';
 import MarkPicker from './MarkPicker.vue';
@@ -7,7 +7,9 @@ import MarkPicker from './MarkPicker.vue';
 const props = defineProps<{
   person: Person;
   position: number;
-  taken: SymbolId[];
+  /** Everyone else on the sheet: a mark one of them has can then say who. */
+  others: Person[];
+  locale: string;
   canRemove: boolean;
   /** Only one person's mark panel is open at a time, so the list stays short. */
   open: boolean;
@@ -38,7 +40,8 @@ function onName(event: Event): void {
         :symbol="person.symbol"
         :initial="person.initial"
         :suggested-initial="personInitial(person)"
-        :taken="taken"
+        :others="others"
+        :locale="locale"
         :open="open"
         :button-label="t('people.markLabel', { name: displayName })"
         :initials-label="t('people.initialsLabel', { name: displayName })"

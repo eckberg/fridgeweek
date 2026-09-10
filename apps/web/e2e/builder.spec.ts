@@ -55,11 +55,17 @@ test('renaming a person updates the legend and the initial it suggests', async (
   await page.getByLabel('Name of person 1').fill('Ingrid');
   await expect(page.locator('.paper svg')).toContainText('Ingrid');
   await page.getByRole('button', { name: 'Mark for Ingrid' }).click();
+  await page.getByRole('radio', { name: 'Letters' }).click();
   await expect(page.getByLabel('Initials for Ingrid')).toHaveAttribute('placeholder', 'I');
 });
 
-test('typing initials in the picker draws that person as letters', async ({ page }) => {
+test('choosing letters draws that person as letters', async ({ page }) => {
   await page.getByRole('button', { name: 'Mark for Alex' }).click();
+
+  // Choosing the mode is the whole change: it takes effect where it is made,
+  // with the letters the name suggests, rather than waiting for a keystroke.
+  await page.getByRole('radio', { name: 'Letters' }).click();
+  await expect(page.locator('.paper svg')).toContainText('Alex');
   await page.getByLabel('Initials for Alex').fill('AB');
 
   const text = await sheetText(page);
@@ -69,19 +75,23 @@ test('typing initials in the picker draws that person as letters', async ({ page
   expect(await page.locator('.paper svg use').count()).toBe(7 * 3 * 2 + 2);
 });
 
-test('clearing the initials gives that person their symbol back', async ({ page }) => {
+test('going back to a picture gives that person their symbol back', async ({ page }) => {
   await page.getByRole('button', { name: 'Mark for Alex' }).click();
+  await page.getByRole('radio', { name: 'Letters' }).click();
   const initials = page.getByLabel('Initials for Alex');
   await initials.fill('AB');
   await expect(page.locator('.paper svg')).toContainText('AB');
 
-  await initials.fill('');
+  // The kept symbol is on the Picture option throughout, so the way back is
+  // visible rather than being "clear the field and hope".
+  await page.getByRole('radio', { name: 'Picture' }).click();
   await expect(page.locator('.paper svg')).not.toContainText('AB');
   expect(await page.locator('.paper svg use').count()).toBe(7 * 3 * 3 + 3);
 });
 
 test('a renamed person keeps initials that were typed on purpose', async ({ page }) => {
   await page.getByRole('button', { name: 'Mark for Alex' }).click();
+  await page.getByRole('radio', { name: 'Letters' }).click();
   await page.getByLabel('Initials for Alex').fill('Zz');
   await page.getByLabel('Name of person 1').fill('Bea');
   await expect(page.getByLabel('Initials for Bea')).toHaveValue('Zz');
@@ -126,13 +136,20 @@ test('a broken link falls back to the defaults rather than an empty page', async
   await expect(page.locator('.paper svg')).toContainText('Alex');
 });
 
-test('the mark picker refuses a symbol another person already has', async ({ page }) => {
+test('a symbol another person has says who has it', async ({ page }) => {
   await page.getByRole('button', { name: 'Mark for Alex' }).click();
   const picker = page.getByRole('group', { name: 'Choose a mark' });
   await expect(picker).toBeVisible();
 
-  await expect(picker.getByRole('button', { name: 'Rocket' })).toBeDisabled();
-  await picker.getByRole('button', { name: 'Dog' }).click();
+  // Sam's rocket is not Alex's to take, but a dimmed button that does nothing
+  // explains nothing, so it is still clickable and it answers.
+  await picker.getByRole('button', { name: /already has the rocket/ }).click();
+  await expect(picker.getByRole('status')).toContainText('Sam already has the rocket');
+
+  await picker.getByRole('button', { name: 'Dog', exact: true }).click();
+  // Choosing is not leaving: the panel stays where it is.
+  await expect(picker).toBeVisible();
+  await page.getByRole('button', { name: 'Done' }).click();
   await expect(picker).toBeHidden();
   // Counted by symbol rather than read by position: the family mark leads every
   // strip (DESIGN.md decision 7), so Alex's mark is not the first `use`. She is
@@ -174,14 +191,19 @@ test('the print and download actions sit in the page header', async ({ page }) =
 
 test('a change the engine refuses is explained rather than silently dropped', async ({ page }) => {
   await page.getByRole('button', { name: 'Mark for Alex' }).click();
+  await page.getByRole('radio', { name: 'Letters' }).click();
   await page.getByLabel('Initials for Alex').fill('A');
   await page.getByRole('button', { name: 'Add a person' }).click();
 
-  // Two people drawn as the same letter cannot be told apart, so the engine
-  // refuses the second one.
+  // Two people drawn as the same letter cannot be told apart, so the second
+  // one is refused — beside the field, and in words rather than in a path.
   await page.getByRole('button', { name: 'Mark for Robin' }).click();
+  await page.getByRole('radio', { name: 'Letters' }).click();
   await page.getByLabel('Initials for Robin').fill('A');
-  await expect(page.getByRole('status').filter({ hasText: 'same initial' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Alex already uses A' })).toBeVisible();
+  // And the field is never left holding letters the sheet refused: it shows
+  // the ones Robin actually has, which is the message's whole point.
+  await expect(page.getByLabel('Initials for Robin')).toHaveValue('R');
 });
 
 test('the weeks field belongs to the date, and appears with it', async ({ page }) => {
