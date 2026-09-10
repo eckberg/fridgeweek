@@ -19,7 +19,8 @@ defineProps<{ options: Option[]; label: string }>();
       class="segment"
       @click="model = option.value"
     >
-      {{ option.label }}
+      <!-- Options are their label unless a caller has something to add to it. -->
+      <slot name="option" :option="option">{{ option.label }}</slot>
     </button>
   </div>
 </template>
@@ -35,6 +36,10 @@ defineProps<{ options: Option[]; label: string }>();
 
 .segment {
   flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
