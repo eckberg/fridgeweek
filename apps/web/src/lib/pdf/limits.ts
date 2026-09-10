@@ -8,7 +8,7 @@ import type { RateLimit } from '@cloudflare/workers-types';
 /**
  * Pages per request.
  *
- * This is the same number as `LIMITS.copies.max` in `@fridgeweek/core`, and
+ * This is the same number as `LIMITS.weeks.max` in `@fridgeweek/core`, and
  * deliberately so: one real limit, not two that can drift apart. The endpoint
  * checks it again anyway, because it validates untrusted input and should not
  * be left wide open by a change to the configuration schema.

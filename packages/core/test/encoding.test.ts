@@ -15,7 +15,8 @@ const FORMAT_1_LINK =
 /**
  * What that link says, written the way it is written today. Its sheet-wide
  * `markStyle: 'initial'` is now a property of each person, so Sam gets the
- * initial that flag used to draw for him.
+ * initial that flag used to draw for him, and its five copies of one dated
+ * week are the five weeks after that date.
  */
 const shared = resolveConfig({
   locale: 'sv',
@@ -23,7 +24,7 @@ const shared = resolveConfig({
   showDayDates: false,
   weekStarting: '2026-09-07',
   linesPerDay: 2,
-  copies: 5,
+  weeks: 5,
   people: [
     { name: 'Alex', symbol: 'cat', initial: 'K' },
     { name: 'Sam', symbol: 'rocket', initial: 'S' },
@@ -82,7 +83,7 @@ describe('encodeConfig / decodeConfig', () => {
       familyMark: false,
       linesPerDay: 4,
       weekendStyle: 'plain',
-      copies: 25,
+      weeks: 25,
       people: [
         { name: 'Åsa Öberg', symbol: 'unicorn', initial: 'Ås' },
         { name: '李小龙', symbol: 'dinosaur', initial: '李' },
@@ -196,15 +197,25 @@ describe('decodeConfig', () => {
   });
 
   it('validates what it unpacks, rather than trusting the bytes', () => {
-    const bytes = bytesOf(encodeConfig(DEFAULT_CONFIG));
-    bytes[3] = (bytes[3] as number) | 0x1f; // 32 copies, past the limit of 25
+    const bytes = bytesOf(encodeConfig(resolveConfig({ weekStarting: '2026-09-07' })));
+    bytes[3] = (bytes[3] as number) | 0x1f; // 32 weeks, past the limit of 25
     let issues: readonly { path: string }[] = [];
     try {
       decodeConfig(linkOf(bytes));
     } catch (error) {
       issues = error instanceof ConfigError ? error.issues : [];
     }
-    expect(issues.map((issue) => issue.path)).toEqual(['copies']);
+    expect(issues.map((issue) => issue.path)).toEqual(['weeks']);
+  });
+
+  it('opens an older undated link that asked for several copies', () => {
+    // Those bits are the number of weeks now, and an undated sheet has none to
+    // count. The link still opens; it opens as the one page it can print.
+    const bytes = bytesOf(encodeConfig(DEFAULT_CONFIG));
+    bytes[3] = (bytes[3] as number) | 0x04;
+    const config = decodeConfig(linkOf(bytes));
+    expect(config.weeks).toBe(1);
+    expect(bytesOf(encodeConfig(config))[3]).toBe(bytesOf(encodeConfig(DEFAULT_CONFIG))[3]);
   });
 });
 
@@ -212,7 +223,12 @@ describe('the encoded config', () => {
   const cases: Record<string, SheetConfig> = {
     defaults: DEFAULT_CONFIG,
     shared,
-    letter: resolveConfig({ paper: 'Letter', marginMm: 5, copies: 25 }),
+    letter: resolveConfig({
+      paper: 'Letter',
+      marginMm: 5,
+      weekStarting: '2026-09-07',
+      weeks: 25,
+    }),
   };
   it.each(Object.keys(cases))('is stable and reversible for %s', (name) => {
     const config = cases[name] as SheetConfig;

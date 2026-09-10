@@ -65,7 +65,7 @@ const HAS_LOCALE = 0x40;
 const HAS_MARGIN = 0x80;
 
 // Byte 3: the two counts.
-const COPIES_MASK = 0x1f;
+const WEEKS_MASK = 0x1f;
 const PEOPLE_SHIFT = 5;
 const PEOPLE_MASK = 0x07;
 
@@ -121,7 +121,7 @@ function packConfig(config: SheetConfig): Uint8Array | undefined {
   const weekStart = WEEK_STARTS.indexOf(config.weekStart);
   if (weekNumber < 0 || weekStart < 0) return undefined;
   if (!isCount(config.linesPerDay, LINES_MASK)) return undefined;
-  if (!isCount(config.copies, COPIES_MASK)) return undefined;
+  if (!isCount(config.weeks, WEEKS_MASK)) return undefined;
   if (!isCount(config.people.length, PEOPLE_MASK)) return undefined;
 
   const hasMargin = config.marginMm !== DEFAULT_CONFIG.marginMm;
@@ -157,7 +157,7 @@ function packConfig(config: SheetConfig): Uint8Array | undefined {
   if (locale !== undefined) fields |= HAS_LOCALE;
   if (hasMargin) fields |= HAS_MARGIN;
 
-  const counts = (config.copies - 1) | ((config.people.length - 1) << PEOPLE_SHIFT);
+  const counts = (config.weeks - 1) | ((config.people.length - 1) << PEOPLE_SHIFT);
 
   const bytes = [FORMAT_PACKED, flags, fields, counts];
   if (hasMargin) bytes.push(margin);
@@ -219,7 +219,10 @@ function unpackConfig(bytes: Uint8Array): SheetConfig {
   if (weekStart === undefined) throw brokenLink();
   input.weekStart = weekStart;
   input.linesPerDay = ((fields >>> LINES_SHIFT) & LINES_MASK) + 1;
-  input.copies = (counts & COPIES_MASK) + 1;
+  // The count is weeks, and only a dated sheet has a second one. An older
+  // link's copy count sits in the same bits and is dropped the same way, so
+  // that a link somebody already sent opens rather than being refused.
+  if ((flags & HAS_WEEK_STARTING) !== 0) input.weeks = (counts & WEEKS_MASK) + 1;
 
   if ((fields & HAS_MARGIN) !== 0) input.marginMm = unpackMargin(byte());
   if ((flags & HAS_WEEK_STARTING) !== 0) {
@@ -307,7 +310,7 @@ const DIFF_KEYS = [
   'familyMark',
   'linesPerDay',
   'weekendStyle',
-  'copies',
+  'weeks',
 ] as const;
 
 function encodeJson(config: SheetConfig): string {

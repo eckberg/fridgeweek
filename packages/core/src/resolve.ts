@@ -1,9 +1,13 @@
 import { type MarkStyle, type Person, personInitial, type SheetConfig } from './config.js';
 import {
+  addDays,
   describeWeek,
   getWeekInfo,
   isWeekend,
+  parseIsoDate,
+  toIsoDate,
   usesWeekNumbers,
+  type WeekDescription,
   type Weekday,
   type WeekInfo,
   weekdayNames,
@@ -111,17 +115,10 @@ export function resolveSheet(config: SheetConfig): ResolvedSheet {
     });
   }
 
-  let dates: ResolvedDates | undefined;
-  if (config.weekStarting !== undefined) {
-    const described = describeWeek(config.weekStarting, locale, firstDay);
-    dates = {
-      start: described.start,
-      end: described.end,
-      days: described.days,
-      week: described.week,
-      weekYear: described.weekYear,
-    };
-  }
+  const dates =
+    config.weekStarting === undefined
+      ? undefined
+      : resolvedDates(describeWeek(config.weekStarting, locale, firstDay));
 
   return {
     config,
@@ -135,5 +132,43 @@ export function resolveSheet(config: SheetConfig): ResolvedSheet {
     marks,
     dates,
     text: { week: t(locale, 'sheet.week'), family: familyLabel },
+  };
+}
+
+/**
+ * One resolved sheet per printed page: the chosen week, then each week after
+ * it. Everything but the dates is the same on every page, so it is resolved
+ * once and only the week moves.
+ *
+ * An undated sheet has no week to count from, so it is always a single page.
+ * `config.weeks` says the same thing, and the two agree because a
+ * configuration with weeks past the first and no date does not validate.
+ */
+export function resolveWeeks(config: SheetConfig): ResolvedSheet[] {
+  const first = resolveSheet(config);
+  if (first.dates === undefined) return [first];
+
+  const start = parseIsoDate(first.dates.start);
+  const pages: ResolvedSheet[] = [first];
+  for (let i = 1; i < config.weeks; i++) {
+    // Counted from the aligned start, so every page begins on the same weekday
+    // as the first one, whatever day was typed into the date field.
+    const weekStarting = toIsoDate(addDays(start, 7 * i));
+    pages.push({
+      ...first,
+      config: { ...config, weekStarting },
+      dates: resolvedDates(describeWeek(weekStarting, config.locale, first.firstDay)),
+    });
+  }
+  return pages;
+}
+
+function resolvedDates(described: WeekDescription): ResolvedDates {
+  return {
+    start: described.start,
+    end: described.end,
+    days: described.days,
+    week: described.week,
+    weekYear: described.weekYear,
   };
 }

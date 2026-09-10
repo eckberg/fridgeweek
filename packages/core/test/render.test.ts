@@ -101,7 +101,14 @@ describe('renderSvg', () => {
 
 describe('renderSheet', () => {
   it('wraps the pages in a self-contained HTML document', () => {
-    const html = renderSheet(resolveConfig({ locale: 'sv-SE', people: family, copies: 3 }));
+    const html = renderSheet(
+      resolveConfig({
+        locale: 'sv-SE',
+        people: family,
+        weekStarting: '2026-09-07',
+        weeks: 3,
+      }),
+    );
     expect(html.startsWith('<!doctype html>')).toBe(true);
     expect(html).toContain('<html lang="sv-SE">');
     expect(html).toContain('@page { size: 210mm 297mm; margin: 0; }');
@@ -111,6 +118,40 @@ describe('renderSheet', () => {
     expect(html.match(/<symbol id="p3-s-house"/g)).toHaveLength(1);
     expect(html).not.toMatch(/src="http/);
     expect(html).not.toMatch(/href="http/);
+  });
+
+  it('is one page per week, each dated the week after the last', () => {
+    const html = renderSheet(
+      resolveConfig({ locale: 'sv-SE', weekStarting: '2026-09-07', weeks: 3 }),
+    );
+    // Week 37 starts on the 7th of September 2026, and the two after it follow.
+    expect(html.match(/>VECKA \d+</g)).toEqual(['>VECKA 37<', '>VECKA 38<', '>VECKA 39<']);
+    expect(html).toContain('>7/9<');
+    expect(html).toContain('>14/9<');
+    expect(html).toContain('>21/9<');
+    // Monday of the last week, seven days on from the second.
+    expect(html.match(/<div class="page">/g)).toHaveLength(3);
+  });
+
+  it('counts the weeks from the aligned start, not from the day that was typed', () => {
+    // A Wednesday snaps back to Monday, and every page starts on a Monday.
+    const html = renderSheet(
+      resolveConfig({ locale: 'sv-SE', weekStarting: '2026-09-09', weeks: 2 }),
+    );
+    expect(html).toContain('>7/9<');
+    expect(html).toContain('>14/9<');
+  });
+
+  it('carries the week number across the turn of the year', () => {
+    const html = renderSheet(
+      resolveConfig({ locale: 'sv-SE', weekStarting: '2026-12-28', weeks: 2 }),
+    );
+    expect(html.match(/>VECKA \d+</g)).toEqual(['>VECKA 53<', '>VECKA 1<']);
+  });
+
+  it('is a single page when the sheet is undated', () => {
+    const html = renderSheet(resolveConfig({ people: family }));
+    expect(html.match(/<div class="page">/g)).toHaveLength(1);
   });
 
   it('uses the Letter page size', () => {

@@ -61,10 +61,10 @@ describe.skipIf(!hasChromium)('local PDF renderer', () => {
     }
   }, 60_000);
 
-  it('renders one page per copy at the configured paper size', async () => {
+  it('renders one page per week at the configured paper size', async () => {
     const renderer = await createLocalRenderer();
     try {
-      const config = resolveConfig({ paper: 'Letter', copies: 3 });
+      const config = resolveConfig({ paper: 'Letter', weekStarting: '2026-09-07', weeks: 3 });
       const pdf = await renderer.render(renderSheet(config), { widthMm: 215.9, heightMm: 279.4 });
 
       const text = Buffer.from(pdf).toString('latin1');

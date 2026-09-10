@@ -41,8 +41,12 @@ export interface SheetConfig {
   /** Writing lines per day, 1 to 4. */
   linesPerDay: number;
   weekendStyle: WeekendStyle;
-  /** Identical pages in the printed document, 1 to 25. */
-  copies: number;
+  /**
+   * Consecutive weeks to print, 1 to 25, one page each. A week only follows
+   * another one when there is a date to count from, so this is 1 on an
+   * undated sheet.
+   */
+  weeks: number;
 }
 
 /** Loosely typed input accepted by {@link resolveConfig}. Missing fields take defaults. */
@@ -62,13 +66,18 @@ export type SheetConfigInput = {
    * style became a property of each person. See {@link validateConfig}.
    */
   markStyle?: MarkStyle;
+  /**
+   * Read, never written: the page multiplier that came before {@link
+   * SheetConfig.weeks}. See {@link validateConfig}.
+   */
+  copies?: number;
 };
 
 export const LIMITS = {
   people: { min: 1, max: 6 },
   linesPerDay: { min: 1, max: 4 },
   marginMm: { min: 5, max: 20 },
-  copies: { min: 1, max: 25 },
+  weeks: { min: 1, max: 25 },
   nameLength: { min: 1, max: 24 },
   initialLength: { min: 1, max: 2 },
 } as const;
@@ -98,7 +107,7 @@ export const DEFAULT_CONFIG: SheetConfig = Object.freeze({
   familyMark: true,
   linesPerDay: 3,
   weekendStyle: 'outline',
-  copies: 1,
+  weeks: 1,
 }) as SheetConfig;
 
 export interface ConfigIssue {
@@ -120,7 +129,9 @@ export class ConfigError extends Error {
   }
 }
 
-const KNOWN_KEYS = new Set<string>(Object.keys(DEFAULT_CONFIG).concat('weekStarting', 'markStyle'));
+const KNOWN_KEYS = new Set<string>(
+  Object.keys(DEFAULT_CONFIG).concat('weekStarting', 'markStyle', 'copies'),
+);
 
 /** Exported for the decoder in `encoding.ts`, which validates the same shapes. */
 export function isRecord(x: unknown): x is Record<string, unknown> {
@@ -143,6 +154,11 @@ function charCount(s: string): number {
  * configurations still carry it: `'initial'` gives every person who has no
  * initial of their own the first character of their name, which is exactly
  * what it used to draw.
+ *
+ * `copies` is accepted the same way. It printed one week several times, which
+ * is what a printer's own copy count does; what it could not do is move the
+ * dates on. A dated sheet therefore reads it as the number of weeks, and an
+ * undated one, which has no second week to print, drops it.
  */
 export function validateConfig(input: unknown): ValidationResult {
   const issues: ConfigIssue[] = [];
@@ -195,8 +211,12 @@ export function validateConfig(input: unknown): ValidationResult {
   checkNumber(input, 'linesPerDay', LIMITS.linesPerDay, true, issues, (v) => {
     out.linesPerDay = v;
   });
-  checkNumber(input, 'copies', LIMITS.copies, true, issues, (v) => {
-    out.copies = v;
+  checkNumber(input, 'weeks', LIMITS.weeks, true, issues, (v) => {
+    out.weeks = v;
+  });
+  let legacyCopies: number | undefined;
+  checkNumber(input, 'copies', LIMITS.weeks, true, issues, (v) => {
+    legacyCopies = v;
   });
 
   if (input.showWeekNumber !== undefined) {
@@ -228,6 +248,16 @@ export function validateConfig(input: unknown): ValidationResult {
         issues.push({ path: 'weekStarting', message: `not a valid date: ${input.weekStarting}` });
       }
     }
+  }
+
+  if (legacyCopies !== undefined && input.weeks === undefined && out.weekStarting !== undefined) {
+    out.weeks = legacyCopies;
+  }
+  if (out.weeks > 1 && out.weekStarting === undefined) {
+    issues.push({
+      path: 'weeks',
+      message: 'needs a start date; an undated sheet is a single page',
+    });
   }
 
   const people = input.people === undefined ? DEFAULT_PEOPLE : input.people;

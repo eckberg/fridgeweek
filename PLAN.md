@@ -30,7 +30,7 @@ A Vue island holding a `SheetConfig`, rendering the sheet through `@fridgeweek/c
 writing the config to the URL hash and `localStorage`.
 
 - Controls: language, people (add, remove, rename, symbol picker, initial), family mark, mark
-  style, lines per day, weekend style, week starting, header toggles, paper, margin, copies.
+  style, lines per day, weekend style, week starting, weeks, header toggles, paper, margin.
 - Live preview in an iframe, so print CSS and millimetre units behave exactly as they will on
   paper.
 - Layout issues surfaced as they come from the engine, with their remedies.
@@ -72,7 +72,7 @@ key or hosting platform.
 |---|---|
 | 1. Sheet refinement | Applied. Marks centred and smaller, a 4.5 mm gutter before the writing rule, day dates right-aligned into one column, more air under the weekday name, one icon size per sheet. Metrics match the design's proposed numbers (line 8.05 mm, mark 4.43 mm). |
 | 2. Web shell | Astro site, static except one route, with design tokens from the brand system, self-hosted fonts and no third-party requests. |
-| 3. The builder | A Vue island: language, people with a searchable symbol picker, family mark, mark style, lines per day, weekend style, week starting, four header toggles, paper, margin and copies, with a live preview and the engine's own fit report. |
+| 3. The builder | A Vue island: language, people with a searchable symbol picker, family mark, mark style, lines per day, weekend style, week starting, weeks, four header toggles, paper and margin, with a live preview and the engine's own fit report. |
 | 4. Content pages | A landing page that renders two real sheets at build time, and one prose page covering about, privacy, terms and licences. |
 | 5. PDF | `POST /api/pdf` behind a renderer interface. A local Chromium implementation needs nothing external; a deployment without one answers 501 and the interface says to print instead. |
 | 6. Quality | 273 unit tests, 21 browser tests, 6 sheet screenshots, axe on all three pages, and a code review whose findings were fixed. |

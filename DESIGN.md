@@ -47,6 +47,7 @@ Each decision below was made deliberately during the initial design session. The
 | 14 | Paper **A4 and Letter**, portrait | Both from day one because the layout is parametric. Letter is what makes the project useful outside Europe. |
 | 15 | UI languages **en** and **sv** at launch; weekday names via `Intl` | Adding a language is a JSON file, not a code change. |
 | 16 | Dropped from the paper prototype: per-day activity icon strip, clothes-peg marker | With a marker strip on every line a second icon row is noise. Either can return later as an off-by-default toggle. |
+| 17 | A dated sheet prints **1 to 25 consecutive weeks**, one page each. There is no copy count | Printing the same page twice is what a printer's own copy dialog is for, so a copy count in the builder bought nothing. What a print dialog cannot do is move the dates on, and that is the sheet somebody actually wants: print the term on Sunday and put a fresh week up each Monday. It follows that the option is meaningless undated, so it is only there once a date is set. |
 
 ## 3. Configuration model
 
@@ -77,7 +78,7 @@ interface SheetConfig {
   familyMark: boolean;        // default true
   linesPerDay: number;        // 1..4, default 3
   weekendStyle: 'outline' | 'plain'; // default 'outline'
-  copies: number;             // 1..25, default 1. Pages in the PDF.
+  weeks: number;              // 1..25, default 1. Consecutive weeks, one page each.
 }
 ```
 
@@ -97,6 +98,14 @@ Rules:
   still reads it, because links and stored configurations carry it: `'initial'` gives
   every person without one the first character of their name, which is what it drew. It
   is never written again, and it is not part of `SheetConfig`.
+- `weeks` is one page per week, counted from the *snapped* `weekStarting`, so every page
+  begins on the same weekday as the first. It needs a date to count from: `weeks > 1`
+  without `weekStarting` is an error, not a silent single page, and the control is hidden
+  in the builder until a date is set. Clearing the date takes the run back to one page.
+- `copies` printed one week several times. `resolveConfig` still reads it, because links
+  and stored configurations carry it: a dated sheet takes it as `weeks`, and an undated
+  one, which has no second week to print, drops it. It is never written again, and it is
+  not part of `SheetConfig`.
 - `weekStarting` that is not on the locale's first weekday is snapped back to the previous
   first weekday. The UI should show the snapped date.
 - Config is carried in the URL hash, plus in `localStorage` for convenience. There is no
@@ -109,14 +118,17 @@ detail: it is pasted into messages, and a mail client decides on its own whether
 it. The hash is packed rather than pretty.
 
 **Format 2, what is written.** Bytes, base64url. Everything with two states is a bit,
-`showWeekNumber` and `weekStart` are two bits each, `linesPerDay`, `copies` and the number
+`showWeekNumber` and `weekStart` are two bits each, `linesPerDay`, `weeks` and the number
 of people are small integers sharing bytes, a margin is tenths of a millimetre, a date is
 a day offset from 2000-01-01 in two bytes, and a symbol is one byte: its number in
 `SYMBOL_CODES`. Only names are text, because only names are unpredictable. A person's
 name length byte carries one spare bit that says an initial follows, which is also what
 says that person is drawn as letters, so moving the mark style onto the person cost the
 format nothing. The bit that used to hold the sheet-wide `markStyle` is still read and
-never written. The defaults come to 20 characters and a two-person sheet with a date and
+never written, and the count that used to hold `copies` is the same five bits as `weeks`:
+an older dated link prints its copies as that many weeks, and an older undated one, where
+those bits can mean nothing, opens as the single page it can print rather than being
+refused. The defaults come to 20 characters and a two-person sheet with a date and
 a language to about 30, down from about 240.
 
 `SYMBOL_CODES` in `packages/core/src/symbols/codes.ts` is therefore append-only.
@@ -204,10 +216,13 @@ Symbols are inline `<symbol>` definitions on a 24-unit grid referenced with `<us
 Outline weekday names are plain SVG text with `fill="none"` and a stroke, so no CSS
 vendor tricks are needed.
 
-`renderSheet(config) -> string` wraps `copies` SVG pages in a self-contained HTML
+`renderSheet(config) -> string` wraps one SVG page per week in a self-contained HTML
 document: `@page { size: A4; margin: 0 }`, embedded WOFF2 fonts as `data:` URIs, no
 external references. This is the file that is previewed, printed and sent to the PDF
-renderer.
+renderer. The pages of a run differ only in the dates printed on them: the header reserves
+`WEEK_NUMBER_W` whatever the week number's digits and a day's date field is a fixed column,
+so the geometry, and therefore the fit report, is the same on every page. The builder's
+preview is the first week.
 
 Determinism: the output depends only on the config. No timestamps, no randomness, numbers
 rounded to three decimals. Snapshot tests rely on this.
@@ -290,7 +305,7 @@ and the process outlives the request.
 Two limits, because a public endpoint that starts browsers is the only part of this project
 that can cost real money:
 
-- **25 pages per request.** The same number as `LIMITS.copies.max`, so there is one real
+- **25 pages per request.** The same number as `LIMITS.weeks.max`, so there is one real
   limit rather than two that can disagree. The endpoint checks it again itself, because it
   validates untrusted input and should not be uncapped by a change to the schema.
 - **Five requests per minute per client IP**, keyed on `CF-Connecting-IP`, enforced by
@@ -366,6 +381,6 @@ SUPPORTED_UI_LOCALES
 - **v0.1** `@fridgeweek/core`: config, layout, renderer, symbols, fonts, dates, i18n, tests,
   and a script that writes sample HTML files.
 - **v0.2** `apps/web`: config panel, live preview, URL and localStorage state, browser print.
-- **v0.3** `/api/pdf` on Cloudflare Browser Rendering with rate limiting and `copies`.
+- **v0.3** `/api/pdf` on Cloudflare Browser Rendering with rate limiting and multi-week runs.
 - **v1.0** README with pictures, CONTRIBUTING with the add-a-language recipe, example
   links, npm publish of core.

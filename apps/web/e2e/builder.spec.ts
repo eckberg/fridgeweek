@@ -184,11 +184,39 @@ test('a change the engine refuses is explained rather than silently dropped', as
   await expect(page.getByRole('status').filter({ hasText: 'same initial' })).toBeVisible();
 });
 
-test('the copies field snaps a silly number back into range', async ({ page }) => {
-  const copies = page.getByLabel('Copies', { exact: true });
-  await copies.fill('500');
-  await copies.blur();
-  await expect(copies).toHaveValue('25');
+test('the weeks field belongs to the date, and appears with it', async ({ page }) => {
+  const weeks = page.getByLabel('Weeks', { exact: true });
+  // An undated sheet has no second week to print, so there is nothing to set.
+  await expect(weeks).toBeHidden();
+
+  await page.getByLabel('Week starting').fill('2026-09-07');
+  await expect(weeks).toBeVisible();
+  await expect(weeks).toHaveValue('1');
+
+  await weeks.fill('500');
+  await weeks.blur();
+  await expect(weeks).toHaveValue('25');
+
+  // Clearing the date takes the run back to the one page it can print, rather
+  // than leaving a configuration the engine refuses.
+  await page.getByLabel('Week starting').fill('');
+  await expect(weeks).toBeHidden();
+  await page.getByLabel('Week starting').fill('2026-09-07');
+  await expect(weeks).toHaveValue('1');
+});
+
+test('a run of weeks says what it covers, and previews the first of them', async ({ page }) => {
+  await page.getByLabel('Language').selectOption('sv');
+  await page.getByLabel('Week starting').fill('2026-09-07');
+  const weeks = page.getByLabel('Weeks', { exact: true });
+  await weeks.fill('3');
+  await weeks.blur();
+
+  // Three weeks from Monday the 7th of September run to Sunday the 27th.
+  await expect(page.locator('.row', { has: weeks })).toContainText('27');
+
+  // The preview is the first week however many pages the run has.
+  expect(await sheetText(page)).toContain('37');
 });
 
 test.describe('on a narrow screen', () => {
@@ -207,9 +235,9 @@ test.describe('on a narrow screen', () => {
   });
 
   test('the whole panel and the sheet are reachable', async ({ page }) => {
-    const copies = page.getByLabel('Copies', { exact: true });
-    await copies.scrollIntoViewIfNeeded();
-    await expect(copies).toBeInViewport();
+    const margin = page.getByLabel('Margin');
+    await margin.scrollIntoViewIfNeeded();
+    await expect(margin).toBeInViewport();
 
     const sheet = page.locator('.paper svg');
     await sheet.scrollIntoViewIfNeeded();
