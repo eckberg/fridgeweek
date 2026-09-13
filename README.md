@@ -38,8 +38,9 @@ you notice first:
 
 The header is optional and each part has its own toggle: week number, date range, and a
 legend pairing every symbol with a name. Dates are blank by default, which suits printing
-a stack of sheets at a time. Set a week starting date and the sheet prints the week number, the
-range and each day's date, with the same layout either way.
+a stack of sheets at a time. Set a week starting date and the sheet prints the week number,
+the range — `14–20 september 2026`, month spelled out in every language whose months leave
+the legend room — and each day's date, with the same layout either way.
 
 Nothing is ever shrunk silently. The layout engine is a pure function that returns every
 coordinate in millimetres plus a list of issues: a line below 6 mm is unwritable with a

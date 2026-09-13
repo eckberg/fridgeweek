@@ -1,5 +1,5 @@
 import { resolveConfig, type SheetConfig } from './config.js';
-import { formatDateRange, formatDayDate, parseIsoDate } from './dates.js';
+import { formatDayDate, parseIsoDate } from './dates.js';
 import { FONT_STACK, fontFaceCss } from './fonts/index.js';
 import {
   type DayLayout,
@@ -114,7 +114,7 @@ function renderSvgResolved(sheet: ResolvedSheet, layout: Layout, options: Render
     `<rect x="0" y="0" width="${fmt(paper.width)}" height="${fmt(paper.height)}" fill="#fff"/>`,
   );
 
-  if (layout.header) parts.push(renderHeader(sheet, layout.header, prefix));
+  if (layout.header) parts.push(renderHeader(layout.header, prefix));
   parts.push(rule(layout.topRule, INK, 0.5));
   for (const day of layout.days) parts.push(renderDay(sheet, day, prefix));
 
@@ -122,8 +122,7 @@ function renderSvgResolved(sheet: ResolvedSheet, layout: Layout, options: Render
   return parts.join('');
 }
 
-function renderHeader(sheet: ResolvedSheet, header: HeaderLayout, prefix: string): string {
-  const { config } = sheet;
+function renderHeader(header: HeaderLayout, prefix: string): string {
   const out: string[] = ['<g class="header">'];
 
   if (header.weekLabel) {
@@ -140,13 +139,8 @@ function renderHeader(sheet: ResolvedSheet, header: HeaderLayout, prefix: string
   }
   if (header.dateRange) {
     const d = header.dateRange;
-    if (sheet.dates) {
-      const label = formatDateRange(
-        config.locale,
-        parseIsoDate(sheet.dates.start),
-        parseIsoDate(sheet.dates.end),
-      );
-      out.push(text(label, d.x, d.y - 0.8, { fontSize: d.fontSize, weight: 400 }));
+    if (d.text !== undefined) {
+      out.push(text(d.text, d.x, d.y - 0.8, { fontSize: d.fontSize, weight: 400 }));
     } else {
       out.push(rule({ x1: d.x, x2: d.x + d.w, y: d.y }, RULE, 0.3));
     }
