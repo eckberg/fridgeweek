@@ -289,14 +289,67 @@ export function formatDayDate(locale: string, d: Date): string {
   return formatterFor(locale, { day: 'numeric', month: 'numeric', timeZone: 'UTC' }).format(d);
 }
 
-/** Header date range, e.g. `14–20 sep.`. Falls back to an en-dash join without `formatRange`. */
-export function formatDateRange(locale: string, start: Date, end: Date): string {
-  const formatter = formatterFor(locale, { day: 'numeric', month: 'short', timeZone: 'UTC' });
+/** How the month is named in a date range: `september` or `sep.`. */
+export type MonthForm = 'long' | 'short';
+
+/**
+ * Header date range, e.g. `14–20 september 2026`. Falls back to an en-dash join without
+ * `formatRange`.
+ *
+ * The year is always part of it: a sheet is printed weeks or months ahead and kept, so the
+ * one line that says which week this is should say it without the reader supplying the year.
+ * `Intl` prints it once for a range inside one year and twice across New Year, which is
+ * exactly what reads well.
+ */
+export function formatDateRange(
+  locale: string,
+  start: Date,
+  end: Date,
+  month: MonthForm = 'long',
+): string {
+  const formatter = formatterFor(locale, {
+    day: 'numeric',
+    month,
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
   try {
     return formatter.formatRange(start, end);
   } catch {
     return `${formatter.format(start)} – ${formatter.format(end)}`;
   }
+}
+
+/** Any year with four digits; which one it is cannot change a range's length. */
+const RANGE_PROBE_YEAR = 2026;
+const widestRanges = new Map<string, string>();
+
+/**
+ * The longest date range this locale can print in this form.
+ *
+ * Every month is probed twice: a week inside it, which is two two-digit days, and a week
+ * starting on the 26th, which crosses into the next month and, in December, into the next
+ * year, so that the two widest shapes a week can take are both covered. Every real week is
+ * one of those shapes with the same number of characters, so the header can reserve this
+ * width and never move: not from page to page of a run, and not when a date is chosen.
+ *
+ * Length is counted in characters because that is what {@link estimateTextWidth} measures,
+ * so the longest range is also the widest one. Memoised per locale and form.
+ */
+export function widestDateRange(locale: string, month: MonthForm): string {
+  const key = `${locale}|${month}`;
+  const cached = widestRanges.get(key);
+  if (cached !== undefined) return cached;
+  let widest = '';
+  for (let m = 0; m < 12; m++) {
+    for (const day of [11, 26]) {
+      const start = new Date(Date.UTC(RANGE_PROBE_YEAR, m, day));
+      const range = formatDateRange(locale, start, addDays(start, 6), month);
+      if (Array.from(range).length > Array.from(widest).length) widest = range;
+    }
+  }
+  widestRanges.set(key, widest);
+  return widest;
 }
 
 export interface WeekDescription {

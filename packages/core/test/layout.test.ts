@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { resolveConfig, type SheetConfigInput } from '../src/config.js';
+import { addDays, parseIsoDate, toIsoDate } from '../src/dates.js';
+import { SHEET_LOCALES } from '../src/i18n/index.js';
 import {
   CAP_H,
   COMFORT_LINE_H,
   computeLayout,
+  DATE_RANGE_MAX_W,
+  DATE_RANGE_MIN_W,
+  estimateTextWidth,
   HEADER_GAP,
   HEADER_H,
   type Layout,
@@ -144,6 +149,43 @@ describe('computeLayout: geometry', () => {
     // The rule takes the width the number would have, so choosing a date does
     // not move the rest of the header.
     expect(blank.header?.dateRange?.x).toBe(dated.header?.dateRange?.x);
+  });
+
+  it('prints the range with the month in full and the year', () => {
+    const l = layoutOf({ locale: 'sv-SE', weekStarting: '2026-09-14' });
+    expect(l.header?.dateRange?.text).toBe('14–20 september 2026');
+    expect(layoutOf({ locale: 'de-DE', weekStarting: '2026-09-14' }).header?.dateRange?.text).toBe(
+      '14.–20. September 2026',
+    );
+  });
+
+  it('keeps the short month for a language whose own is too long for the header', () => {
+    // Spanish spells a week in December as "26 de diciembre de 2026 – 1 de enero
+    // de 2027", which would take a third of the header line to itself.
+    const es = layoutOf({ locale: 'es-ES', weekStarting: '2026-09-14' });
+    expect(es.header?.dateRange?.text).toContain('2026');
+    expect(es.header?.dateRange?.text).not.toContain('septiembre');
+    expect(es.header?.dateRange?.w).toBeLessThanOrEqual(DATE_RANGE_MAX_W);
+  });
+
+  it('reserves the same width for the range dated or not, and enough for any week', () => {
+    const tooWide: string[] = [];
+    for (const { code } of SHEET_LOCALES) {
+      const blank = layoutOf({ locale: code });
+      const reserved = blank.header?.dateRange?.w ?? 0;
+      expect(reserved).toBeGreaterThanOrEqual(DATE_RANGE_MIN_W);
+      // Every week of a run, on every page, in the width the blank rule takes.
+      for (let week = 0; week < 53; week++) {
+        const weekStarting = toIsoDate(addDays(parseIsoDate('2026-01-05'), 7 * week));
+        const dated = layoutOf({ locale: code, weekStarting });
+        const range = dated.header?.dateRange;
+        expect(range?.w).toBe(reserved);
+        expect(range?.x).toBe(blank.header?.dateRange?.x);
+        const width = estimateTextWidth(range?.text ?? '', range?.fontSize ?? 0, 'mixed');
+        if (width > reserved) tooWide.push(`${code}: ${range?.text} (${width} > ${reserved})`);
+      }
+    }
+    expect(tooWide).toEqual([]);
   });
 
   it('prints dates when a week start is given', () => {

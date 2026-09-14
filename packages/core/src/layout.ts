@@ -1,4 +1,5 @@
 import type { PaperSize, SheetConfig } from './config.js';
+import { formatDateRange, type MonthForm, parseIsoDate, widestDateRange } from './dates.js';
 import { type Mark, type ResolvedSheet, resolveSheet } from './resolve.js';
 
 // ---------------------------------------------------------------------------
@@ -66,7 +67,13 @@ export const WEEK_NUMBER_W = 10.5;
 export const HEADER_FIELD_DROP = 0.6;
 /** Gutter between the header's fields. */
 export const HEADER_ITEM_GAP = 6;
-export const DATE_RANGE_W = 44;
+/** Narrowest the header's date range gets, which undated is a rule to write it on. */
+export const DATE_RANGE_MIN_W = 40;
+/**
+ * A language keeps its long month name while its widest week of the year fits this, which
+ * is about a third of the content line on A4. Past it the header takes the short month.
+ */
+export const DATE_RANGE_MAX_W = 64;
 export const DATE_FONT = 3.6;
 
 /**
@@ -158,6 +165,11 @@ export interface HeaderLayout {
   weekLabel: (TextAnchor & { text: string }) | undefined;
   /** Rule to write the week number on, when the sheet is not dated. */
   weekNumberField: Rule | undefined;
+  /**
+   * The range, ready to draw, or `text: undefined` and a rule to write it on. Unlike a
+   * day's date it is formatted here, because whether the month is named in full is a
+   * question about width and therefore this module's to answer.
+   */
   dateRange:
     | { x: number; y: number; w: number; text: string | undefined; fontSize: number }
     | undefined;
@@ -448,14 +460,23 @@ function layoutHeader(
 
   let dateRange: HeaderLayout['dateRange'];
   if (config.showDateRange) {
+    const field = dateRangeField(config.locale);
     dateRange = {
       x: cursor,
       y: baseline + HEADER_FIELD_DROP,
-      w: DATE_RANGE_W,
-      text: undefined,
+      w: field.width,
+      text:
+        sheet.dates === undefined
+          ? undefined
+          : formatDateRange(
+              config.locale,
+              parseIsoDate(sheet.dates.start),
+              parseIsoDate(sheet.dates.end),
+              field.month,
+            ),
       fontSize: DATE_FONT,
     };
-    cursor += DATE_RANGE_W + HEADER_ITEM_GAP;
+    cursor += field.width + HEADER_ITEM_GAP;
   }
 
   let legend: HeaderLayout['legend'];
@@ -473,6 +494,35 @@ function layoutHeader(
     legend,
   };
   return { ...header, inkBottom: headerInkBottom(header) };
+}
+
+/**
+ * How the header names the month, and how much width it keeps for the range.
+ *
+ * The month is spelled out, because that is what a sheet on a fridge is read at a glance
+ * and `14–20 september 2026` is a date where `14–20 sep. 2026` is a code. It is a property
+ * of the language rather than of the week on the page: one form for every sheet in a
+ * language, so a run printed a term at a time does not change its wording in the middle.
+ * A language whose months are too long for the header to hold keeps the short form —
+ * Finnish, Spanish and Portuguese do, mostly because of the week that crosses New Year
+ * and carries two month names and two years.
+ *
+ * The width kept is that widest week of the year, not the week being printed, so the
+ * legend beside it sits in the same place on every page of a run and does not move when a
+ * date is chosen.
+ */
+function dateRangeField(locale: string): { month: MonthForm; width: number } {
+  const long = estimateTextWidth(widestDateRange(locale, 'long'), DATE_FONT, 'mixed');
+  if (long <= DATE_RANGE_MAX_W) return { month: 'long', width: dateRangeWidth(long) };
+  const short = estimateTextWidth(widestDateRange(locale, 'short'), DATE_FONT, 'mixed');
+  // A language whose short month is no shorter gains nothing by abbreviating.
+  if (short >= long) return { month: 'long', width: dateRangeWidth(long) };
+  return { month: 'short', width: dateRangeWidth(short) };
+}
+
+/** Rounded up to the next half millimetre: this is an estimate, not a measurement. */
+function dateRangeWidth(estimate: number): number {
+  return Math.max(DATE_RANGE_MIN_W, Math.ceil(estimate * 2) / 2);
 }
 
 /**

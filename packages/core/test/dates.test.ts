@@ -20,7 +20,9 @@ import {
   weekInfoFallback,
   weekNumber,
   weekOrder,
+  widestDateRange,
 } from '../src/dates.js';
+import { SHEET_LOCALES } from '../src/i18n/index.js';
 
 const MS_PER_DAY = 86_400_000;
 
@@ -411,25 +413,72 @@ describe('formatDayDate / formatDateRange', () => {
     expect(formatDayDate('de-DE', day)).toContain('14.9');
   });
 
-  it('formats a range containing both day numbers', () => {
+  it('formats a range containing both day numbers and the year', () => {
     const end = parseIsoDate('2026-09-20');
     for (const locale of ['sv-SE', 'en-US', 'en-GB', 'de-DE']) {
       const range = formatDateRange(locale, day, end);
       expect(range.length).toBeGreaterThan(0);
       expect(range).toContain('14');
       expect(range).toContain('20');
+      expect(range).toContain('2026');
     }
+  });
+
+  it('names the month in full, or abbreviates it when asked', () => {
+    const end = parseIsoDate('2026-09-20');
+    expect(formatDateRange('sv-SE', day, end)).toBe('14–20 september 2026');
+    expect(formatDateRange('sv-SE', day, end, 'short')).toBe('14–20 sep. 2026');
   });
 
   it('formats a range that crosses a month', () => {
     const range = formatDateRange('sv-SE', parseIsoDate('2026-09-28'), parseIsoDate('2026-10-04'));
     expect(range).toContain('28');
     expect(range).toContain('4');
+    expect(range).toContain('september');
+    expect(range).toContain('oktober');
+  });
+
+  it('prints both years for a week that crosses New Year', () => {
+    const range = formatDateRange('sv-SE', parseIsoDate('2026-12-28'), parseIsoDate('2027-01-03'));
+    expect(range).toContain('2026');
+    expect(range).toContain('2027');
   });
 
   it('does not throw on an unusable tag', () => {
     expect(() => formatDayDate('not a locale', day)).not.toThrow();
     expect(() => formatDateRange('not a locale', day, day)).not.toThrow();
+    expect(() => widestDateRange('not a locale', 'long')).not.toThrow();
+  });
+});
+
+describe('widestDateRange', () => {
+  it('is the week that crosses New Year, with two months and two years', () => {
+    const widest = widestDateRange('sv-SE', 'long');
+    expect(widest).toContain('december');
+    expect(widest).toContain('januari');
+    expect(widest).toMatch(/2026.*2027/);
+  });
+
+  /*
+   * What the header reserves for the date range. Every week a sheet can print
+   * has to fit in it, in every language the picker offers, or the legend beside
+   * it would be run into on one page of a run and not another.
+   */
+  it('is at least as long as every week of the year, in every sheet language', () => {
+    const wider: string[] = [];
+    for (const { code } of SHEET_LOCALES) {
+      for (const month of ['long', 'short'] as const) {
+        const widest = Array.from(widestDateRange(code, month)).length;
+        let start = parseIsoDate('2026-01-05');
+        // Two years of weeks, so every month boundary and both New Years are tried.
+        for (let week = 0; week < 105; week++) {
+          const range = formatDateRange(code, start, addDays(start, 6), month);
+          if (Array.from(range).length > widest) wider.push(`${code} ${month}: ${range}`);
+          start = addDays(start, 7);
+        }
+      }
+    }
+    expect(wider).toEqual([]);
   });
 });
 

@@ -48,6 +48,7 @@ Each decision below was made deliberately during the initial design session. The
 | 15 | UI languages **en** and **sv** at launch; weekday names via `Intl` | Adding a language is a JSON file, not a code change. |
 | 16 | Dropped from the paper prototype: per-day activity icon strip, clothes-peg marker | With a marker strip on every line a second icon row is noise. Either can return later as an off-by-default toggle. |
 | 17 | A dated sheet prints **1 to 25 consecutive weeks**, one page each. There is no copy count | Printing the same page twice is what a printer's own copy dialog is for, so a copy count in the builder bought nothing. What a print dialog cannot do is move the dates on, and that is the sheet somebody actually wants: print the term on Sunday and put a fresh week up each Monday. It follows that the option is meaningless undated, so it is only there once a date is set. |
+| 18 | The date range carries the **year** and names the **month in full**: `14–20 september 2026` | The sheets are printed a term at a time and the one that is up has been up for a week, so the line saying which week this is should not need the year supplied from memory; and `sep.` is a code where `september` is a date. A language keeps the full name unless its longest week of the year — the one crossing New Year, which carries two month names and two years — would claim more than a third of the header line, since the legend needs the rest: Finnish, Spanish and Portuguese therefore keep the short form their own locale data gives them, which is what they printed before, now with the year on it. |
 
 ## 3. Configuration model
 
@@ -161,6 +162,10 @@ usable         paper - 2 * margin
 header         HEADER_H 15 + HEADER_GAP 4, present if weekNumber || dateRange || legend
 weekLabel      the word, plus ' ' + the number when dated, one run at WEEK_LABEL_FONT 7;
                undated, WEEK_NUMBER_W 10.5 of rule to write on. Reserved either way.
+dateRange      the language's widest week of the year at DATE_FONT 3.6, rounded up to the
+               next half millimetre, never below DATE_RANGE_MIN_W 40. The month is named
+               in full while that stays within DATE_RANGE_MAX_W 64, a third of the A4
+               content line; past it the language keeps its short month instead.
 dayH           (usableH - header) / 7                     (A4, m=10: 36.86)
 headH          clamp(dayH * HEAD_RATIO .26, 6, 9.5),      capped so the lines keep
                their comfort height before the band keeps its own
@@ -220,7 +225,8 @@ vendor tricks are needed.
 document: `@page { size: A4; margin: 0 }`, embedded WOFF2 fonts as `data:` URIs, no
 external references. This is the file that is previewed, printed and sent to the PDF
 renderer. The pages of a run differ only in the dates printed on them: the header reserves
-`WEEK_NUMBER_W` whatever the week number's digits and a day's date field is a fixed column,
+`WEEK_NUMBER_W` whatever the week number's digits, keeps the width of the language's widest
+week for the date range whichever week is printed, and a day's date field is a fixed column,
 so the geometry, and therefore the fit report, is the same on every page. The builder's
 preview is the first week.
 
@@ -238,7 +244,10 @@ rounded to three decimals. Snapshot tests rely on this.
 - `showWeekNumber: 'auto'` is true when `minimalDays === 4`, which is the ISO family of
   locales (most of Europe), and false otherwise.
 - Day dates and date ranges are formatted with `Intl.DateTimeFormat` so "14/9" and "9/14"
-  come out right for free.
+  come out right for free. The range is `{ day, month, year }` and `formatRange`, which
+  prints the year once inside one year and twice across New Year, and puts the month where
+  the language puts it. Whether the month is named in full is decided per language by
+  `computeLayout`, because it is a question about width; see decision 18.
 - **The sheet is translated; the interface is not.** The sheet is the product, so it
   prints correctly in a family's own language. The website around it is English, which
   keeps one set of words to maintain and one page to review.
@@ -358,7 +367,8 @@ weekdayName(locale, weekday, form): string
 weekNumber(date, weekInfo): { week, year }
 alignToWeekStart(date, firstDay): IsoDate
 formatDayDate(locale, date): string
-formatDateRange(locale, start, end): string
+formatDateRange(locale, start, end, month?): string   // month: 'long' (default) | 'short'
+widestDateRange(locale, month): string                // the widest week, which the header fits
 addDays, parseIsoDate, toIsoDate                      // UTC-only helpers
 
 // src/i18n/index.ts

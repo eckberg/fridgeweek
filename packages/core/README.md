@@ -87,7 +87,8 @@ weekdayName(locale, weekday, form): string
 weekNumber(date, weekInfo): { week, year }
 alignToWeekStart(date, firstDay): IsoDate
 formatDayDate(locale, date): string
-formatDateRange(locale, start, end): string
+formatDateRange(locale, start, end, month?): string  // 'long' names the month in full
+widestDateRange(locale, month): string         // the widest week, which the header fits
 addDays, parseIsoDate, toIsoDate               // UTC-only helpers
 
 // i18n
