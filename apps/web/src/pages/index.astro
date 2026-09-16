@@ -6,6 +6,7 @@ import StepCard from '../components/landing/StepCard.astro';
 import SymbolRow from '../components/landing/SymbolRow.astro';
 import { t } from '../i18n/index.js';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import type { SampleEntry } from '../lib/filledSample.js';
 
 /** What the builder can set, in the sheet's own vocabulary. */
 const choices = [
@@ -28,6 +29,28 @@ const family = [
 ];
 
 const entries = ['library book', 'preschool closed', 'football at five', 'grandma picks up'];
+
+/**
+ * The hero sheet is the four of them drawn as letters rather than pictures,
+ * because a stranger reading the page has to see whose line is whose without
+ * being told which animal is which child first.
+ */
+const heroFamily = family.map((person) => ({ ...person, initial: person.name[0] }));
+
+/**
+ * A week as it actually gets used: mostly empty, a couple of days carrying two
+ * things, and two entries that belong to two people at once — the gesture the
+ * whole sheet is built around, since any line can be anyone's.
+ */
+const heroWeek: SampleEntry[] = [
+  { day: 0, line: 0, text: 'swimming kit', who: ['Iris'] },
+  { day: 1, line: 0, text: 'dentist at three', who: ['Otto'] },
+  { day: 2, line: 0, text: 'preschool closed', who: ['family'] },
+  { day: 2, line: 1, text: 'library books back', who: ['Vera'] },
+  { day: 3, line: 0, text: 'football at five', who: ['Otto', 'Milo'] },
+  { day: 5, line: 0, text: 'grandma visiting', who: ['family'] },
+  { day: 5, line: 1, text: 'cinema at two', who: ['Iris', 'Vera'] },
+];
 ---
 
 <BaseLayout title="Fridgeweek" description={t('meta.homeDescription')}>
@@ -44,7 +67,11 @@ const entries = ['library book', 'preschool closed', 'football at five', 'grandm
     </div>
 
     <div class="hero-frame">
-      <SheetSample id="hero" config={{ locale: 'en-GB', people: family, weekStarting: '2026-09-07' }} />
+      <SheetSample
+        id="hero"
+        config={{ locale: 'en-GB', people: heroFamily, weekStarting: '2026-09-07' }}
+        entries={heroWeek}
+      />
     </div>
   </section>
 
@@ -193,17 +220,21 @@ const entries = ['library book', 'preschool closed', 'football at five', 'grandm
     gap: var(--space-3);
   }
 
+  /*
+   * Wider than the other samples on the page: this one is written on, and the
+   * writing has to be readable rather than merely present.
+   */
   .hero-frame {
-    flex: 0 1 420px;
+    flex: 0 1 480px;
     display: flex;
     justify-content: center;
-    padding: 36px;
+    padding: 28px;
     border-radius: 16px;
     background: var(--desk);
   }
 
   .hero-frame :global(.sample) {
-    max-width: 360px;
+    max-width: 420px;
   }
 
   .facts {
