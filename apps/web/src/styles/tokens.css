@@ -67,7 +67,9 @@
   /* Layout */
   --measure: 78ch;
   --page-max: 1200px;
-  --panel-width: 380px;
+  /* The builder's settings column. Wide enough that a person's row holds a
+     handle, a mark, a name and a remove without crowding. */
+  --panel-width: 400px;
   --header-height: 60px;
 
   --focus-ring: 2px solid var(--accent);

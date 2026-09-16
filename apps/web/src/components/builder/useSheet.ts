@@ -8,7 +8,14 @@ import {
   type SheetConfig,
 } from '@fridgeweek/core';
 import { computed, ref, watch } from 'vue';
-import { applyChange, loadConfig, readHash, saveConfig, shareUrl } from '../../lib/sheetState.js';
+import {
+  applyChange,
+  cloneDefaults,
+  loadConfig,
+  readHash,
+  saveConfig,
+  shareUrl,
+} from '../../lib/sheetState.js';
 
 /**
  * The builder's single source of truth. One configuration object, validated on
@@ -84,6 +91,34 @@ export function useSheet() {
   }
 
   /**
+   * People are printed in the order they are held: the legend reads top to
+   * bottom in it and every marker strip left to right, so moving somebody is a
+   * change to the sheet and not to the panel. Out-of-range moves are ignored
+   * rather than clamped, because a drop past the end and a drop on the last row
+   * are the same gesture and both mean "last".
+   */
+  function movePerson(from: number, to: number): void {
+    const people = [...config.value.people];
+    const target = Math.min(people.length - 1, Math.max(0, to));
+    if (from < 0 || from >= people.length || from === target) return;
+    const [moved] = people.splice(from, 1);
+    if (moved === undefined) return;
+    people.splice(target, 0, moved);
+    update({ people });
+  }
+
+  /**
+   * Start again from the defaults. The watcher below writes the new
+   * configuration to the address bar and to storage, so nothing is left of the
+   * old sheet in either place.
+   */
+  function reset(): void {
+    rejected.value = [];
+    linkWasBroken.value = false;
+    config.value = cloneDefaults();
+  }
+
+  /**
    * Undated, there is no week for a second page to follow, so the run comes
    * back to one page as the date goes. Leaving it where it was would put the
    * configuration into a state the engine refuses and the date would not
@@ -151,6 +186,8 @@ export function useSheet() {
     updatePerson,
     addPerson,
     removePerson,
+    movePerson,
+    reset,
     clearWeekStarting,
     printableHtml,
     link,

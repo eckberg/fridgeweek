@@ -9,7 +9,7 @@ import {
   SYMBOL_IDS,
   sheetLocaleMeta,
 } from '@fridgeweek/core';
-import { computed, onMounted, onUnmounted, ref, useId } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, useId } from 'vue';
 import { t } from '../../i18n/index.js';
 import {
   downloadHtml,
@@ -42,9 +42,64 @@ const notice = ref('');
 const busy = ref(false);
 /** Index of the person whose mark panel is open, or null. */
 const openPerson = ref<number | null>(null);
+/** Index of the person being asked about before they are removed, or null. */
+const confirmingPerson = ref<number | null>(null);
+/** Whether the panel's own reset is waiting on a second press. */
+const confirmingReset = ref(false);
+const peopleEl = ref<HTMLUListElement | null>(null);
+const resetEl = ref<HTMLButtonElement | null>(null);
+/**
+ * What a row exposes, named here rather than taken from the component: a type
+ * that reaches into `PersonRow` would make its import a type-only one, and the
+ * template still needs the value.
+ */
+interface PersonRowHandle {
+  focusHandle: () => void;
+  focusConfirm: () => void;
+}
+const rowEls = ref<PersonRowHandle[]>([]);
 
 function togglePerson(index: number): void {
+  confirmingPerson.value = null;
   openPerson.value = openPerson.value === index ? null : index;
+}
+
+function askRemovePerson(index: number): void {
+  openPerson.value = null;
+  confirmingPerson.value = confirmingPerson.value === index ? null : index;
+  if (confirmingPerson.value !== null) {
+    nextTick(() => rowEls.value[index]?.focusConfirm());
+  }
+}
+
+/**
+ * Anything open in the people list is a panel inside one row, so a click that
+ * lands anywhere else is a click away from it. Before this the only way out of
+ * the mark panel was the very button that removes the person, sitting a few
+ * pixels from where the eye expects a close.
+ *
+ * An armed reset is the same kind of thing and gets the same treatment.
+ *
+ * On the click and not on the press: closing a panel shortens the row holding
+ * it, which moves everything below it up. Act on `pointerdown` and the button
+ * being aimed at slides out from under the pointer before it is released, so
+ * the click never happens at all. By the time a click has bubbled this far its
+ * own target has already been served, and whatever it opened is open.
+ */
+function onClickAway(event: MouseEvent): void {
+  const target = event.target instanceof Node ? event.target : null;
+
+  // Not left to the button's own blur: not every browser focuses a button it
+  // was clicked on, and an armed reset that never disarms is a trap.
+  if (confirmingReset.value && !(target && resetEl.value?.contains(target))) {
+    confirmingReset.value = false;
+  }
+
+  if (openPerson.value === null && confirmingPerson.value === null) return;
+  const row = peopleEl.value?.querySelector('.person.open, .person.confirming');
+  if (row && target && row.contains(target)) return;
+  openPerson.value = null;
+  confirmingPerson.value = null;
 }
 
 function announce(message: string): void {
@@ -105,18 +160,92 @@ function dismissLinkWarning(): void {
 }
 
 function removePerson(index: number): void {
+  const name = personLabel(index);
   openPerson.value = null;
+  confirmingPerson.value = null;
   sheet.removePerson(index);
+  announce(t('people.removed', { name }));
+}
+
+/** The name on the sheet, or the position when it is still blank. */
+function personLabel(index: number): string {
+  const person = config.value.people[index];
+  return person?.name.trim() || t('people.nameLabel', { position: index + 1 });
+}
+
+// --- Order ----------------------------------------------------------------
+
+/**
+ * People print in the order they are listed, so the list is a control and not
+ * a display. It is dragged by the grip on each row, and moved with the arrow
+ * keys on that same grip, which is the only way to reorder without a mouse.
+ */
+const dragFrom = ref<number | null>(null);
+const dragOver = ref<number | null>(null);
+
+function dropEdge(index: number): 'above' | 'below' | null {
+  if (dragFrom.value === null || dragOver.value !== index) return null;
+  if (dragFrom.value === index) return null;
+  return index < dragFrom.value ? 'above' : 'below';
+}
+
+function onDrop(index: number): void {
+  const from = dragFrom.value;
+  endDrag();
+  if (from === null) return;
+  movePerson(from, index);
+}
+
+function endDrag(): void {
+  dragFrom.value = null;
+  dragOver.value = null;
+}
+
+/** Keeps focus with the person who moved rather than with the row they left. */
+function nudgePerson(index: number, delta: number): void {
+  const to = index + delta;
+  if (to < 0 || to >= config.value.people.length) return;
+  movePerson(index, to);
+  nextTick(() => rowEls.value[to]?.focusHandle());
+}
+
+function movePerson(from: number, to: number): void {
+  if (from === to) return;
+  openPerson.value = null;
+  confirmingPerson.value = null;
+  const name = personLabel(from);
+  sheet.movePerson(from, to);
+  announce(t('people.moved', { name, position: to + 1, count: config.value.people.length }));
 }
 
 function addPerson(): void {
   openPerson.value = null;
+  confirmingPerson.value = null;
   const used = new Set(takenSymbols.value);
   const symbol = SYMBOL_IDS.find((id) => !used.has(id));
   if (!symbol) return;
   const names = new Set(config.value.people.map((p) => p.name));
   const name = NEW_PERSON_NAMES.find((candidate) => !names.has(candidate)) ?? '';
   sheet.addPerson({ name, symbol });
+}
+
+// --- Starting again -------------------------------------------------------
+
+/**
+ * One press arms it and a second does it. Reset throws away the whole sheet —
+ * the household, the language, the paper — and the only copy of it is the link
+ * in the address bar, which this overwrites.
+ */
+function onReset(): void {
+  if (!confirmingReset.value) {
+    confirmingReset.value = true;
+    return;
+  }
+  confirmingReset.value = false;
+  openPerson.value = null;
+  confirmingPerson.value = null;
+  sheet.reset();
+  announce(t('action.resetDone'));
 }
 
 // --- Dates ----------------------------------------------------------------
@@ -211,8 +340,14 @@ async function onCopyLink(): Promise<void> {
 }
 
 // The address bar is part of the state, so a paste or a back button must land.
-onMounted(() => window.addEventListener('hashchange', sheet.adoptHash));
-onUnmounted(() => window.removeEventListener('hashchange', sheet.adoptHash));
+onMounted(() => {
+  window.addEventListener('hashchange', sheet.adoptHash);
+  document.addEventListener('click', onClickAway);
+});
+onUnmounted(() => {
+  window.removeEventListener('hashchange', sheet.adoptHash);
+  document.removeEventListener('click', onClickAway);
+});
 
 /**
  * One line of feedback, most urgent first: a change the engine refused, then a
@@ -271,21 +406,34 @@ const languageSummary = computed(() => {
         :title="t('people.group')"
         :meta="t('people.count', { count: config.people.length, max: LIMITS.people.max })"
       >
-        <ul class="people">
+        <ul ref="peopleEl" class="people">
           <PersonRow
             v-for="(person, index) in config.people"
             :key="index"
+            ref="rowEls"
             :person="person"
             :position="index + 1"
             :others="config.people.filter((_, other) => other !== index)"
             :locale="config.locale"
             :can-remove="canRemovePerson"
             :open="openPerson === index"
+            :confirming="confirmingPerson === index"
+            :can-reorder="config.people.length > 1"
+            :dragging="dragFrom === index"
+            :drop-edge="dropEdge(index)"
             @update="(change) => sheet.updatePerson(index, change)"
+            @ask-remove="askRemovePerson(index)"
+            @cancel-remove="confirmingPerson = null"
             @remove="removePerson(index)"
             @toggle="togglePerson(index)"
+            @move="(delta) => nudgePerson(index, delta)"
+            @drag-start="dragFrom = index"
+            @drag-over="dragOver = index"
+            @drop="onDrop(index)"
+            @drag-end="endDrag"
           />
         </ul>
+        <p v-if="config.people.length > 1" class="people-hint">{{ t('people.orderHint') }}</p>
 
         <button v-if="canAddPerson" type="button" class="add" @click="addPerson">
           <span aria-hidden="true">+</span> {{ t('people.add') }}
@@ -344,6 +492,7 @@ const languageSummary = computed(() => {
           :help="t('header.weeksHelp')"
           :value="weeksSummary"
           :control-id="weeksId"
+          split
         >
           <StepperInput
             :id="weeksId"
@@ -405,6 +554,23 @@ const languageSummary = computed(() => {
         </button>
         <p class="mono foot-note">{{ t('builder.urlNote') }}<br />{{ t('builder.privacyNote') }}</p>
       </div>
+
+      <!-- Last thing in the panel, because it undoes everything above it. -->
+      <div class="panel-reset">
+        <button
+          ref="resetEl"
+          type="button"
+          class="reset"
+          :class="{ armed: confirmingReset }"
+          @click="onReset"
+          @blur="confirmingReset = false"
+        >
+          {{ confirmingReset ? t('action.resetConfirm') : t('action.reset') }}
+        </button>
+        <p class="reset-note">
+          {{ confirmingReset ? t('action.resetWarning') : t('action.resetHelp') }}
+        </p>
+      </div>
     </form>
 
     <div class="stage" :aria-label="t('builder.previewLabel')" role="region">
@@ -421,7 +587,7 @@ const languageSummary = computed(() => {
 <style scoped>
 .builder {
   display: grid;
-  grid-template-columns: 340px minmax(0, 1fr);
+  grid-template-columns: var(--panel-width) minmax(0, 1fr);
   /* Row 1 belongs to the live region and collapses to nothing while it is
      hidden; row 2 takes the rest, so the preview keeps its full height either
      way. Every child is placed explicitly, because the live region leaves the
@@ -509,6 +675,13 @@ const languageSummary = computed(() => {
   list-style: none;
 }
 
+/* Said once under the list rather than on every row's handle. */
+.people-hint {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
 .add {
   align-self: flex-start;
   display: inline-flex;
@@ -572,6 +745,54 @@ const languageSummary = computed(() => {
 .ghost:hover {
   border-color: var(--accent-mid);
   color: var(--accent);
+}
+
+/*
+ * Quiet until it is armed, and never a filled red button: it sits at the end
+ * of a panel people scroll through, and it should not be the loudest thing
+ * there.
+ */
+.panel-reset {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  border-top: 1px solid var(--border);
+}
+
+.reset {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.reset:hover {
+  border-color: var(--accent-mid);
+  color: var(--accent);
+}
+
+.reset.armed {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--paper);
+}
+
+.reset.armed:hover {
+  border-color: var(--accent-deep);
+  background: var(--accent-deep);
+}
+
+.reset-note {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-faint);
 }
 
 @media (max-width: 900px) {

@@ -58,8 +58,13 @@ function commit(event: Event): void {
 </template>
 
 <style scoped>
+/*
+ * Hugs its three controls. Stretched to whatever cell it lands in, the buttons
+ * pack to one end and the rest of the track is empty sunk paper, which reads
+ * as a mistake rather than as a control.
+ */
 .stepper {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 2px;
   padding: 3px;
@@ -68,8 +73,13 @@ function commit(event: Event): void {
 }
 
 button {
+  /* Centred by the box rather than by the glyph: a plus and a minus sign do
+     not share a vertical centre, and side by side that shows. */
+  display: grid;
+  place-items: center;
   width: 30px;
   height: 30px;
+  padding: 0;
   border: none;
   border-radius: var(--radius-sm);
   background: var(--white);
