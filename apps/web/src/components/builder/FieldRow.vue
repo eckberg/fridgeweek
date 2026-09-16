@@ -11,11 +11,17 @@ const props = defineProps<{
   controlId?: string;
   /** Stack the control under the label instead of beside it. */
   stacked?: boolean;
+  /**
+   * Give the label and its help the full width, and put the value beside the
+   * control on the row below. A label with helper text and a value next to it
+   * shares a narrow column three ways and wraps the help mid-phrase.
+   */
+  split?: boolean;
 }>();
 </script>
 
 <template>
-  <div class="row" :class="{ stacked, 'has-value': value !== undefined }">
+  <div class="row" :class="{ stacked, split, 'has-value': value !== undefined }">
     <div class="text">
       <label v-if="props.controlId" :for="props.controlId" class="label">{{ label }}</label>
       <span v-else class="label">{{ label }}</span>
@@ -48,6 +54,13 @@ const props = defineProps<{
   grid-template-areas: 'text' 'control';
 }
 
+/* Text across the top, then the control on the left with its value opposite. */
+.row.split {
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: 'text text' 'control value';
+  row-gap: var(--space-3);
+}
+
 .text {
   grid-area: text;
   display: flex;
@@ -71,6 +84,14 @@ const props = defineProps<{
   grid-area: value;
   white-space: nowrap;
   align-self: center;
+}
+
+/* Beside a control rather than above it, so it right-aligns and may wrap. */
+.row.split .value {
+  justify-self: end;
+  text-align: right;
+  white-space: normal;
+  line-height: 1.4;
 }
 
 .control {

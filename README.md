@@ -71,6 +71,11 @@ The website is an Astro site with one Vue island. The config lives in the URL ha
 link is the sheet, and in `localStorage` for convenience. The bar above the preview is the
 layout engine's own report: whether it fits, and the millimetres it arrived at.
 
+People are listed in the order they print in — down the legend, along each marker strip —
+and that list is reorderable, by dragging the grip on a row or by moving it with the arrow
+keys. Removing somebody asks first, and a reset at the foot of the panel starts the whole
+sheet again.
+
 The site is the quickest way to see all of this for real. Everything below runs it on your
 own machine instead.
 

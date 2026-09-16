@@ -1,23 +1,36 @@
 ---
-import { renderSvg, resolveConfig, type SheetConfigInput } from '@fridgeweek/core';
+import { computeLayout, renderSvg, resolveConfig, type SheetConfigInput } from '@fridgeweek/core';
+import { renderFilledOverlay, type SampleEntry } from '../../lib/filledSample.js';
 
 /**
  * A real sheet, rendered at build time by the same function the printer uses.
  * Nothing here is a mock-up: what the page shows is what comes out of the tray.
+ *
+ * `entries` adds a second layer over that sheet, in the same coordinates,
+ * holding what somebody wrote on it. The sheet under it is untouched — the
+ * writing is what the pen does afterwards, which is the half of the product
+ * an empty grid cannot show.
  */
 interface Props {
   config: SheetConfigInput;
   caption?: string;
   /** Distinguishes the inline `<symbol>` ids when several sheets share a page. */
   id: string;
+  /** A week written onto the sheet. Omit for a blank one. */
+  entries?: SampleEntry[];
 }
 
-const { config, caption, id } = Astro.props;
-const svg = renderSvg(resolveConfig(config), { idPrefix: id });
+const { config, caption, id, entries } = Astro.props;
+const resolved = resolveConfig(config);
+const svg = renderSvg(resolved, { idPrefix: id });
+const ink = entries?.length ? renderFilledOverlay(computeLayout(resolved), entries) : '';
 ---
 
 <figure class="sample">
-  <div class="paper" set:html={svg} />
+  <div class="paper">
+    <Fragment set:html={svg} />
+    {ink && <Fragment set:html={ink} />}
+  </div>
   {caption && <figcaption class="mono">{caption}</figcaption>}
 </figure>
 
@@ -30,6 +43,7 @@ const svg = renderSvg(resolveConfig(config), { idPrefix: id });
   }
 
   .paper {
+    position: relative;
     background: var(--white);
     box-shadow: var(--shadow-sheet);
   }
@@ -38,6 +52,17 @@ const svg = renderSvg(resolveConfig(config), { idPrefix: id });
     display: block;
     width: 100%;
     height: auto;
+  }
+
+  /* Laid exactly over the sheet, sharing its viewBox, so a millimetre in the
+     layout is the same millimetre here whatever the sheet is scaled to. */
+  .paper :global(svg.ink) {
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    font-family: var(--font-hand);
+    font-weight: 600;
+    pointer-events: none;
   }
 
   figcaption {

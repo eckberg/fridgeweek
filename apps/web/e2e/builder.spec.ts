@@ -183,6 +183,111 @@ test('the picker filters by search and closes on Escape', async ({ page }) => {
   await expect(picker).toBeHidden();
 });
 
+test('the order of the people is the order they print in, and it can be changed', async ({
+  page,
+}) => {
+  const before = await sheetText(page);
+  expect(before.indexOf('Alex')).toBeLessThan(before.indexOf('Sam'));
+
+  // The grip is a button, so the arrow keys are the way through without a mouse.
+  await page.getByRole('button', { name: 'Move Alex up or down' }).focus();
+  await page.keyboard.press('ArrowDown');
+
+  const after = await sheetText(page);
+  expect(after.indexOf('Sam')).toBeLessThan(after.indexOf('Alex'));
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Alex moved to position 2' }),
+  ).toBeVisible();
+
+  // Focus follows the person, not the row they left. A second press has to
+  // move the same person back, rather than whoever has taken their place.
+  await expect(page.getByRole('button', { name: 'Move Alex up or down' })).toBeFocused();
+  await page.keyboard.press('ArrowUp');
+  const back = await sheetText(page);
+  expect(back.indexOf('Alex')).toBeLessThan(back.indexOf('Sam'));
+});
+
+test('a person can be dragged to a new place in the list', async ({ page }) => {
+  await page
+    .getByRole('button', { name: 'Move Alex up or down' })
+    .dragTo(page.locator('.person').nth(1));
+
+  const text = await sheetText(page);
+  expect(text.indexOf('Sam')).toBeLessThan(text.indexOf('Alex'));
+});
+
+test('the mark panel closes on a click outside it', async ({ page }) => {
+  await page.getByRole('button', { name: 'Mark for Alex' }).click();
+  const picker = page.getByRole('group', { name: 'Choose a mark' });
+  await expect(picker).toBeVisible();
+
+  // The only way out used to be the button that removes the person, a few
+  // pixels from where the eye goes looking for a close.
+  await page.getByRole('region', { name: 'Sheet preview' }).click({ position: { x: 8, y: 8 } });
+  await expect(picker).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Mark for Alex' })).toHaveAttribute(
+    'aria-expanded',
+    'false',
+  );
+});
+
+test('removing a person asks first, and keeps them if the answer is no', async ({ page }) => {
+  await page.getByRole('button', { name: 'Remove Alex' }).click();
+  const question = page.getByRole('group', { name: 'Remove Alex from the sheet?' });
+  await expect(question).toBeVisible();
+  await expect(page.locator('.paper svg')).toContainText('Alex');
+
+  await question.getByRole('button', { name: 'Keep' }).click();
+  await expect(question).toBeHidden();
+  await expect(page.getByText('2 of 6')).toBeVisible();
+
+  // Asked again and answered, they go.
+  await page.getByRole('button', { name: 'Remove Alex' }).click();
+  await page.getByRole('button', { name: 'Remove', exact: true }).click();
+  await expect(page.locator('.paper svg')).not.toContainText('Alex');
+  await expect(page.getByText('1 of 6')).toBeVisible();
+});
+
+test('a pending removal is called off by clicking away from it', async ({ page }) => {
+  await page.getByRole('button', { name: 'Remove Alex' }).click();
+  await expect(page.getByRole('group', { name: 'Remove Alex from the sheet?' })).toBeVisible();
+
+  await page.getByRole('region', { name: 'Sheet preview' }).click({ position: { x: 8, y: 8 } });
+  await expect(page.getByRole('group', { name: 'Remove Alex from the sheet?' })).toBeHidden();
+  await expect(page.locator('.paper svg')).toContainText('Alex');
+});
+
+test('an armed reset is called off by clicking anywhere else', async ({ page }) => {
+  await page.getByLabel('Name of person 1').fill('Ingrid');
+  await page.getByRole('button', { name: 'Start over' }).click();
+  await expect(page.getByRole('button', { name: 'Yes, clear everything' })).toBeVisible();
+
+  // Not left to the button's own blur, which not every browser gives it.
+  await page.getByRole('region', { name: 'Sheet preview' }).click({ position: { x: 8, y: 8 } });
+  await expect(page.getByRole('button', { name: 'Start over' })).toBeVisible();
+  await expect(page.locator('.paper svg')).toContainText('Ingrid');
+});
+
+test('starting over clears the sheet, once it has been asked twice', async ({ page }) => {
+  await page.getByLabel('Name of person 1').fill('Ingrid');
+  await page.getByRole('radio', { name: 'Letter' }).click();
+  await expect(page.locator('.paper svg')).toContainText('Ingrid');
+
+  // One press arms it, and only the second throws the sheet away.
+  await page.getByRole('button', { name: 'Start over' }).click();
+  await expect(page.locator('.paper svg')).toContainText('Ingrid');
+
+  await page.getByRole('button', { name: 'Yes, clear everything' }).click();
+  await expect(page.locator('.paper svg')).toContainText('Alex');
+  await expect(page.locator('.paper svg')).not.toContainText('Ingrid');
+  await expect(page.getByRole('radio', { name: 'A4' })).toHaveAttribute('aria-checked', 'true');
+
+  // The link is the sheet, so a reset that left the old one in the address bar
+  // would come straight back on the next reload.
+  await page.reload();
+  await expect(page.locator('.paper svg')).toContainText('Alex');
+});
+
 test('the print and download actions sit in the page header', async ({ page }) => {
   const header = page.locator('header.site-header');
   await expect(header.getByRole('button', { name: 'Print' })).toBeVisible();
