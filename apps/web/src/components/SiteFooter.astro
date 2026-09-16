@@ -1,5 +1,6 @@
 ---
 import { t } from '../i18n/index.js';
+import { SITE_VERSION } from '../lib/version.js';
 import GithubMark from './GithubMark.astro';
 import Logo from './Logo.astro';
 
@@ -45,7 +46,10 @@ const repo = 'https://github.com/eckberg/fridgeweek';
   </div>
 
   <p class="legal mono">
-    {t('footer.legal')} · <a href="/about#credits">{t('footer.credits')}</a>
+    {t('footer.legal')} · <a href="/about#credits">{t('footer.credits')}</a> · <a
+      href={`${repo}/releases`}
+      rel="noopener">{t('footer.version', { version: SITE_VERSION })}</a
+    >
   </p>
 </footer>
 

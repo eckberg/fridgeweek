@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # The tag object itself carries the notes, so the annotation has to come
+      # with the checkout. A shallow one fetches the commit and not the tag.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # The releases page is the changelog: the website's footer links to it,
+      # and there is no CHANGELOG.md that could disagree with it. So the notes
+      # are written once, in the tag's annotation, and published from there.
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          subject="$(git for-each-ref "refs/tags/$tag" --format='%(contents:subject)')"
+          body="$(git for-each-ref "refs/tags/$tag" --format='%(contents:body)')"
+
+          # A lightweight tag has no annotation. Failing here is the point:
+          # an empty release is worse than a missing one, because the footer
+          # sends people to it.
+          if [ -z "$body" ]; then
+            echo "::error::$tag has no annotation, so there are no notes to publish. Tag with git tag -a."
+            exit 1
+          fi
+
+          gh release create "$tag" --title "${subject:-$tag}" --notes "$body"

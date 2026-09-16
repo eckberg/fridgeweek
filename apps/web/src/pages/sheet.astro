@@ -3,6 +3,7 @@ import SheetBuilder from '../components/builder/SheetBuilder.vue';
 import GithubMark from '../components/GithubMark.astro';
 import { t } from '../i18n/index.js';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_VERSION } from '../lib/version.js';
 ---
 
 <BaseLayout
@@ -17,7 +18,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   </SheetBuilder>
 
   <footer slot="app-footer" class="app-footer">
-    <p class="mono">{t('footer.legal')}</p>
+    <p class="mono">{t('footer.legal')} · {t('footer.version', { version: SITE_VERSION })}</p>
     <nav aria-label={t('nav.secondaryLabel')}>
       <a href="/about">{t('footer.about')}</a>
       <a href="https://github.com/eckberg/fridgeweek/releases" rel="noopener">

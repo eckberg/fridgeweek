@@ -288,6 +288,12 @@ test('starting over clears the sheet, once it has been asked twice', async ({ pa
   await expect(page.locator('.paper svg')).toContainText('Alex');
 });
 
+test('the footer says which version is running', async ({ page }) => {
+  // The changelog link beside it is only worth following if you know what you
+  // are on, so the number has to survive the build and reach the page.
+  await expect(page.locator('.app-footer .mono')).toContainText(/v\d+\.\d+\.\d+/);
+});
+
 test('the print and download actions sit in the page header', async ({ page }) => {
   const header = page.locator('header.site-header');
   await expect(header.getByRole('button', { name: 'Print' })).toBeVisible();
