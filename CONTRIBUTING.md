@@ -87,6 +87,30 @@ Custom icons are contributed under the project's MIT license.
 - DESIGN.md is updated if behaviour changed.
 - Screenshots are attached for visual changes.
 
+## Releases
+
+The releases page is the changelog. The website's footer links to it and prints the version
+it is running, so an empty or stale releases page is a dead end somebody has already
+clicked.
+
+1. Bump `version` in `apps/web/package.json`. That one number is the product's version: it
+   is what the footer prints and what the tag is named after. `packages/core` is never
+   published, so its version is inert.
+2. Merge that, then tag the merge commit with an **annotated** tag whose message is the
+   notes. The first line is the release title and the rest is the body:
+
+   ```sh
+   git tag -a v0.4.0 -F notes.md
+   git push origin v0.4.0
+   ```
+
+3. `.github/workflows/release.yml` publishes the annotation as the release. A lightweight
+   tag carries no annotation, so it fails the job rather than publishing an empty release.
+
+Write the notes for somebody who prints sheets rather than somebody reading the diff: what
+changed about the sheet, then the builder, then the site, and a short note of anything
+under the hood worth knowing. A plain list of merged pull request titles is not notes.
+
 ## Commit style
 
 Plain imperative subject lines, for example "Add Finnish locale" or "Fix week number for Saturday-start locales". There is no enforced convention and no commit linting.

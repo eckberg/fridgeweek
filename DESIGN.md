@@ -23,6 +23,9 @@ These are deliberate. Feature requests that cross them are closed with a link he
 - No screen view, no app, no recurring events.
 - No poster aesthetics. The sheet is plain, dense and functional, printed in black on
   whatever paper you have.
+- No npm release of `@fridgeweek/core`. It stays a workspace package the website is built
+  from. `pnpm build` still proves the published shape would load, because that check
+  catches real mistakes either way, but nothing is pushed to a registry.
 
 ## 2. Product decisions
 
@@ -396,8 +399,16 @@ SUPPORTED_UI_LOCALES
 ## 9. Milestones
 
 - **v0.1** `@fridgeweek/core`: config, layout, renderer, symbols, fonts, dates, i18n, tests,
-  and a script that writes sample HTML files.
+  and a script that writes sample HTML files. Shipped.
 - **v0.2** `apps/web`: config panel, live preview, URL and localStorage state, browser print.
+  Shipped.
 - **v0.3** `/api/pdf` on Cloudflare Browser Rendering with rate limiting and multi-week runs.
-- **v1.0** README with pictures, CONTRIBUTING with the add-a-language recipe, example
-  links, npm publish of core.
+  Shipped, and the first tagged release.
+- **v1.0** README with pictures, CONTRIBUTING with the add-a-language recipe, example links.
+  Publishing core to npm was on this list and is now a non-goal above.
+
+The version lives in `apps/web/package.json`, because the website is the thing that ships,
+and the footer prints it. A release is an annotated `vX.Y.Z` tag whose message is the notes;
+`.github/workflows/release.yml` publishes them, and the releases page is therefore the
+changelog the footer links to. There is no CHANGELOG.md to fall out of step with it.
+See CONTRIBUTING.md for the steps.

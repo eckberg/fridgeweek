@@ -116,6 +116,7 @@
   "footer.pitchLink": "the whole project is on GitHub",
   "footer.legal": "MIT licence · no cookies · privacy-friendly analytics",
   "footer.credits": "licences and credits",
+  "footer.version": "v{version}",
   "landing.heroEyebrow": "Paper · a pen · seven rows",
   "landing.heroFacts": "Free · MIT · A4 and Letter · {count} sheet languages",
   "landing.setEyebrow": "What you set",
