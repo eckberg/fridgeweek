@@ -25,7 +25,7 @@ jobs:
       # Same provisioning as ci.yml: pnpm from `packageManager`, Node from
       # `devEngines.runtime`. The comparison is only meaningful if the browser
       # and the runtime match the ones that do the checking.
-      - uses: pnpm/setup@v2
+      - uses: pnpm/setup@v3
         with:
           cache: true
           install: false
