@@ -24,7 +24,7 @@ jobs:
       # so this replaces `pnpm/action-setup` and `actions/setup-node` together
       # and caches the store itself. `install: false` because the action's own
       # install is not a frozen one, and a stale lockfile must fail here.
-      - uses: pnpm/setup@v2
+      - uses: pnpm/setup@v3
         with:
           cache: true
           install: false
@@ -46,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/setup@v2
+      - uses: pnpm/setup@v3
         with:
           cache: true
           install: false
