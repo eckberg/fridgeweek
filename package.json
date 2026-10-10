@@ -2,7 +2,7 @@
   "name": "fridgeweek-monorepo",
   "private": true,
   "version": "0.0.0",
-  "description": "Printable weekly sheet for the fridge, filled in by hand.",
+  "description": "A free web tool for making a printable weekly planner for the family fridge. Seven days on one page, filled in by hand, with picture marks so even kids who can't read yet can follow the week.",
   "license": "MIT",
   "packageManager": "pnpm@12.3.4",
   "engines": {
